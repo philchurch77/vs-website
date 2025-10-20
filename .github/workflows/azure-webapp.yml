@@ -3,20 +3,10 @@ name: Deploy Django to Azure Web App
 on:
   push:
     branches: [ main ]
-  workflow_dispatch: {}   # manual "Run workflow" button
-
-concurrency:
-  group: deploy-vs-training-website
-  cancel-in-progress: true
-
-env:
-  AZURE_WEBAPP_NAME: vs-training-website
-  AZURE_RESOURCE_GROUP: appsvc_linux_northeurope_basic
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
 
     steps:
       - name: ⬇️ Checkout code
@@ -25,61 +15,21 @@ jobs:
       - name: 🚀 Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          app-name: vs-training-website
           slot-name: Production
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE }}
 
-      - name: 🛠️ Migrate & collectstatic (inside container)
+      - name: 🛠️ Run migrations and collectstatic
         if: always()
         uses: azure/cli@v2
         with:
           inlineScript: |
             az webapp ssh \
-              --name "${{ env.AZURE_WEBAPP_NAME }}" \
-              --resource-group "${{ env.AZURE_RESOURCE_GROUP }}" \
-              --command '
-                set -euo pipefail
-                ROOT=/home/site/wwwroot
-                cd "$ROOT"
-
-                # Unpack if Oryx left a package
-                if [ -f output.tar.gz ]; then
-                  echo "Extracting output.tar.gz into $ROOT..."
-                  tar -xzf output.tar.gz -C "$ROOT"
-                fi
-
-                # Detect layout and compute settings module
-                if [ -d myproject/myprojectsettings ]; then
-                  cd myproject
-                  SETTINGS="myproject.myprojectsettings.settings"
-                elif [ -d myprojectsettings ]; then
-                  SETTINGS="myprojectsettings.settings"
-                else
-                  echo "ERROR: myprojectsettings/ not found under $ROOT"
-                  ls -la "$ROOT"
-                  exit 1
-                fi
-
-                echo "Using DJANGO_SETTINGS_MODULE=$SETTINGS"
-
-                # Sanity: make sure settings import works
-                python -c "import importlib,sys; m=\"${SETTINGS}\"; importlib.import_module(m); print(\"Settings OK:\", m)"
-
-                # Idempotent admin tasks
-                python manage.py migrate --noinput --settings="$SETTINGS"
-                python manage.py collectstatic --noinput --settings="$SETTINGS"
-              '
-
-      - name: 🔎 Health check
-        run: |
-          set -euo pipefail
-          URL="https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/"
-          echo "Probing $URL ..."
-          code=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
-          echo "HTTP $code"
-          if [ "$code" -lt 200 ] || [ "$code" -ge 400 ]; then
-            echo "Health check failed"
-            exit 1
-          fi
-          echo "Healthy ✅"
+              --name vs-training-website \
+              --resource-group appsvc_linux_northeurope_basic \
+              --command "
+                cd /home/site/wwwroot &&
+                python manage.py migrate --noinput --settings=myprojectsettings.settings &&
+                python manage.py collectstatic --noinput --settings=myprojectsettings.settings
+              "
 
