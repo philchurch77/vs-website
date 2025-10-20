@@ -19,14 +19,38 @@ jobs:
           slot-name: Production
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE }}
 
-      # Run DB migrations and collect static inside the running container
       - name: 🛠️ Migrate & collectstatic
         if: always()
         uses: azure/cli@v2
         with:
           inlineScript: |
-            az webapp ssh --name vs-training-website --resource-group appsvc_linux_northeurope_basic --command "
-              cd /home/site/wwwroot &&
-              python manage.py migrate --settings=myproject.myprojectsettings.settings &&
-              python manage.py collectstatic --noinput --settings=myproject.myprojectsettings.settings
-            "
+            az webapp ssh \
+              --name vs-training-website \
+              --resource-group appsvc_linux_northeurope_basic \
+              --command '
+                set -e
+
+                cd /home/site/wwwroot
+
+                # If Oryx left a package, extract it so manage.py and apps exist here
+                if [ -f output.tar.gz ]; then
+                  echo "Extracting output.tar.gz into wwwroot..."
+                  tar -xzf output.tar.gz -C /home/site/wwwroot
+                fi
+
+                # Figure out the correct settings module automatically
+                if [ -d "myprojectsettings" ]; then
+                  SETTINGS="myprojectsettings.settings"
+                elif [ -d "myproject/myprojectsettings" ]; then
+                  SETTINGS="myproject.myprojectsettings.settings"
+                  cd myproject
+                else
+                  echo "Could not find myprojectsettings/ - aborting."
+                  ls -la
+                  exit 1
+                fi
+
+                echo "Using DJANGO_SETTINGS_MODULE=$SETTINGS"
+                python manage.py migrate --noinput --settings=$SETTINGS
+                python manage.py collectstatic --noinput --settings=$SETTINGS
+              '
