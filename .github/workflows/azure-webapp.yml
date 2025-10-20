@@ -7,6 +7,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: ⬇️ Checkout code
         uses: actions/checkout@v4
@@ -17,3 +18,15 @@ jobs:
           app-name: vs-training-website
           slot-name: Production
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE }}
+
+      # Run DB migrations and collect static inside the running container
+      - name: 🛠️ Migrate & collectstatic
+        if: always()
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            az webapp ssh --name vs-training-website --resource-group appsvc_linux_northeurope_basic --command "
+              cd /home/site/wwwroot &&
+              python manage.py migrate --settings=myproject.myprojectsettings.settings &&
+              python manage.py collectstatic --noinput --settings=myproject.myprojectsettings.settings
+            "
