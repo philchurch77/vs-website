@@ -7,7 +7,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: ⬇️ Checkout code
         uses: actions/checkout@v4
@@ -18,13 +17,3 @@ jobs:
           app-name: vs-training-website
           slot-name: Production
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE }}
-
-      - name: 🛠️ Run Django commands (optional)
-        if: always()
-        uses: azure/cli@v2
-        with:
-          inlineScript: |
-            az webapp ssh --name vs-training-website --resource-group appsvc_linux_northeurope_basic --command "
-              python manage.py migrate --settings=myproject.settings.production &&
-              python manage.py collectstatic --noinput --settings=myproject.settings.production
-            " || echo 'SSH post-deploy skipped (Startup Command handles this)'
