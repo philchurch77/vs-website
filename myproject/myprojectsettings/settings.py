@@ -8,16 +8,15 @@ load_dotenv(BASE_DIR / ".env")
 SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = False
 
-runtime_host = os.environ.get("WEBSITE_HOSTNAME")  # Azure sets this automatically
-extra = os.getenv("ALLOWED_HOSTS_EXTRA", "")       # comma-separated if you use custom domains
+runtime_host = os.environ.get("WEBSITE_HOSTNAME")  # set by Azure
+extra_hosts = [x.strip() for x in os.getenv("ALLOWED_HOSTS_EXTRA", "").split(",") if x.strip()]
 
-ALLOWED_HOSTS = [h for h in [runtime_host] + [x.strip() for x in extra.split(",") if x.strip()] if h]
+ALLOWED_HOSTS = [h for h in [runtime_host, *extra_hosts] if h]
+
+# CSRF: include all allowed hosts + explicit Azure hostname (handy if WEBSITE_HOSTNAME is missing during local runs)
 CSRF_TRUSTED_ORIGINS = [f"https://{h}" for h in ALLOWED_HOSTS]
-
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-USE_X_FORWARDED_HOST = True
-
-CSRF_TRUSTED_ORIGINS = ["https://vs-training-website.azurewebsites.net"]
+if "vs-training-website.azurewebsites.net" not in [h.replace("https://","") for h in ALLOWED_HOSTS]:
+    CSRF_TRUSTED_ORIGINS.append("https://vs-training-website.azurewebsites.net")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
