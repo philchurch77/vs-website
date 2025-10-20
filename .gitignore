@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+
+# Envs
+.venv/
+venv/
+env/
+ENV/
+
+# Django
+*.sqlite3
+staticfiles/
+media/
+*.log
+
+# OS / IDE
+.DS_Store
+.vscode/
+.idea/
+
+# Byte-compiled / cache
+*.egg-info/
+.eggs/
+
+# Secrets (rename your local env file accordingly)
+.env

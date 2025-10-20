@@ -1,0 +1,65 @@
+{% load static %}
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Django App{% endblock %}</title>
+
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <script src="{% static 'js/main.js' %}" defer></script>
+
+  <!-- ✅ Add HTMX here -->
+  <script src="https://unpkg.com/htmx.org@1.9.5"></script>
+</head>
+
+<body>
+    <nav>
+        <a href="/">
+            <span role="str" aria-label="Home" title="Home">Home</span>
+        </a> 
+        <a href="/about">
+            <span role="str" aria-label="About" title="About">About</span>
+        </a> 
+        <a href="{% url 'posts:list' %}">
+            <span role="str" aria-label="Posts" title="Posts">Virtual School Posts</span>
+        </a> 
+        <a href="{% url 'training:training_request' %}">
+            <span role="str" aria-label="Training Requests" title="Training Requests">Request Training</span>
+        </a> 
+        {% if user.is_authenticated %}
+            <a href="{% url 'posts:new-post' %}">
+                <span role="str" aria-label="New Post" title="New Post">New Post</span>
+            </a> 
+            <a href="{% url 'evaluation:chat_page' %}">
+                <span role="str" aria-label="Chat" title="Chat">Training Evaluation</span>
+            </a>
+            <a href="{% url 'flashcards:flashcards_page' %}">
+                <span role="str" aria-label="Toolkit" title="Toolkit">Educational Toolkit</span>
+            </a>
+            <a href="{% url 'sdq:sdq_form_view' %}">
+                <span role="str" aria-label="SDQ" title="SDQ">SDQ</span>
+            </a>
+            <form class="logout" action="{% url 'users:logout' %}" method="post" style="display: inline;">
+                {% csrf_token %}
+                <button class="nav-button-link" aria-label="User Logout" title="User Logout">
+                    Logout
+                </button>
+            </form>
+        {% else %}
+            <a href="{% url 'users:register' %}">
+                <span role="str" aria-label="User Registration" title="User Registration">Registration</span>
+            </a> 
+            <a href="{% url 'users:login' %}">
+                <span role="str" aria-label="User Login" title="User Login">Login</span>
+            </a>
+        {% endif %}
+    </nav>
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    {% block scripts %}
+    {% endblock %}
+</body>
+</html>

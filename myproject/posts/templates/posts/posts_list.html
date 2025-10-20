@@ -1,0 +1,47 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Posts
+{% endblock %}
+
+{% block content %}
+    <section>
+        <h1>Posts from the Cambridgeshire Virtual School</h1>
+
+        {% if tag %}
+            <h2>Posts tagged with "{{ tag.name }}"</h2>
+        {% endif %}
+
+        <p>Here are some of our most recent events and training activities.</p>
+
+        {% for post in posts %}
+            <article class="post">
+                <h2>
+                    <a href="{% url 'posts:page' slug=post.slug %}">
+                        {{ post.title }}
+                    </a>
+                </h2>
+
+                {% if post.image %}
+                    <div style="text-align: center;">
+                        <img src="{{ post.image.url }}" alt="{{ post.title }} image" style="max-width: 150px; height: auto; ">
+                    </div>
+                {% endif %}
+
+                <p class="tags">
+                    Tags:
+                    {% for post_tag in post.tags.all %}
+                        <a href="{% url 'posts:post_list_by_tag' post_tag.slug %}">{{ post_tag.name }}</a>{% if not forloop.last %}, {% endif %}
+                    {% empty %}
+                        No tags
+                    {% endfor %}
+                </p>
+
+                <p><em>{{ post.date }} by {{ post.author }}</em></p>
+                <p>{{ post.body }}</p>
+            </article>
+        {% endfor %}
+
+        {% include "pagination.html" with page=posts %}
+    </section>
+{% endblock %}

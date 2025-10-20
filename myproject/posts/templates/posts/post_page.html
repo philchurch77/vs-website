@@ -1,0 +1,25 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    {{ post.title }}
+{% endblock %}
+
+{% block content %}
+    <section>
+        {% if post.image %}
+            <img
+                class="image"
+                src="{{ post.image.url }}"
+                alt="{{ post.title }}"
+            />
+        {% endif %}
+
+        <h1>{{ post.title }}</h1>
+        <p>{{ post.date }}</p>
+        
+        {% if post.body %}
+            <p>{{ post.body }}</p>
+        {% endif %}
+    </section>
+{% endblock %}
+

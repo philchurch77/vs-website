@@ -1,0 +1,683 @@
+/* Reset & Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary: #233d4d;
+    --accent: #586f7c;
+    --highlight: #fe7f2d;
+    --light-highlight: #fcca46;
+    --light-bg: #f9fafb;
+    --dark-text: #111827;
+    --nav-height: 70px;
+}
+
+body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f8f9fc, #e6e9f0);
+    color: #1f2937;
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(1rem, 2vw, 1.125rem);
+    padding: 2rem; /* fallback for small screens */
+    padding-left: 240px; /* this clears the fixed nav */
+    box-sizing: border-box;
+}
+
+.break {
+    display: block;
+    height: 1rem;
+}
+
+/* Typography */
+h1 {
+    font-size: clamp(1.5rem, 5vw, 3rem);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+h2 {
+    font-size: clamp(1.5rem, 5vw, 3rem);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+h3 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    text-align: center;
+    margin-bottom: 1rem;
+    background-color: #adf7b6;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    
+}
+
+p {
+    font-size: clamp(0.9rem, 2vw, 1.25rem);
+    margin-bottom: 0.75rem;
+    text-align: center;
+}
+
+.narrow-text {
+  max-width: 700px;   /* adjust to taste: 600–800px works well */
+  margin: 0 auto;     /* centers the block horizontally */
+  line-height: 1.6;   /* improves readability */
+  text-align: center; /* optional, keep it centered like your heading */
+}
+
+/* Navigation */
+nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 240px;
+    height: 100vh;
+    background-color: var(--primary);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    padding: 2rem 1rem;
+    gap: 1rem;
+    z-index: 1000;
+    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+nav a {
+    color: white;
+    font-size: clamp(0.8rem, 1.8vw, 1rem);
+    text-decoration: none;
+    padding: 0.75rem 1rem;
+    width: 100%;
+    text-align: left;
+    border-radius: 8px;
+    transition: transform 0.2s ease, background-color 0.3s ease;
+}
+
+nav a:hover {
+    background-color: var(--highlight);
+    color: white;
+    transform: translateX(4px);
+}
+
+.nav-button-link {
+    background: linear-gradient(135deg, var(--highlight), var(--light-highlight));
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    padding: 0.6rem 1.2rem;
+    display: flex;
+    align-items: center;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.nav-button-link:hover {
+    transform: scale(1.1);
+    background: linear-gradient(135deg, var(--light-highlight), var(--highlight));
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+}
+
+/* Main Layout */
+.main-layout {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;                /* tighter spacing */
+    padding: 1rem 0;
+    box-sizing: border-box;
+    max-width: 1600px;        /* more room on large screens */
+    margin: 0 auto;
+    height: calc(100vh - 2rem); /* minus top/bottom padding */
+}
+
+.chat-history {
+    flex: 0.6;                /* minimal space */
+    min-width: 160px;
+    max-width: 200px;
+}
+
+.chat-container {
+    flex: 2.8;                /* large space for toolkit */
+    min-width: 500px;
+    max-width: 800px;
+}
+
+.sidebar {
+    flex: 2.4;                /* also large for flashcards */
+    min-width: 480px;
+}
+
+
+/* Layout Boxes */
+.chat-history,
+.chat-container,
+.sidebar {
+    flex: 1;
+    min-width: 300px;
+    height: 100%;
+    overflow-y: auto;
+    border-radius: 20px;
+    background-color: #f9f9f9;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    padding: 1.5rem;
+}
+
+/* Chat container specifics */
+.chat-container {
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* New Chat Button */
+.new-chat-btn {
+    background: linear-gradient(135deg, var(--highlight), var(--light-highlight));
+    border: 1px solid #ccc;
+    padding: 0.5em 1em;
+    cursor: pointer;
+    font-weight: bold;
+    border-radius: 10px;
+    margin-top: 0.5em;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.new-chat-btn:hover {
+    transform: scale(1.1);
+    background: linear-gradient(135deg, var(--light-highlight), var(--highlight));
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+}
+
+/* Individual Chat History Item */
+.chat-item {
+    position: relative;
+    padding: 0.75em 1em;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    margin-bottom: 1em;
+    transition: background 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-item:hover {
+    background: #f2f6fc;
+}
+
+.chat-item a {
+    display: block;
+    color: #111;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 1rem;
+    margin-right: 2rem;
+}
+
+/* Three Dots Menu Position */
+.chat-menu {
+    position: absolute;
+    top: 0.75em;
+    right: 0.75em;
+}
+
+/* Three Dots Button */
+.menu-toggle {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #333;
+    padding: 0;
+    outline: none;
+    box-shadow: none;
+}
+
+.menu-toggle:focus,
+.menu-toggle:active,
+.menu-toggle:hover {
+    outline: none;
+    box-shadow: none;
+    background: none;
+    color: #333; /* or your preferred color */
+}
+
+/* Dropdown Styling */
+.menu-dropdown {
+    display: none;
+    position: absolute;
+    right: -20px;
+    top: 2.5em;
+    background: ghostwhite;
+    border-radius: 10px;
+    padding: 0.5em 0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    width: 150px;
+    transition: all 0.3s ease;
+}
+
+.menu-dropdown.show {
+    display: block;
+}
+
+/* Buttons & Links inside Dropdown */
+.menu-dropdown button,
+.menu-dropdown a {
+    color: var(--dark-text) !important;
+    text-decoration: none !important;
+    font-size: 0.9rem !important;
+    text-align: left;
+    display: block;
+    box-shadow: none;
+    width: 100%;
+    padding: 0.5em 1em;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.menu-dropdown button:hover,
+.menu-dropdown a:hover {
+    background-color: #005173;
+    color: #fff;
+    text-decoration: none !important;
+}
+
+/* Wrapper */
+.wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Chat Container Inner */
+.messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #ffffff;
+}
+
+.message {
+    padding: 10px;
+    margin: 8px 0;
+    border-radius: 6px;
+}
+
+.user {
+    background-color: #a0ced9;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    text-align: left;
+}
+
+.assistant {
+    background-color: #fcf5c7;
+    text-align: left;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.input-area {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+input[type="text"] {
+    flex: 1;
+    padding: 12px;
+    font-size: 16px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    border: 1px solid #ccc;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+}
+
+button {
+    padding: 12px 28px;
+    font-size: 16px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 10px;
+    width: auto;
+    display: block;
+    margin: 1.5rem auto;
+    text-align: center;
+    transition: background 0.3s ease;
+}
+
+button:hover {
+    background: linear-gradient(135deg, var(--accent), var(--primary));
+}
+
+/* Flashcards */
+.flashcard {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.flashcard img {
+    max-width: 60px;
+    height: auto;
+    border-radius: 10px;
+    margin-bottom: 0.5rem;
+}
+
+.flashcard .card-title {
+    background-color: #d4edda;
+    color: #2f513c;
+    font-size: 1.25rem;
+    font-weight: 600;
+    text-align: center;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+}
+
+.flashcard .section-title {
+    font-weight: bold;
+    font-size: 1.05rem;
+    margin-top: 1rem;
+}
+
+.flashcard p {
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 0.5rem;
+}
+
+/* Chat History Styling */
+.chat-history h2 {
+    font-size: 1.5rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--dark-text);
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+}
+
+.chat-history ul {
+    list-style: none;
+    padding-left: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.chat-history li {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    padding: 1rem;
+    transition: transform 0.2s ease, background-color 0.3s ease;
+}
+
+.chat-history a {
+    text-decoration: none;
+    color: #003049;
+    font-weight: 500;
+    display: block;
+    font-size: 1.05rem;
+}
+
+.chat-history li:hover {
+    background-color: #eef6ff;
+    transform: scale(1.02);
+}
+
+/* Links */
+main a, section a {
+    color: var(--highlight);
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+main a:hover, section a:hover {
+    text-decoration: underline;
+    opacity: 0.9;
+}
+
+/* Image */
+.image {
+    display: block;
+    margin: 1rem auto;
+    max-width: 800px;
+    width: 100%;
+}
+
+.pagination {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.pagination .step-links a {
+    margin: 0 0.5rem;
+    text-decoration: none;
+    color: #0066cc;
+}
+
+.pagination .step-links .current {
+    margin: 0 1rem;
+    font-weight: bold;
+}
+
+/* Forms */
+.form-with-validation {
+    max-width: 800px;
+    min-width: 400px;
+    min-height: 300px;
+    width: 100%;
+    padding: 3rem;
+    font-size: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    background-color: #fdfdfd;
+    border-radius: 20px;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+    margin: 2rem auto;
+    border: 1px solid #e0e0e0;
+    transition: all 0.3s ease-in-out;
+}
+
+.form-with-validation div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.form-with-validation input {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    border: 1px solid #d0d0d0;
+    border-radius: 12px;
+    background-color: #fafafa;
+    transition: all 0.3s ease-in-out;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.form-with-validation input:focus {
+    border-color: var(--highlight);
+    background-color: #fff;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+
+.form-submit {
+    width: 100px;
+    padding: 0.75rem;
+    border-radius: 10px;
+    background-color: var(--accent);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    margin: 0 auto;
+}
+
+.form-submit:hover {
+    background-color: var(--highlight);
+    transform: scale(1.05);
+}
+
+/* Top score cards */
+.score-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0 2rem;
+}
+
+@media (max-width: 1100px) {
+  .score-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .score-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.score-card {
+  --bg: hsl(var(--hue, 220) 100% 97%);
+  --border: hsl(var(--hue, 220) 60% 80%);
+  --accent: hsl(var(--hue, 220) 80% 45%);
+  background:
+    radial-gradient(120% 120% at 100% 0%, rgba(255,255,255,0.7) 0%, transparent 60%),
+    var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+  display: grid;
+  grid-template-areas:
+    "icon value"
+    "label hint";
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+}
+
+.score-card__icon {
+  grid-area: icon;
+  font-size: 1.4rem;
+  line-height: 1;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.08));
+}
+
+.score-card__value {
+  grid-area: value;
+  justify-self: end;
+  font-weight: 800;
+  font-size: 1.6rem;
+  color: var(--accent);
+}
+
+.score-card__label {
+  grid-area: label;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #1c2333;
+}
+
+.score-card__hint {
+  grid-area: hint;
+  justify-self: end;
+  font-size: 0.8rem;
+  color: #5b6477;
+  background: white;
+  border: 1px solid var(--border);
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+}
+
+/* Help Text */
+.helptext {
+    font-size: 1rem;
+    margin-left: 1rem;
+}
+
+.helptext ul {
+    list-style-type: none;
+}
+
+/* Errors */
+.errorlist {
+    color: #F00;
+    margin-left: 2rem;
+}
+
+.errorlist li::marker {
+    content: '🚨 ';
+}
+
+/* Animations */
+.fade-in {
+    opacity: 0;
+    animation: fadeIn 1s ease forwards;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+    }
+}
+
+/* Responsive layout for chat + sidebar */
+@media (max-width: 768px) {
+    .main-layout {
+        flex-direction: column;
+    }
+
+    .chat-history, .chat-container, .sidebar {
+        width: 100%;
+        height: auto;
+    }
+
+    .chat-container {
+        padding: 1rem;
+    }
+}
+
+/* Flash message wrapper */
+#flash-messages {
+    position: fixed;
+    top: 20%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+}
+
+/* Initial hidden state */
+.flash-message {
+    opacity: 0;
+    background-color: ghostwhite;
+    border: 1px solid lightgrey;
+    color: darkblue;            
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: opacity 0.7s ease;
+}
+
+/* Show it */
+.flash-message.show {
+    opacity: 1;
+}

@@ -1,0 +1,16 @@
+<!-- templates/start_summary.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Start Training Summary</title>
+</head>
+<body>
+    <h1>Start Training Summary</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <label>Conversation Input:</label><br>
+        <textarea name="conversation" rows="8" cols="50" placeholder="Paste your conversation here..."></textarea><br><br>
+        <button type="submit">Generate Summary PDF</button>
+    </form>
+</body>
+</html>

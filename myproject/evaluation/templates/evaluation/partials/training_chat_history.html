@@ -1,0 +1,14 @@
+{% if summaries %}
+<ul>
+  {% for summary in summaries %}
+    <li class="chat-item">
+      <a href="{% url 'evaluation:chat_session' summary.session_id %}" class="chat-link">
+        <strong>{{ summary.school_or_trust }}</strong><br>
+        <small>{{ summary.created_at|date:"Y-m-d H:i" }}</small>
+      </a>
+    </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>No training summaries yet.</p>
+{% endif %}

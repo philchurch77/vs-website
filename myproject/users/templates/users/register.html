@@ -1,0 +1,17 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Register a New User
+{% endblock %}
+
+{% block content %}
+    <h1 style="text-align: center;">Register a New User</h1>
+    <div style="display: flex; justify-content: center;">
+        <form class="form-with-validation" action="{% url 'users:register' %}" method="post">
+            {% csrf_token %}
+            {{ form }}
+            <button class="form-submit">Submit</button>
+        </form>
+    </div>
+
+{% endblock %}

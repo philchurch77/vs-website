@@ -1,0 +1,38 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    New Training Request
+{% endblock %}
+
+{% block content %}
+
+    <section>
+        <h1>Training Request</h1>
+        <p>Complete and submit this form to request a training session with the Virtual School</p>
+        <form class="form-with-validation" action="{% url 'training:training_request' %}" method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form }}
+            <button class="form-submit">Add Request</button>
+        </form>
+    </section>
+
+    {% if messages %}
+        <div id="flash-messages">
+            {% for message in messages %}
+                <div class="flash-message">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+        <script>
+            const flash = document.querySelector('#flash-messages .flash-message');
+            if (flash) {
+                flash.classList.add('show');  // fade in
+                setTimeout(() => flash.classList.remove('show'), 3000);  // fade out
+                setTimeout(() => flash.remove(), 4000);  // remove from DOM
+            }
+        </script>
+    {% endif %}
+
+{% endblock %}
+

@@ -1,0 +1,180 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    ChatGPT Assistant
+{% endblock %}
+
+{% block content %}
+<div class="main-layout">
+    <!-- Sidebar: Training Summary History -->
+    <div class="chat-history">
+        <h2>Training Summary History</h2>
+        <div id="chat-history"
+            hx-get="{% url 'evaluation:chat_history_partial' %}"
+            hx-trigger="load"
+            hx-swap="innerHTML">
+            <p>No Training Summaries Yet</p>
+        </div>
+    </div>
+
+    <!-- Main Chat Area -->
+    <div class="chat-container">
+        <h2>Training Evaluation</h2>
+        <b>Please complete your training impact evaluation with our friendly assistant. Select a training summary to review past evaluations or begin a new chat.</b>
+        <span class="break"></span>
+
+        <!-- Chat messages -->
+        <div class="messages" id="messages">
+            {% if chat_turns %}
+                {% for turn in chat_turns %}
+                    <div class="message {{ turn.role }}">
+                        <p>{{ turn.content }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <!-- New Chat Button -->
+        <form method="post" action="{% url 'evaluation:new_chat_session' %}" id="newChatForm">
+            {% csrf_token %}
+            <button type="submit" name="new" value="1" class="new-chat-btn">New Chat</button>
+        </form>
+
+        <!-- Input area -->
+        <div class="input-area">
+            <input type="text" id="messageInput" placeholder="Type here..." disabled />
+            <button id="sendBtn" onclick="sendMessage()" disabled>Send</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function sendMessage() {
+        const input = document.getElementById("messageInput");
+        const text = input.value.trim();
+        if (!text) return;
+
+        if (!sessionStorage.getItem("session_active")) {
+            alert("Please start a new chat or select a previous one.");
+            return;
+        }
+
+        appendMessage("user", text);
+        input.value = "";
+
+        try {
+            const response = await fetch("/evaluation/stream/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCookie("csrftoken")
+                },
+                body: JSON.stringify({ message: text })
+            });
+
+            if (!response.ok || !response.body) {
+                appendMessage("assistant", "⚠️ Error: Failed to stream response.");
+                return;
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            let fullText = "";
+            appendMessage("assistant", ""); // Placeholder
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value, { stream: true });
+                fullText += chunk;
+
+            if (chunk.includes("[SUMMARY_SAVED]")) {
+                const historyEl = document.querySelector("#chat-history");
+                if (historyEl) {
+                    htmx.ajax('GET', historyEl.getAttribute("hx-get"), {
+                        target: historyEl,
+                        swap: historyEl.getAttribute("hx-swap") || "innerHTML"
+                    });
+                }
+            }
+
+                const lastMessage = document.querySelector(".message.assistant:last-child");
+                if (lastMessage) {
+                    const paragraphs = fullText.split(/\n+/).map(p => `<p>${p}</p>`).join("");
+                    lastMessage.innerHTML = paragraphs;
+                }
+            }
+
+        } catch (err) {
+            appendMessage("assistant", "⚠️ Network error. See console.");
+            console.error("Network error:", err);
+        }
+    }
+
+    function appendMessage(sender, text) {
+        const messagesDiv = document.getElementById("messages");
+        const div = document.createElement("div");
+        div.classList.add("message", sender);
+        div.innerHTML = `<p>${text}</p>`;
+        messagesDiv.appendChild(div);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== "") {
+            const cookies = document.cookie.split(";");
+            for (let cookie of cookies) {
+                cookie = cookie.trim();
+                if (cookie.startsWith(name + "=")) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Enable input if session is active
+    window.onload = () => {
+        if (sessionStorage.getItem("session_active")) {
+            document.getElementById("messageInput").disabled = false;
+            document.getElementById("sendBtn").disabled = false;
+        }
+
+        const messagesDiv = document.getElementById("messages");
+        if (messagesDiv) {
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+    };
+
+    // Mark session active on new chat start
+    document.getElementById("newChatForm").addEventListener("submit", () => {
+        sessionStorage.setItem("session_active", "1");
+    });
+
+    // Mark session active when a summary is clicked
+    document.addEventListener("click", function (e) {
+        if (e.target.closest("a[href*='/evaluation/session/']")) {
+            sessionStorage.setItem("session_active", "1");
+        }
+    });
+
+    // Enable chat when clicking a session
+    document.addEventListener("click", function (e) {
+        if (e.target.closest(".chat-link")) {
+            sessionStorage.setItem("session_active", "1");
+            document.getElementById("messageInput").disabled = false;
+            document.getElementById("sendBtn").disabled = false;
+        }
+    });
+</script>
+
+<script>
+    window.addEventListener("beforeunload", function () {
+        navigator.sendBeacon("/evaluation/reset-chat-session/");
+    });
+</script>
+{% endblock %}
+

@@ -1,0 +1,17 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    New Post
+{% endblock %}
+
+{% block content %}
+    <section>
+        <h1>Virtual School Posts</h1>
+        <p>Complete and submit this form to post your news or updates 😊</p>
+        <form class="form-with-validation" action="{% url 'posts:new-post' %}" method = "POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form }}
+            <button class="form-submit">Add Post</button>
+        </form>
+    </section>
+{% endblock %}

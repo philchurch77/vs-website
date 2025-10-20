@@ -1,0 +1,22 @@
+<ul>
+    {% for session in chat_sessions %}
+        {% if session.session_id %}
+        <li class="chat-item">
+            <a href="{% url 'flashcards:flashcards_page' %}?session_id={{ session.session_id }}">
+                {{ session.title|truncatechars:50 }}
+            </a>
+            <div class="chat-menu">
+                <button class="menu-toggle" data-session-id="{{ session.session_id }}">⋮</button>
+                <div class="menu-dropdown" id="menu-{{ session.session_id }}">
+                    <form method="post" action="{% url 'flashcards:delete_chat_session' session.session_id %}" onsubmit="return confirm('Delete this chat?')">
+                        {% csrf_token %}
+                        <button type="submit">Delete</button>
+                    </form>
+                    <button onclick="renameSession('{{ session.session_id }}')">Rename</button>
+                    <a href="{% url 'flashcards:export_chat_session' session.session_id %}">Export</a>
+                </div>
+            </div>
+        </li>
+        {% endif %}
+    {% endfor %}
+</ul>

@@ -1,0 +1,18 @@
+<p>Flashcards Selected: {{ flashcards|length }}</p>
+
+{% if flashcards %}
+    {% for card in flashcards %}
+        <div class="flashcard">
+            <h3>{{ card.title }}</h3>
+            <p><strong>Who? Where? When? Why?:</strong> {{ card.who_where_when_why }}</p>
+            <p><strong>How to do it:</strong> {{ card.how_to_do_it }}</p>
+            <p><strong>What you need:</strong> {{ card.what_you_need }}</p>
+            <p><strong>Flashcard ID:</strong> {{ card.flashcard_id }}</p>
+            {% if card.image %}
+                <img src="{{ card.image.url }}" alt="{{ card.title }}" style="max-width: 100%;">
+            {% endif %}
+        </div>
+    {% endfor %}
+{% else %}
+    <p>⚠️ No flashcards were selected or found.</p>
+{% endif %}

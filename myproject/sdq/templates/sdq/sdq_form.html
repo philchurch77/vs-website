@@ -1,0 +1,71 @@
+{% extends 'layout.html' %}
+
+{% block title %}Strengths and Difficulties Questionnaire{% endblock %}
+
+{% block content %}
+<section>
+
+  {% if response %}
+  <div class="score-grid" role="region" aria-label="SDQ scores">
+    <div class="score-card" style="--hue:220">
+      <div class="score-card__icon">📊</div>
+      <div class="score-card__label">Total Difficulties</div>
+      <div class="score-card__value">{{ response.total_score }}</div>
+      <div class="score-card__hint">0–40</div>
+    </div>
+
+    <div class="score-card" style="--hue:260">
+      <div class="score-card__icon">💙</div>
+      <div class="score-card__label">Emotional</div>
+      <div class="score-card__value">{{ response.emotional_problems_score }}</div>
+      <div class="score-card__hint">0–10</div>
+    </div>
+
+    <div class="score-card" style="--hue:10">
+      <div class="score-card__icon">⚖️</div>
+      <div class="score-card__label">Conduct</div>
+      <div class="score-card__value">{{ response.conduct_problems_scale }}</div>
+      <div class="score-card__hint">0–10</div>
+    </div>
+
+    <div class="score-card" style="--hue:40">
+      <div class="score-card__icon">⚡</div>
+      <div class="score-card__label">Hyperactivity</div>
+      <div class="score-card__value">{{ response.hyperactivity_scale }}</div>
+      <div class="score-card__hint">0–10</div>
+    </div>
+
+    <div class="score-card" style="--hue:190">
+      <div class="score-card__icon">🧩</div>
+      <div class="score-card__label">Peer Problems</div>
+      <div class="score-card__value">{{ response.peer_problems_scale }}</div>
+      <div class="score-card__hint">0–10</div>
+    </div>
+
+    <div class="score-card" style="--hue:130">
+      <div class="score-card__icon">🌱</div>
+      <div class="score-card__label">Prosocial</div>
+      <div class="score-card__value">{{ response.prosocial_scale }}</div>
+      <div class="score-card__hint">0–10</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <h1>Strengths and Difficulties Questionnaire</h1>
+  <p>Complete the questionnaire and submit to find the total score.</p>
+  <div class="narrow-text">
+    <p>
+      For each item, please mark the box for Not True, Somewhat True or Certainly True. 
+      Please answer based on the child's behaviour over the last six months or this school year.
+    </p>
+  </div>
+
+
+  <form class="form-with-validation" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Submit</button>
+  </form>
+</section>
+{% endblock %}
+
