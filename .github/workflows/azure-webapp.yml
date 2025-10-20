@@ -19,13 +19,14 @@ jobs:
           slot-name: Production
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE }}
 
-      - name: 🛠️ Run Django commands (optional)
+      # Run DB migrations and collect static inside the running container
+      - name: 🛠️ Migrate & collectstatic
         if: always()
         uses: azure/cli@v2
         with:
           inlineScript: |
             az webapp ssh --name vs-training-website --resource-group appsvc_linux_northeurope_basic --command "
-              python manage.py migrate --settings=myproject.settings.production &&
-              python manage.py collectstatic --noinput --settings=myproject.settings.production
-            " || echo 'SSH post-deploy skipped (Startup Command handles this)'
-
+              cd /home/site/wwwroot &&
+              python manage.py migrate --settings=myproject.myprojectsettings.settings &&
+              python manage.py collectstatic --noinput --settings=myproject.myprojectsettings.settings
+            "
