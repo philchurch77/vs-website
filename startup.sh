@@ -15,28 +15,35 @@ else
     exit 1
 fi
 
-# --- DEBUG & ESSENTIAL ENVIRONMENT VARIABLES (Temporary for testing!) ---
-# If your Django settings use environment variables for SECRET_KEY or DEBUG,
-# setting these here can prevent silent crashes during setup.
-# WARNING: Do NOT use a real secret key here in production!
-export DJANGO_SECRET_KEY='temporary-insecure-key-for-testing'
-export DJANGO_DEBUG='True' # Setting this to True can give better logging
-
-# --- 2. DATABASE SETUP & STATIC FILES ---
-echo "Running migrations and collecting static files..."
-# The settings path is now CORRECT based on your file structure.
-SETTINGS_PATH="myproject.myprojectsettings.settings"
-
-python manage.py migrate --settings=$SETTINGS_PATH || { echo "ERROR: Django migration failed. Check settings: $SETTINGS_PATH"; exit 1; }
-python manage.py collectstatic --noinput --settings=$SETTINGS_PATH || { echo "ERROR: Collectstatic failed. Check settings: $SETTINGS_PATH"; exit 1; }
-
-# --- 3. START GUNICORN ---
-echo "Starting Gunicorn..."
-# WSGI path is now CORRECT based on your file structure.
+# --- 2. ESSENTIAL ENVIRONMENT VARIABLES ---
+# Path variables are set based on confirmed file structure:
+SETTINGS_MODULE="myproject.myprojectsettings.settings"
 WSGI_PATH="myproject.myprojectsettings.wsgi:application"
 
+# We can rely on manage.py to set DJANGO_SETTINGS_MODULE now.
+# export DJANGO_SETTINGS_MODULE=$SETTINGS_MODULE <-- REMOVED, manage.py handles this.
+
+# Secondary variables (for testing/runtime)
+export SECRET_KEY='temporary-insecure-key-for-testing'
+export DEBUG='True' 
+
+# IMPORTANT: If using external DB (Postgres/MySQL), ensure credentials 
+# are set as environment variables in the Azure Portal!
+
+# --- 3. DATABASE SETUP & STATIC FILES ---
+echo "Running migrations and collecting static files..."
+
+# Running commands, relying on manage.py's settings logic
+python manage.py migrate --noinput || { echo "ERROR: Django migration failed. Check DB connection/settings."; exit 1; }
+python manage.py collectstatic --noinput || { echo "ERROR: Collectstatic failed. Check static configuration."; exit 1; }
+
+# --- 4. START GUNICORN ---
+echo "--- Django setup finished. Starting Gunicorn. ---"
+
+# Use exec to replace the shell process with the Gunicorn process
 exec gunicorn \
   --chdir /home/site/wwwroot \
   --bind=0.0.0.0:${PORT:-8000} \
   --timeout 600 \
   $WSGI_PATH
+
