@@ -16,12 +16,13 @@ urlpatterns = [
     path('about/', views.about),
 
     # App routes
-    path('posts/', include('posts.urls')),
-    path('users/', include('users.urls')),
-    path('evaluation/', include('evaluation.urls')),
-    path('flashcards/', include('flashcards.urls')),
-    path('training/', include('training.urls')),
-    path('sdq/', include(('sdq.urls', 'sdq'), namespace='sdq')),
+    path('posts/', include('myproject.posts.urls')),
+    path('users/', include('myproject.users.urls')),
+    path('evaluation/', include('myproject.evaluation.urls')),
+    path('flashcards/', include('myproject.flashcards.urls')),
+    path('training/', include('myproject.training.urls')),
+    path('sdq/', include('myproject.sdq.urls')),
+    path('resources/', include('myproject.resources.urls')),
 ]
 
 # Serve static and media files in development mode
