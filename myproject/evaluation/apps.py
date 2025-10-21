@@ -2,6 +2,6 @@ from django.apps import AppConfig
 
 class EvaluationConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'evaluation'
+    name = 'myproject.evaluation'
     label= 'gptchat'
     verbose_name= 'evaluation'
