@@ -20,9 +20,6 @@ fi
 SETTINGS_MODULE="myproject.myprojectsettings.settings"
 WSGI_PATH="myproject.myprojectsettings.wsgi:application"
 
-# We can rely on manage.py to set DJANGO_SETTINGS_MODULE now.
-# export DJANGO_SETTINGS_MODULE=$SETTINGS_MODULE <-- REMOVED, manage.py handles this.
-
 # Secondary variables (for testing/runtime)
 export SECRET_KEY='temporary-insecure-key-for-testing'
 export DEBUG='True' 
@@ -33,14 +30,16 @@ export DEBUG='True'
 # --- 3. DATABASE SETUP & STATIC FILES ---
 echo "Running migrations and collecting static files..."
 
-# Running commands, relying on manage.py's settings logic
-python manage.py migrate --noinput || { echo "ERROR: Django migration failed. Check DB connection/settings."; exit 1; }
-python manage.py collectstatic --noinput || { echo "ERROR: Collectstatic failed. Check static configuration."; exit 1; }
+# CRITICAL FIX: Explicitly passing the --settings flag, which should override 
+# any environment or manage.py default that is failing.
+python manage.py migrate --noinput --settings=$SETTINGS_MODULE || { echo "ERROR: Django migration failed. Check DB connection/settings."; exit 1; }
+python manage.py collectstatic --noinput --settings=$SETTINGS_MODULE || { echo "ERROR: Collectstatic failed. Check static configuration."; exit 1; }
 
 # --- 4. START GUNICORN ---
 echo "--- Django setup finished. Starting Gunicorn. ---"
 
 # Use exec to replace the shell process with the Gunicorn process
+# Gunicorn will rely on manage.py setting the DJANGO_SETTINGS_MODULE when it imports WSGI.
 exec gunicorn \
   --chdir /home/site/wwwroot \
   --bind=0.0.0.0:${PORT:-8000} \
