@@ -48,7 +48,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "myprojectsettings.urls"
+ROOT_URLCONF = "myproject.urls"
 TEMPLATES = [{
     "BACKEND": "django.template.backends.django.DjangoTemplates",
     "DIRS": [BASE_DIR / "templates"],
@@ -61,9 +61,8 @@ TEMPLATES = [{
     ]},
 }]
 
-WSGI_APPLICATION = "myprojectsettings.wsgi.application"
-
-ASGI_APPLICATION = "myprojectsettings.asgi.application"
+WSGI_APPLICATION = "myproject.settings.wsgi.application"
+ASGI_APPLICATION = "myproject.settings.asgi.application"
 
 DATABASES = {"default": {
     "ENGINE": "django.db.backends.sqlite3",
