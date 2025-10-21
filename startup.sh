@@ -17,15 +17,13 @@ else
 fi
 
 # --- 2. ESSENTIAL ENVIRONMENT VARIABLES ---
-# The DJANGO_SETTINGS_MODULE is set in the Azure App Configuration, but we are 
-# also setting other temporary variables here.
-
 # CRITICAL: Ensure the application root is in Python's search path.
 export PYTHONPATH=$APP_ROOT:$PYTHONPATH
 
 # Path variables used for Gunicorn below
-SETTINGS_MODULE="myproject.myprojectsettings.settings"
-WSGI_PATH="myproject.myprojectsettings.wsgi:application"
+# UPDATED: Assuming the configuration folder has been renamed to 'settings'.
+SETTINGS_MODULE="myproject.settings.settings"
+WSGI_PATH="myproject.settings.wsgi:application"
 
 # Secondary variables (for testing/runtime)
 export SECRET_KEY='temporary-insecure-key-for-testing'
@@ -34,8 +32,7 @@ export DEBUG='True'
 # --- 3. DATABASE SETUP & STATIC FILES ---
 echo "Running migrations and collecting static files..."
 
-# REMOVED --settings: Relying solely on the DJANGO_SETTINGS_MODULE App Setting 
-# (which seems to be failing, but we keep the command clean).
+# Running manage.py commands
 python manage.py migrate --noinput || { echo "ERROR: Django migration failed. Check DB connection/settings."; exit 1; }
 python manage.py collectstatic --noinput || { echo "ERROR: Collectstatic failed. Check static configuration."; exit 1; }
 
