@@ -22,7 +22,6 @@ urlpatterns = [
     path('flashcards/', include('myproject.flashcards.urls')),
     path('training/', include('myproject.training.urls')),
     path('sdq/', include('myproject.sdq.urls')),
-    path('resources/', include('myproject.resources.urls')),
 ]
 
 # Serve static and media files in development mode
