@@ -3,7 +3,8 @@
 set -euo pipefail
 
 # Change directory to the application root
-cd /home/site/wwwroot
+APP_ROOT="/home/site/wwwroot"
+cd $APP_ROOT
 
 # --- 1. ACTIVATE VIRTUAL ENVIRONMENT (CRITICAL) ---
 VENV_PATH="antenv"
@@ -16,32 +17,32 @@ else
 fi
 
 # --- 2. ESSENTIAL ENVIRONMENT VARIABLES ---
-# Path variables are set based on confirmed file structure:
-SETTINGS_MODULE="myproject.myprojectsettings.settings"
+# The DJANGO_SETTINGS_MODULE is now set in the Azure App Configuration (confirmed by user screenshot).
+# We rely on that environment variable, so no need for --settings flags.
+
+# CRITICAL: Ensure the application root is in Python's search path.
+export PYTHONPATH=$APP_ROOT:$PYTHONPATH
+
+# Path variables used only for Gunicorn below
 WSGI_PATH="myproject.myprojectsettings.wsgi:application"
 
 # Secondary variables (for testing/runtime)
 export SECRET_KEY='temporary-insecure-key-for-testing'
 export DEBUG='True' 
 
-# IMPORTANT: If using external DB (Postgres/MySQL), ensure credentials 
-# are set as environment variables in the Azure Portal!
-
 # --- 3. DATABASE SETUP & STATIC FILES ---
 echo "Running migrations and collecting static files..."
 
-# CRITICAL FIX: Explicitly passing the --settings flag, which should override 
-# any environment or manage.py default that is failing.
-python manage.py migrate --noinput --settings=$SETTINGS_MODULE || { echo "ERROR: Django migration failed. Check DB connection/settings."; exit 1; }
-python manage.py collectstatic --noinput --settings=$SETTINGS_MODULE || { echo "ERROR: Collectstatic failed. Check static configuration."; exit 1; }
+# REMOVED --settings: Relying solely on the DJANGO_SETTINGS_MODULE App Setting.
+python manage.py migrate --noinput || { echo "ERROR: Django migration failed. Check DB connection/settings."; exit 1; }
+python manage.py collectstatic --noinput || { echo "ERROR: Collectstatic failed. Check static configuration."; exit 1; }
 
 # --- 4. START GUNICORN ---
 echo "--- Django setup finished. Starting Gunicorn. ---"
 
 # Use exec to replace the shell process with the Gunicorn process
-# Gunicorn will rely on manage.py setting the DJANGO_SETTINGS_MODULE when it imports WSGI.
 exec gunicorn \
-  --chdir /home/site/wwwroot \
+  --chdir $APP_ROOT \
   --bind=0.0.0.0:${PORT:-8000} \
   --timeout 600 \
   $WSGI_PATH
