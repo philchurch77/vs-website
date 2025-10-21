@@ -17,7 +17,7 @@ fi
 # 2) Python path + settings
 export PYTHONPATH="$APP_ROOT:${PYTHONPATH:-}"
 : "${DJANGO_SETTINGS_MODULE:=myproject.settings.settings}"   # <-- change if needed
-WSGI_PATH="${WSGI_PATH:-myproject.settings.wsgi:application}"# <-- change if needed
+WSGI_PATH="${WSGI_PATH:-myproject.settings.wsgi:application}"  # <-- change if needed
 
 # 3) Optional: run migrations & collectstatic (skip failing these in case DB not reachable)
 if [ -f "$APP_ROOT/manage.py" ]; then
