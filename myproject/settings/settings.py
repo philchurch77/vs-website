@@ -18,6 +18,14 @@ CSRF_TRUSTED_ORIGINS = [f"https://{h}" for h in ALLOWED_HOSTS]
 if "vs-training-website.azurewebsites.net" not in [h.replace("https://","") for h in ALLOWED_HOSTS]:
     CSRF_TRUSTED_ORIGINS.append("https://vs-training-website.azurewebsites.net")
 
+allow_all = os.getenv("ALLOW_ALL_HOSTS", "0") in ("1", "true", "True")
+if allow_all:
+    ALLOWED_HOSTS = ["*"]
+else:
+    runtime_host = os.environ.get("WEBSITE_HOSTNAME")
+    extra_hosts = [x.strip() for x in os.getenv("ALLOWED_HOSTS_EXTRA", "").split(",") if x.strip()]
+    ALLOWED_HOSTS = [h for h in [runtime_host, *extra_hosts, "localhost", "127.0.0.1", ".azurewebsites.net", ".scm.azurewebsites.net"] if h]
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -78,6 +86,7 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
