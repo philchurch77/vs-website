@@ -17,13 +17,14 @@ else
 fi
 
 # --- 2. ESSENTIAL ENVIRONMENT VARIABLES ---
-# The DJANGO_SETTINGS_MODULE is now set in the Azure App Configuration (confirmed by user screenshot).
-# We rely on that environment variable, so no need for --settings flags.
+# The DJANGO_SETTINGS_MODULE is set in the Azure App Configuration, but we are 
+# also setting other temporary variables here.
 
 # CRITICAL: Ensure the application root is in Python's search path.
 export PYTHONPATH=$APP_ROOT:$PYTHONPATH
 
-# Path variables used only for Gunicorn below
+# Path variables used for Gunicorn below
+SETTINGS_MODULE="myproject.myprojectsettings.settings"
 WSGI_PATH="myproject.myprojectsettings.wsgi:application"
 
 # Secondary variables (for testing/runtime)
@@ -33,17 +34,20 @@ export DEBUG='True'
 # --- 3. DATABASE SETUP & STATIC FILES ---
 echo "Running migrations and collecting static files..."
 
-# REMOVED --settings: Relying solely on the DJANGO_SETTINGS_MODULE App Setting.
+# REMOVED --settings: Relying solely on the DJANGO_SETTINGS_MODULE App Setting 
+# (which seems to be failing, but we keep the command clean).
 python manage.py migrate --noinput || { echo "ERROR: Django migration failed. Check DB connection/settings."; exit 1; }
 python manage.py collectstatic --noinput || { echo "ERROR: Collectstatic failed. Check static configuration."; exit 1; }
 
-# --- 4. START GUNICORN ---
+# --- 4. START GUNICORN (FINAL FIX ATTEMPT) ---
 echo "--- Django setup finished. Starting Gunicorn. ---"
 
-# Use exec to replace the shell process with the Gunicorn process
+# FIX: Forcing the DJANGO_SETTINGS_MODULE environment variable *directly* # into the Gunicorn command via the --env flag. This is the last and most 
+# aggressive way to ensure the worker process gets the correct setting.
 exec gunicorn \
   --chdir $APP_ROOT \
   --bind=0.0.0.0:${PORT:-8000} \
   --timeout 600 \
+  --env DJANGO_SETTINGS_MODULE=$SETTINGS_MODULE \
   $WSGI_PATH
 
