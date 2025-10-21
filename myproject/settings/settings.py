@@ -28,13 +28,13 @@ INSTALLED_APPS = [
     "taggit",
 
     # use dotted paths under the project package:
-    "myproject.users",
-    "myproject.posts",
-    "myproject.evaluation.apps.EvaluationConfig",
-    "myproject.flashcards",
-    "myproject.training",
-    "myproject.sdq",
-    "myproject.resources",
+    "settings.users",
+    "settings.posts",
+    "settings.evaluation.apps.EvaluationConfig",
+    "settings.flashcards",
+    "settings.training",
+    "settings.sdq",
+    "settings.resources",
 ]
 
 MIDDLEWARE = [
