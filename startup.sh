@@ -1,50 +1,37 @@
 #!/usr/bin/env bash
-# Exit immediately if a command exits with a non-zero status, treat unset variables as errors, and prevent errors in a pipeline from being hidden.
 set -euo pipefail
 
-# Change directory to the application root
-APP_ROOT="/home/site/wwwroot"
-cd $APP_ROOT
+# Oryx starts this script with CWD already set to the extracted app path (e.g. /tmp/xxxx).
+APP_ROOT="$(pwd)"
 
-# --- 1. ACTIVATE VIRTUAL ENVIRONMENT (CRITICAL) ---
-VENV_PATH="antenv"
+# 1) Activate the virtualenv created by Oryx (relative path)
+VENV_PATH="$APP_ROOT/antenv"
 if [ -d "$VENV_PATH" ]; then
-    echo "Activating virtual environment at $VENV_PATH..."
-    source $VENV_PATH/bin/activate
+  echo "Activating virtualenv: $VENV_PATH"
+  # shellcheck disable=SC1091
+  source "$VENV_PATH/bin/activate"
 else
-    echo "Error: Virtual environment '$VENV_PATH' not found."
-    exit 1
+  echo "Warning: virtualenv not found at $VENV_PATH (Oryx may have set PYTHONPATH already). Continuing..."
 fi
 
-# --- 2. ESSENTIAL ENVIRONMENT VARIABLES ---
-# CRITICAL: Ensure the application root is in Python's search path.
-export PYTHONPATH=$APP_ROOT:$PYTHONPATH
+# 2) Python path + settings
+export PYTHONPATH="$APP_ROOT:${PYTHONPATH:-}"
+: "${DJANGO_SETTINGS_MODULE:=myproject.settings.settings}"   # <-- change if needed
+WSGI_PATH="${WSGI_PATH:-myproject.settings.wsgi:application}"# <-- change if needed
 
-# Path variables used for Gunicorn below
-# UPDATED: Assuming the configuration folder has been renamed to 'settings'.
-SETTINGS_MODULE="myproject.settings.settings"
-WSGI_PATH="myproject.settings.wsgi:application"
+# 3) Optional: run migrations & collectstatic (skip failing these in case DB not reachable)
+if [ -f "$APP_ROOT/manage.py" ]; then
+  echo "Running migrations..."
+  python manage.py migrate --noinput || echo "Migrations failed (continuing)."
+  echo "Collecting static..."
+  python manage.py collectstatic --noinput || echo "Collectstatic failed (continuing)."
+fi
 
-# Secondary variables (for testing/runtime)
-export SECRET_KEY='temporary-insecure-key-for-testing'
-export DEBUG='True' 
-
-# --- 3. DATABASE SETUP & STATIC FILES ---
-echo "Running migrations and collecting static files..."
-
-# Running manage.py commands
-python manage.py migrate --noinput || { echo "ERROR: Django migration failed. Check DB connection/settings."; exit 1; }
-python manage.py collectstatic --noinput || { echo "ERROR: Collectstatic failed. Check static configuration."; exit 1; }
-
-# --- 4. START GUNICORN (FINAL FIX ATTEMPT) ---
-echo "--- Django setup finished. Starting Gunicorn. ---"
-
-# FIX: Forcing the DJANGO_SETTINGS_MODULE environment variable *directly* # into the Gunicorn command via the --env flag. This is the last and most 
-# aggressive way to ensure the worker process gets the correct setting.
+# 4) Start gunicorn from the current app path
+echo "Starting gunicorn..."
 exec gunicorn \
-  --chdir $APP_ROOT \
-  --bind=0.0.0.0:${PORT:-8000} \
+  --chdir "$APP_ROOT" \
+  --bind "0.0.0.0:${PORT:-8000}" \
   --timeout 600 \
-  --env DJANGO_SETTINGS_MODULE=$SETTINGS_MODULE \
-  $WSGI_PATH
-
+  --env "DJANGO_SETTINGS_MODULE=$DJANGO_SETTINGS_MODULE" \
+  "$WSGI_PATH"
