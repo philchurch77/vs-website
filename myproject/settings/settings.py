@@ -24,10 +24,13 @@ else:
     ] if h]
 
 # CSRF needs full scheme+host
-CSRF_TRUSTED_ORIGINS = [f"https://{h.lstrip('.')} " if h.startswith('.') else f"https://{h}" for h in ALLOWED_HOSTS]
-# Ensure your actual site hostname is definitely present
+CSRF_TRUSTED_ORIGINS = []
+for h in ALLOWED_HOSTS:
+    h = h.lstrip(".")
+    CSRF_TRUSTED_ORIGINS.append(f"https://{h}")
 if "https://vs-training-website.azurewebsites.net" not in CSRF_TRUSTED_ORIGINS:
     CSRF_TRUSTED_ORIGINS.append("https://vs-training-website.azurewebsites.net")
+
 
 # --- Django apps/middleware (unchanged) ---
 INSTALLED_APPS = [
