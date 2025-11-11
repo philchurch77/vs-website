@@ -10,7 +10,7 @@ class TopicAdmin(admin.ModelAdmin):
     date_hierarchy = "date"
 
     # Do NOT put 'date' in fields; it's non-editable
-    fields = ("title", "slug", "author", "tags", "file", "link")  # add "body" if you have it
+    fields = ("title", "slug", "author", "tags", "file", "link", "body")  # add "body" if you have it
     readonly_fields = ("date",)
 
     autocomplete_fields = ("author",)
