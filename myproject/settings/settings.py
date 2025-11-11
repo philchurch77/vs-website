@@ -5,8 +5,9 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
-SECRET_KEY = os.getenv("SECRET_KEY")
-DEBUG = False
+# --- Core ---
+SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key")  # safe default for local
+DEBUG = os.getenv("DEBUG", "0") in ("1", "true", "True")
 
 # --- Hosts / CSRF ---
 runtime_host = os.environ.get("WEBSITE_HOSTNAME")  # set by Azure
@@ -16,23 +17,25 @@ allow_all = os.getenv("ALLOW_ALL_HOSTS", "0") in ("1", "true", "True")
 if allow_all:
     ALLOWED_HOSTS = ["*"]
 else:
-    # include azure defaults + localhost for local runs
     ALLOWED_HOSTS = [h for h in [
         runtime_host, *extra_hosts,
         "localhost", "127.0.0.1",
         ".azurewebsites.net", ".scm.azurewebsites.net",
     ] if h]
 
-# CSRF needs full scheme+host
 CSRF_TRUSTED_ORIGINS = []
 for h in ALLOWED_HOSTS:
     h = h.lstrip(".")
+    # Always include https origin
     CSRF_TRUSTED_ORIGINS.append(f"https://{h}")
+# Explicitly add your Azure site
 if "https://vs-training-website.azurewebsites.net" not in CSRF_TRUSTED_ORIGINS:
     CSRF_TRUSTED_ORIGINS.append("https://vs-training-website.azurewebsites.net")
+# Add local http origins when DEBUG
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS += ["http://localhost", "http://127.0.0.1"]
 
-
-# --- Django apps/middleware (unchanged) ---
+# --- Apps / Middleware ---
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -62,6 +65,8 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "myproject.settings.urls"
+WSGI_APPLICATION = "myproject.settings.wsgi.application"
+ASGI_APPLICATION = "myproject.settings.asgi.application"
 
 TEMPLATES = [{
     "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -75,11 +80,12 @@ TEMPLATES = [{
     ]},
 }]
 
-WSGI_APPLICATION = "myproject.settings.wsgi.application"
-ASGI_APPLICATION = "myproject.settings.asgi.application"
+# --- Database ---
+SQLITE_PATH = os.environ.get("SQLITE_PATH")
+if not SQLITE_PATH:
+    # Use Azure path in prod, local file in dev
+    SQLITE_PATH = "/home/site/data/db.sqlite3" if not DEBUG else (BASE_DIR / "db.sqlite3")
 
-# --- SQLite in a writable, persistent path on Azure ---
-SQLITE_PATH = os.environ.get("SQLITE_PATH", "/home/site/data/db.sqlite3")
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
@@ -87,17 +93,22 @@ DATABASES = {
     }
 }
 
-# --- Internationalization / timezone (unchanged) ---
+# --- i18n / tz ---
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "Europe/London"
 USE_I18N = True
 USE_TZ = True
 
-# --- Static / media (unchanged) ---
+# --- Static / media ---
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+
+# Use a simpler storage in DEBUG to avoid manifest errors
+if DEBUG:
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
+else:
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -106,13 +117,13 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# --- Proxy & cookie security: required behind Azure's reverse proxy ---
+# --- Proxy & cookie security ---
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = not DEBUG  # allow http locally
+CSRF_COOKIE_SECURE = not DEBUG     # allow http locally
 
-# --- Minimal console logging so Log Stream shows tracebacks ---
+# --- Logging ---
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -126,6 +137,7 @@ LOGGING = {
 
 if not SECRET_KEY and not DEBUG:
     raise RuntimeError("SECRET_KEY must be set in production")
+
 
 
 

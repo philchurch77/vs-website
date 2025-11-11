@@ -1,0 +1,39 @@
+{% extends 'layout.html' %}
+
+{% block title %}{{ topic.title }}{% endblock %}
+
+{% block content %}
+<section>
+    <h1>{{ topic.title }}</h1>
+
+    <p>
+        <em>
+            {{ topic.date|date:"j M Y, H:i" }} 
+            {% if topic.author %} by {{ topic.author }}{% endif %}
+        </em>
+    </p>
+
+    {% if topic.tags.all %}
+        <p class="tags">
+            Tags:
+            {% for t in topic.tags.all %}
+                <a href="{% url 'resources:resource_list_by_tag' t.slug %}">{{ t.name }}</a>{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        </p>
+    {% endif %}
+
+    {% if topic.body %}
+        <div class="prose">
+            {{ topic.body|linebreaks }}
+        </div>
+    {% endif %}
+
+    {% if topic.link %}
+        <p><a href="{{ topic.link }}" target="_blank" rel="noopener">Open related link</a></p>
+    {% endif %}
+
+    {% if topic.file %}
+        <p><a href="{{ topic.file.url }}" download>Download attachment</a></p>
+    {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends 'layout.html' %}
+
+{% block title %}Resources{% endblock %}
+
+{% block content %}
+<section>
+  <h1>Resources and links from training sessions with the Cambridgeshire Virtual School</h1>
+
+  {% if tag %}
+    <h2>Resources tagged with "{{ tag.name }}"</h2>
+  {% endif %}
+
+  <p>Here is a list of training resources.</p>
+
+  {% for topic in resources %}
+    <article class="resource">
+      <h2>
+        <a href="{% url 'resources:page' slug=topic.slug %}">{{ topic.title }}</a>
+      </h2>
+
+      <p class="tags">
+        Tags:
+        {% for t in topic.tags.all %}
+          <a href="{% url 'resources:resource_list_by_tag' t.slug %}">{{ t.name }}</a>{% if not forloop.last %}, {% endif %}
+        {% empty %}
+          No tags
+        {% endfor %}
+      </p>
+
+      <p><em>{{ topic.date }} by {{ topic.author }}</em></p>
+
+      {% if topic.body %}
+        <p>{{ topic.body|truncatewords:30 }}</p>
+      {% endif %}
+    </article>
+  {% empty %}
+    <p>No resources yet.</p>
+  {% endfor %}
+
+  {% include "pagination.html" with page=resources %}
+</section>
+{% endblock %}
