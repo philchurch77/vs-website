@@ -29,8 +29,8 @@
 
       <p><em>{{ topic.date }} by {{ topic.author }}</em></p>
 
-      {% if topic.body %}
-        <p>{{ topic.body|truncatewords:30 }}</p>
+      {% if topic.text %}
+        <p>{{ topic.text|truncatewords:30 }}</p>
       {% endif %}
     </article>
   {% empty %}
