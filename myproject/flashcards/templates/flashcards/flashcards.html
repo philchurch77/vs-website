@@ -6,40 +6,56 @@
 
 {% block content %}
 <div class="main-layout">
-    <div class="chat-history">
-        <h2>Chat History</h2>
-        <div id="chat-history">
-            {% include "flashcards/partials/chat_history_list.html" %}
+
+    <!-- LEFT: Toolkit + Chat history -->
+    <section class="toolkit-column">
+        <header class="panel-header">
+            <div class="panel-heading">
+                <h2>Toolkit</h2>
+                <p class="panel-subtitle">Ask Echo a question to begin.</p>
+            </div>
+
+            <div class="panel-actions">
+                <form method="get" action="{% url 'flashcards:flashcards_page' %}">
+                    <button type="submit" name="new" value="1" class="new-chat-btn">
+                        New Chat
+                    </button>
+                </form>
+
+                <button onclick="exportVisibleFlashcardsAsPNGs()" class="new-chat-btn">
+                    Export Flashcards
+                </button>
+            </div>
+        </header>
+
+        <div class="toolkit-body">
+            <!-- Chat history, now a narrow panel on the left -->
+            <aside class="chat-history">
+                <h3>Chat History</h3>
+                <div id="chat-history">
+                    {% include "flashcards/partials/chat_history_list.html" %}
+                </div>
+            </aside>
+
+            <!-- Chat panel -->
+            <section class="chat-panel">
+                <div class="messages" id="messages"></div>
+
+                <div class="input-area">
+                    <input type="text" id="messageInput" placeholder="Type here..." />
+                    <button type="button" onclick="sendMessage()">Send</button>
+                </div>
+            </section>
         </div>
-    </div>
+    </section>
 
-<div class="chat-container">
-    <h2>Toolkit</h2>
-    <b>Ask Echo a question to begin.</b>
-
-    <div class="messages" id="messages"></div>
-
-<div class="flashcard-actions" style="display: flex; justify-content: space-between; align-items: center; margin: 0.5em 0;">
-    <form method="get" action="{% url 'flashcards:flashcards_page' %}">
-        <button type="submit" name="new" value="1" class="new-chat-btn">New Chat</button>
-    </form>
-
-    <button onclick="exportVisibleFlashcardsAsPNGs()" class="new-chat-btn">
-        Export Flashcards
-    </button>
-</div>
-
-    <div class="input-area">
-        <input type="text" id="messageInput" placeholder="Type here..." />
-        <button onclick="sendMessage()">Send</button>
-    </div>
-</div>
-
-    <div class="sidebar">
+    <!-- RIGHT: Flashcards -->
+    <aside class="sidebar flashcards-column">
         <h2>Flashcards</h2>
         {% include "flashcards/partials/flashcard_list.html" %}
-    </div>
+    </aside>
 </div>
+{% endblock %}
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
