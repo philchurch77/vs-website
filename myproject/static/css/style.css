@@ -85,7 +85,7 @@ nav {
     position: fixed;
     top: 0;
     left: 0;
-    width: 240px;
+    width: 220px;
     height: 100vh;
     background-color: ghostwhite;
     display: flex;
@@ -136,8 +136,9 @@ nav a:hover {
 }
 
 .vs-banner img {
-    width: 100%;
+    width: 160px;              /* adjust as needed */
     height: auto;
+    margin-bottom: 20px;
     display: block;
 }
 
