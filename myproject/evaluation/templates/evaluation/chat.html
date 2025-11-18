@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="main-layout">
+<div class="main-layout single-column">
     <!-- Single big column that uses the same layout as the Toolkit page -->
     <section class="toolkit-column">
         <header class="panel-header">
@@ -15,16 +15,6 @@
                     Please complete your training impact evaluation with our friendly assistant.
                     Select a training summary to review past evaluations or begin a new chat.
                 </p>
-            </div>
-
-            <div class="panel-actions">
-                <!-- New Chat Button -->
-                <form method="post" action="{% url 'evaluation:new_chat_session' %}" id="newChatForm">
-                    {% csrf_token %}
-                    <button type="submit" name="new" value="1" class="new-chat-btn">
-                        New Chat
-                    </button>
-                </form>
             </div>
         </header>
 
@@ -53,10 +43,20 @@
                     {% endif %}
                 </div>
 
+            <div class="panel-actions">
+                <!-- New Chat Button -->
+                <form method="post" action="{% url 'evaluation:new_chat_session' %}" id="newChatForm">
+                    {% csrf_token %}
+                    <button type="submit" name="new" value="1" class="new-chat-btn">
+                        New Chat
+                    </button>
+                </form>
+            </div>
+
                 <!-- Input area -->
                 <div class="input-area">
                     <input type="text" id="messageInput" placeholder="Type here..." disabled />
-                    <button id="sendBtn" type="button" onclick="sendMessage()" disabled>Send</button>
+                    <button id="sendBtn" type="button" class="new-chat-btn" onclick="sendMessage()" disabled>Send</button>
                 </div>
             </section>
         </div>

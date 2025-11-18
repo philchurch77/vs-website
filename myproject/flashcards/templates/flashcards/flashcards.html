@@ -11,20 +11,8 @@
     <section class="toolkit-column">
         <header class="panel-header">
             <div class="panel-heading">
-                <h2>Toolkit</h2>
+                <h2>Educational Toolkit</h2>
                 <p class="panel-subtitle">Ask Echo a question to begin.</p>
-            </div>
-
-            <div class="panel-actions">
-                <form method="get" action="{% url 'flashcards:flashcards_page' %}">
-                    <button type="submit" name="new" value="1" class="new-chat-btn">
-                        New Chat
-                    </button>
-                </form>
-
-                <button onclick="exportVisibleFlashcardsAsPNGs()" class="new-chat-btn">
-                    Export Flashcards
-                </button>
             </div>
         </header>
 
@@ -40,10 +28,20 @@
             <!-- Chat panel -->
             <section class="chat-panel">
                 <div class="messages" id="messages"></div>
+            <div class="panel-actions">
+                <form method="get" action="{% url 'flashcards:flashcards_page' %}">
+                    <button type="submit" name="new" value="1" class="new-chat-btn">
+                        New Chat
+                    </button>
+                </form>
 
+                <button onclick="exportVisibleFlashcardsAsPNGs()" class="new-chat-btn">
+                    Export Flashcards
+                </button>
+            </div>
                 <div class="input-area">
                     <input type="text" id="messageInput" placeholder="Type here..." />
-                    <button type="button" onclick="sendMessage()">Send</button>
+                    <button type="button" class="new_chat_btn" onclick="sendMessage()">Send</button>
                 </div>
             </section>
         </div>
