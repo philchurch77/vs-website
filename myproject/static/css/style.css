@@ -29,6 +29,13 @@ body {
     box-sizing: border-box;
 }
 
+.wallpaper {
+    min-height: 100vh;
+    background-image: url("../images/Flashcards_Wallpaper.jpg");
+    background-size: cover;
+    background-position: center;
+}
+
 .break {
     display: block;
     height: 1rem;
