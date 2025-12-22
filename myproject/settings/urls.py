@@ -23,6 +23,7 @@ urlpatterns = [
     path('training/',   include('myproject.training.urls', namespace='training')),
     path('sdq/',        include('myproject.sdq.urls', namespace='sdq')),
     path('resources/',  include('myproject.resources.urls', namespace='resources')),
+    path('tolerance/',  include('myproject.tolerance.urls', namespace='tolerance')),
 ]
 
 # Serve static and media files in development mode

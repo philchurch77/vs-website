@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "myproject.training",
     "myproject.sdq",
     "myproject.resources",
+    "myproject.tolerance",
 ]
 
 MIDDLEWARE = [

@@ -1,0 +1,164 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Window of Tolerance</title>
+  </head>
+
+  <body>
+    <h2>Window of Tolerance — {{ checkin.date }}</h2>
+
+    <div class="summary">
+      <div class="row">
+        <div>
+          <strong>Today:</strong>
+          <span id="todayLabel">{{ summary.today_label }}</span>
+        </div>
+        <div>Hyper: <span id="cHyper">{{ summary.counts.hyper }}</span></div>
+        <div>Window: <span id="cWindow">{{ summary.counts.window }}</span></div>
+        <div>Hypo: <span id="cHypo">{{ summary.counts.hypo }}</span></div>
+        <div>
+          <strong>Score:</strong>
+          <span id="score">{{ summary.score }}</span>
+        </div>
+      </div>
+    </div>
+
+    <h3>Keywords (click to select)</h3>
+
+    <div id="keywordBank" class="keyword-bank">
+      {% csrf_token %}
+      {% for kw in keywords %}
+        <button
+          type="button"
+          class="chip {% if kw.id in selected %}selected{% endif %}"
+          data-kid="{{ kw.id }}"
+        >
+          {{ kw.label }}
+        </button>
+      {% endfor %}
+    </div>
+
+    <div class="grid">
+      <div class="col">
+        <h3>Hyper-arousal</h3>
+        <div id="listHYPER" class="pill-list">
+          {% for k in selected_keywords %}
+            {% if k.default_zone == "HYPER" %}
+              <span class="pill">{{ k.label }}</span>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="col">
+        <h3>Window of tolerance</h3>
+        <div id="listWINDOW" class="pill-list">
+          {% for k in selected_keywords %}
+            {% if k.default_zone == "WINDOW" %}
+              <span class="pill">{{ k.label }}</span>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="col">
+        <h3>Hypo-arousal</h3>
+        <div id="listHYPO" class="pill-list">
+          {% for k in selected_keywords %}
+            {% if k.default_zone == "HYPO" %}
+              <span class="pill">{{ k.label }}</span>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <h3>Notes</h3>
+    <textarea id="notes">{{ checkin.notes }}</textarea>
+
+    <div class="actions">
+      <button class="save" id="saveNotes" type="button">Save notes</button>
+      <span id="saveStatus"></span>
+    </div>
+
+    <script>
+      const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+      function renderPills(containerId, labels) {
+        const el = document.getElementById(containerId);
+        el.innerHTML = "";
+        labels.forEach(label => {
+          const span = document.createElement("span");
+          span.className = "pill";
+          span.textContent = label;
+          el.appendChild(span);
+        });
+      }
+
+      function updateSummary(summary) {
+        document.getElementById("todayLabel").textContent = summary.today_label;
+        document.getElementById("cHyper").textContent = summary.counts.hyper;
+        document.getElementById("cWindow").textContent = summary.counts.window;
+        document.getElementById("cHypo").textContent = summary.counts.hypo;
+        document.getElementById("score").textContent = summary.score;
+      }
+
+      document
+        .getElementById("keywordBank")
+        .addEventListener("click", async (e) => {
+          if (!e.target.classList.contains("chip")) return;
+
+          const keywordId = e.target.dataset.kid;
+
+          const resp = await fetch("{% url 'tolerance:toggle_keyword' %}", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+              "X-CSRFToken": csrftoken
+            },
+            body: new URLSearchParams({ keyword_id: keywordId })
+          });
+
+          const data = await resp.json();
+          if (!data.ok) return;
+
+          const selectedIds = new Set(data.selected_ids.map(String));
+          document.querySelectorAll(".chip").forEach(btn => {
+            btn.classList.toggle("selected", selectedIds.has(btn.dataset.kid));
+          });
+
+          renderPills("listHYPER", data.grouped.HYPER || []);
+          renderPills("listWINDOW", data.grouped.WINDOW || []);
+          renderPills("listHYPO", data.grouped.HYPO || []);
+
+          updateSummary(data.summary);
+        });
+
+      document
+        .getElementById("saveNotes")
+        .addEventListener("click", async () => {
+          const notes = document.getElementById("notes").value;
+          const status = document.getElementById("saveStatus");
+
+          status.textContent = "Saving...";
+
+          const resp = await fetch("{% url 'tolerance:save_notes' %}", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+              "X-CSRFToken": csrftoken
+            },
+            body: new URLSearchParams({ notes })
+          });
+
+          const data = await resp.json();
+          status.textContent = data.ok ? "Saved" : "Error";
+
+          setTimeout(() => {
+            status.textContent = "";
+          }, 1500);
+        });
+    </script>
+  </body>
+</html>

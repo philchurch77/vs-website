@@ -776,3 +776,163 @@ main a:hover, section a:hover {
 .flash-message.show {
     opacity: 1;
 }
+
+.summary {
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: #fff;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  align-items: center;
+}
+
+.summary strong {
+  font-weight: 600;
+}
+
+/* =========================
+   Keyword bank (chips)
+========================= */
+
+.keyword-bank {
+  margin-bottom: 16px;
+}
+
+.chip {
+  display: inline-block;
+  padding: 8px 12px;
+  margin: 6px 6px 0 0;
+  border-radius: 999px;
+  border: 1px solid #ccc;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.15s ease;
+}
+
+.chip:hover {
+  background: #f2f2f2;
+}
+
+.chip.selected {
+  border-color: #333;
+  background: #eaeaea;
+  font-weight: 600;
+}
+
+/* =========================
+   Grid / Columns
+========================= */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.col {
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fff;
+  min-height: 120px;
+}
+
+.col h3 {
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+
+/* =========================
+   Pills
+========================= */
+
+.pill-list {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.pill {
+  display: inline-block;
+  padding: 4px 10px;
+  margin: 4px;
+  border-radius: 999px;
+  font-size: 13px;
+  border: 1px solid transparent;
+}
+
+/* Zone colouring */
+#listHYPER .pill {
+  background: #fdecea;
+  border-color: #f5c6cb;
+  color: #842029;
+}
+
+#listWINDOW .pill {
+  background: #e6f4ea;
+  border-color: #badbcc;
+  color: #0f5132;
+}
+
+#listHYPO .pill {
+  background: #e7f1ff;
+  border-color: #b6d4fe;
+  color: #084298;
+}
+
+/* =========================
+   Notes
+========================= */
+
+textarea {
+  width: 100%;
+  min-height: 90px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: #666;
+}
+
+/* =========================
+   Actions
+========================= */
+
+.actions {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+button.save {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid #333;
+  background: #333;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+button.save:hover {
+  background: #000;
+}
+
+#saveStatus {
+  font-size: 14px;
+  color: #555;
+}
