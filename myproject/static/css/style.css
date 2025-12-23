@@ -751,20 +751,23 @@ main a:hover, section a:hover {
 @media (max-width: 900px) {
     .main-layout {
         display: block;
-        height: auto;
+        min-height: calc(100vh - 2rem);
     }
 
     .toolkit-column,
     .flashcards-column {
         margin-bottom: 1rem;
+        overflow-y: auto;
+        min-height: 0;
+        max-height: calc(100vh - 4rem);
     }
 
     .toolkit-body {
-        grid-template-columns: 1fr; /* stack history above chat */
+        grid-template-columns: 1fr;
     }
 
     .chat-history {
-        max-height: 220px; /* scroll history, leave room for chat */
+        max-height: 220px;
     }
 }
 
