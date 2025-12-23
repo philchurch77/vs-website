@@ -106,16 +106,10 @@
 <script>
   const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-  function renderPills(containerId, labels) {
-    const el = document.getElementById(containerId);
-    el.innerHTML = "";
-    labels.forEach(label => {
-      const span = document.createElement("span");
-      span.className = "pill";
-      span.textContent = label;
-      el.appendChild(span);
-    });
-  }
+function renderPills(containerId, labels) {
+  const el = document.getElementById(containerId);
+  el.textContent = labels.join("; ");
+}
 
   function updateSummary(summary) {
     document.getElementById("todayLabel").textContent = summary.today_label;
