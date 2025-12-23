@@ -67,7 +67,6 @@ def toggle_keyword(request):
         "summary": summary,
     })
 
-
 @login_required
 @require_POST
 def save_notes(request):

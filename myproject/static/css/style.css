@@ -6,13 +6,29 @@
 }
 
 :root {
-    --primary: #233d4d;
-    --accent: #586f7c;
-    --ink: #1f2937;
-    --highlight: #0d4770;
-    --light-highlight: #188fe4;
-    --light-bg: #f9fafb;
-    --dark-text: #111827;
+    /* Core brand */
+    --primary: #1e3a5f;          /* deep calm blue */
+    --accent: #5c7fa3;           /* soft steel blue */
+    --ink: #0f172a;              /* near-black, softer than pure black */
+
+    /* Emphasis & actions */
+    --highlight: #0b5ed7;        /* confident action blue */
+    --light-highlight: #4da3ff;  /* friendly accent blue */
+
+    /* Backgrounds */
+    --light-bg: #f8fafc;         /* ultra-light neutral */
+    --panel-bg: #ffffff;         /* cards / columns */
+
+    /* Text */
+    --dark-text: #020617;        /* strong headings */
+    --muted-text: #64748b;       /* subtitles, hints */
+
+    /* State colours (Window of Tolerance) */
+    --hyper: #ef4444;            /* red – activated */
+    --window: #22c55e;           /* green – regulated */
+    --hypo: #3b82f6;             /* blue – shut down */
+    --score: #a855f7;            /* purple – reflective */
+
     --nav-height: 70px;
     --nav-width: 240px;
     --nav-gap: 20px;
@@ -151,13 +167,13 @@ nav a:hover {
     box-sizing: border-box;
     max-width: 1600px;
     margin: 0 auto;
-    height: calc(100vh - 2rem); /* full-height app feel */
+    min-height: calc(100vh - 2rem); /* full-height app feel */
 }
 
 .main-layout.single-column {
     grid-template-columns: minmax(0, 1fr);
-    max-width: 900px;      /* optional: constrain width a bit */
-    margin: 0 auto;        /* center it nicely */
+    max-width: 100%;
+    margin: 0;
 }
 
 /* Big cards */
@@ -273,6 +289,7 @@ nav a:hover {
     padding: 0.5em 1em;
     cursor: pointer;
     font-weight: bold;
+    color: white;
     border-radius: 10px;
     margin-top: 0.5em;
     transition: background-color 0.2s ease, transform 0.2s ease;
@@ -436,7 +453,7 @@ input[type="text"] {
     border-bottom-left-radius: 5px;
 }
 
-button {
+button:not(.chip):not(.save):not(.menu-toggle) {
     padding: 12px 28px;
     font-size: 16px;
     background: linear-gradient(135deg, var(--primary), var(--accent));
@@ -452,7 +469,7 @@ button {
     transition: background 0.3s ease;
 }
 
-button:hover {
+button:not(.chip):not(.save):not(.menu-toggle):hover {
     background: linear-gradient(135deg, var(--accent), var(--primary));
 }
 
@@ -620,6 +637,7 @@ main a:hover, section a:hover {
     padding: 0.5em 1em;
     cursor: pointer;
     font-weight: bold;
+    color: white;
     border-radius: 10px;
     margin-top: 0.5em;
     transition: background-color 0.2s ease, transform 0.2s ease;
@@ -777,162 +795,96 @@ main a:hover, section a:hover {
     opacity: 1;
 }
 
-.summary {
-  border: 1px solid #ddd;
-  border-radius: 12px;
-  padding: 12px 16px;
-  margin-bottom: 16px;
-  background: #fff;
+/* =========================
+   Window of Tolerance layout
+========================= */
+
+.tolerance-content {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
-.row {
+/* Score cards layout */
+.tolerance-page .score-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  justify-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .tolerance-page .score-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .tolerance-page .score-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Keyword chips row */
+.tolerance-page #keywordBank {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px 20px;
-  align-items: center;
-}
-
-.summary strong {
-  font-weight: 600;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
 }
 
 /* =========================
-   Keyword bank (chips)
+   Keyword chips (improved)
 ========================= */
 
-.keyword-bank {
-  margin-bottom: 16px;
-}
-
-.chip {
-  display: inline-block;
-  padding: 8px 12px;
-  margin: 6px 6px 0 0;
+.tolerance-page .chip {
+  appearance: none;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #1f2937;
+  padding: 0.55rem 1rem;
   border-radius: 999px;
-  border: 1px solid #ccc;
-  background: #fff;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.15s ease;
-}
-
-.chip:hover {
-  background: #f2f2f2;
-}
-
-.chip.selected {
-  border-color: #333;
-  background: #eaeaea;
+  font-size: 0.95rem;
   font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.06);
 }
 
-/* =========================
-   Grid / Columns
-========================= */
+.tolerance-page .chip:hover {
+  background: #f3f4f6;
+  transform: translateY(-1px);
+}
 
-.grid {
+.tolerance-page .chip.selected {
+  background: linear-gradient(135deg, var(--highlight), var(--light-highlight));
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 10px 22px rgba(13,71,112,0.28);
+}
+
+.tolerance-page .chip:active {
+  transform: translateY(0);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.14);
+}
+
+/* Zone cards */
+.tolerance-page .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-  margin-top: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.25rem;
 }
 
-.col {
-  border: 1px solid #ddd;
-  border-radius: 12px;
-  padding: 12px;
-  background: #fff;
-  min-height: 120px;
-}
-
-.col h3 {
-  font-size: 16px;
-  margin-bottom: 6px;
-}
-
-/* =========================
-   Pills
-========================= */
-
-.pill-list {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.pill {
-  display: inline-block;
-  padding: 4px 10px;
-  margin: 4px;
-  border-radius: 999px;
-  font-size: 13px;
-  border: 1px solid transparent;
-}
-
-/* Zone colouring */
-#listHYPER .pill {
-  background: #fdecea;
-  border-color: #f5c6cb;
-  color: #842029;
-}
-
-#listWINDOW .pill {
-  background: #e6f4ea;
-  border-color: #badbcc;
-  color: #0f5132;
-}
-
-#listHYPO .pill {
-  background: #e7f1ff;
-  border-color: #b6d4fe;
-  color: #084298;
-}
-
-/* =========================
-   Notes
-========================= */
-
-textarea {
-  width: 100%;
-  min-height: 90px;
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid #ccc;
-  font-family: inherit;
-  font-size: 14px;
-  resize: vertical;
-}
-
-textarea:focus {
-  outline: none;
-  border-color: #666;
-}
-
-/* =========================
-   Actions
-========================= */
-
-.actions {
-  margin-top: 10px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-button.save {
-  padding: 8px 14px;
-  border-radius: 10px;
-  border: 1px solid #333;
-  background: #333;
-  color: #fff;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-button.save:hover {
-  background: #000;
-}
-
-#saveStatus {
-  font-size: 14px;
-  color: #555;
+@media (max-width: 900px) {
+  .tolerance-page .grid {
+    grid-template-columns: 1fr;
+  }
 }

@@ -1,164 +1,160 @@
-<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Window of Tolerance</title>
-  </head>
+{% extends "layout.html" %}
+{% load static %}
 
-  <body>
-    <h2>Window of Tolerance — {{ checkin.date }}</h2>
+{% block title %}Window of Tolerance{% endblock %}
 
-    <div class="summary">
-      <div class="row">
-        <div>
-          <strong>Today:</strong>
-          <span id="todayLabel">{{ summary.today_label }}</span>
+{% block content %}
+<main class="main-layout single-column">
+  <section class="toolkit-column tolerance-page">
+    <div class="tolerance-content">
+
+      <div class="panel-header">
+        <div class="panel-heading">
+          <h1>Window of Tolerance</h1>
+          <p class="panel-subtitle">{{ checkin.date }}</p>
         </div>
-        <div>Hyper: <span id="cHyper">{{ summary.counts.hyper }}</span></div>
-        <div>Window: <span id="cWindow">{{ summary.counts.window }}</span></div>
-        <div>Hypo: <span id="cHypo">{{ summary.counts.hypo }}</span></div>
-        <div>
-          <strong>Score:</strong>
-          <span id="score">{{ summary.score }}</span>
-        </div>
-      </div>
-    </div>
 
-    <h3>Keywords (click to select)</h3>
-
-    <div id="keywordBank" class="keyword-bank">
-      {% csrf_token %}
-      {% for kw in keywords %}
-        <button
-          type="button"
-          class="chip {% if kw.id in selected %}selected{% endif %}"
-          data-kid="{{ kw.id }}"
-        >
-          {{ kw.label }}
-        </button>
-      {% endfor %}
-    </div>
-
-    <div class="grid">
-      <div class="col">
-        <h3>Hyper-arousal</h3>
-        <div id="listHYPER" class="pill-list">
-          {% for k in selected_keywords %}
-            {% if k.default_zone == "HYPER" %}
-              <span class="pill">{{ k.label }}</span>
-            {% endif %}
-          {% endfor %}
+        <div class="panel-actions">
+          <div class="new-chat-btn" style="pointer-events:none;">
+            <span id="todayLabel">{{ summary.today_label }}</span>
+          </div>
         </div>
       </div>
 
-      <div class="col">
-        <h3>Window of tolerance</h3>
-        <div id="listWINDOW" class="pill-list">
-          {% for k in selected_keywords %}
-            {% if k.default_zone == "WINDOW" %}
-              <span class="pill">{{ k.label }}</span>
-            {% endif %}
-          {% endfor %}
+      <div class="score-grid">
+        <div class="score-card" style="--hue: 10">
+          <div class="score-card__icon">🔥</div>
+          <div class="score-card__value" id="cHyper">{{ summary.counts.hyper }}</div>
+          <div class="score-card__label">Hyper</div>
+          <div class="score-card__hint">Activated</div>
+        </div>
+
+        <div class="score-card" style="--hue: 120">
+          <div class="score-card__icon">🟢</div>
+          <div class="score-card__value" id="cWindow">{{ summary.counts.window }}</div>
+          <div class="score-card__label">Window</div>
+          <div class="score-card__hint">Regulated</div>
+        </div>
+
+        <div class="score-card" style="--hue: 210">
+          <div class="score-card__icon">❄️</div>
+          <div class="score-card__value" id="cHypo">{{ summary.counts.hypo }}</div>
+          <div class="score-card__label">Hypo</div>
+          <div class="score-card__hint">Shut down</div>
+        </div>
+
+        <div class="score-card" style="--hue: 260">
+          <div class="score-card__icon">⭐</div>
+          <div class="score-card__value" id="score">{{ summary.score }}</div>
+          <div class="score-card__label">Score</div>
+          <div class="score-card__hint">Window - Others</div>
         </div>
       </div>
 
-      <div class="col">
-        <h3>Hypo-arousal</h3>
-        <div id="listHYPO" class="pill-list">
-          {% for k in selected_keywords %}
-            {% if k.default_zone == "HYPO" %}
-              <span class="pill">{{ k.label }}</span>
-            {% endif %}
-          {% endfor %}
+      <h3>Keywords</h3>
+      <div id="keywordBank">
+        {% csrf_token %}
+        {% for kw in keywords %}
+          <button
+            type="button"
+            class="chip {% if kw.id in selected %}selected{% endif %}"
+            data-kid="{{ kw.id }}"
+          >
+            {{ kw.label }}
+          </button>
+        {% endfor %}
+      </div>
+
+      <div class="grid">
+        <div class="flashcard">
+          <div class="card-title">Hyper-arousal</div>
+          <div id="listHYPER">
+            {% for k in selected_keywords %}
+              {% if k.default_zone == "HYPER" %}
+                <span class="pill">{{ k.label }}</span>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="flashcard">
+          <div class="card-title">Window of tolerance</div>
+          <div id="listWINDOW">
+            {% for k in selected_keywords %}
+              {% if k.default_zone == "WINDOW" %}
+                <span class="pill">{{ k.label }}</span>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="flashcard">
+          <div class="card-title">Hypo-arousal</div>
+          <div id="listHYPO">
+            {% for k in selected_keywords %}
+              {% if k.default_zone == "HYPO" %}
+                <span class="pill">{{ k.label }}</span>
+              {% endif %}
+            {% endfor %}
+          </div>
         </div>
       </div>
     </div>
+  </section>
+</main>
 
-    <h3>Notes</h3>
-    <textarea id="notes">{{ checkin.notes }}</textarea>
+<script>
+  const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-    <div class="actions">
-      <button class="save" id="saveNotes" type="button">Save notes</button>
-      <span id="saveStatus"></span>
-    </div>
+  function renderPills(containerId, labels) {
+    const el = document.getElementById(containerId);
+    el.innerHTML = "";
+    labels.forEach(label => {
+      const span = document.createElement("span");
+      span.className = "pill";
+      span.textContent = label;
+      el.appendChild(span);
+    });
+  }
 
-    <script>
-      const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+  function updateSummary(summary) {
+    document.getElementById("todayLabel").textContent = summary.today_label;
+    document.getElementById("cHyper").textContent = summary.counts.hyper;
+    document.getElementById("cWindow").textContent = summary.counts.window;
+    document.getElementById("cHypo").textContent = summary.counts.hypo;
+    document.getElementById("score").textContent = summary.score;
+  }
 
-      function renderPills(containerId, labels) {
-        const el = document.getElementById(containerId);
-        el.innerHTML = "";
-        labels.forEach(label => {
-          const span = document.createElement("span");
-          span.className = "pill";
-          span.textContent = label;
-          el.appendChild(span);
-        });
-      }
+  document.getElementById("keywordBank").addEventListener("click", async (e) => {
+    if (!e.target.classList.contains("chip")) return;
 
-      function updateSummary(summary) {
-        document.getElementById("todayLabel").textContent = summary.today_label;
-        document.getElementById("cHyper").textContent = summary.counts.hyper;
-        document.getElementById("cWindow").textContent = summary.counts.window;
-        document.getElementById("cHypo").textContent = summary.counts.hypo;
-        document.getElementById("score").textContent = summary.score;
-      }
+    const keywordId = e.target.dataset.kid;
 
-      document
-        .getElementById("keywordBank")
-        .addEventListener("click", async (e) => {
-          if (!e.target.classList.contains("chip")) return;
+    const resp = await fetch("{% url 'tolerance:toggle_keyword' %}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRFToken": csrftoken
+      },
+      body: new URLSearchParams({ keyword_id: keywordId })
+    });
 
-          const keywordId = e.target.dataset.kid;
+    const data = await resp.json();
+    if (!data.ok) return;
 
-          const resp = await fetch("{% url 'tolerance:toggle_keyword' %}", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
-              "X-CSRFToken": csrftoken
-            },
-            body: new URLSearchParams({ keyword_id: keywordId })
-          });
+    const selectedIds = new Set(data.selected_ids.map(String));
+    document.querySelectorAll(".chip").forEach(btn => {
+      btn.classList.toggle("selected", selectedIds.has(btn.dataset.kid));
+    });
 
-          const data = await resp.json();
-          if (!data.ok) return;
+    renderPills("listHYPER", data.grouped.HYPER || []);
+    renderPills("listWINDOW", data.grouped.WINDOW || []);
+    renderPills("listHYPO", data.grouped.HYPO || []);
 
-          const selectedIds = new Set(data.selected_ids.map(String));
-          document.querySelectorAll(".chip").forEach(btn => {
-            btn.classList.toggle("selected", selectedIds.has(btn.dataset.kid));
-          });
+    updateSummary(data.summary);
+  });
 
-          renderPills("listHYPER", data.grouped.HYPER || []);
-          renderPills("listWINDOW", data.grouped.WINDOW || []);
-          renderPills("listHYPO", data.grouped.HYPO || []);
+</script>
+{% endblock %}
 
-          updateSummary(data.summary);
-        });
 
-      document
-        .getElementById("saveNotes")
-        .addEventListener("click", async () => {
-          const notes = document.getElementById("notes").value;
-          const status = document.getElementById("saveStatus");
-
-          status.textContent = "Saving...";
-
-          const resp = await fetch("{% url 'tolerance:save_notes' %}", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
-              "X-CSRFToken": csrftoken
-            },
-            body: new URLSearchParams({ notes })
-          });
-
-          const data = await resp.json();
-          status.textContent = data.ok ? "Saved" : "Error";
-
-          setTimeout(() => {
-            status.textContent = "";
-          }, 1500);
-        });
-    </script>
-  </body>
-</html>
