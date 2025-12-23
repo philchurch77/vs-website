@@ -176,6 +176,47 @@ nav a:hover {
     margin: 0;
 }
 
+/* =========================
+   Flashcards page: lock height + internal scroll
+========================= */
+
+.flashcards-layout{
+  height: calc(100dvh - 4rem);  /* body has 2rem top + 2rem bottom padding */
+  overflow: hidden;             /* stop the page growing forever */
+  min-height: 0;                /* critical for grid children scrolling */
+}
+
+/* Override your global min-height for main-layout ONLY on flashcards page */
+.flashcards-layout.main-layout{
+  min-height: 0 !important;
+}
+
+/* Make both columns scroll instead of stretching */
+.flashcards-layout .toolkit-column,
+.flashcards-layout .flashcards-column{
+  min-height: 0;        /* critical */
+  overflow-y: auto;
+}
+
+/* Toolkit column is flex -> its inner grid must be allowed to shrink */
+.flashcards-layout .toolkit-body{
+  flex: 1;
+  min-height: 0;        /* critical */
+}
+
+/* Chat panel + messages: messages area should scroll */
+.flashcards-layout .chat-panel{
+  min-height: 0;        /* critical */
+  display: flex;
+  flex-direction: column;
+}
+
+.flashcards-layout .messages{
+  flex: 1;
+  min-height: 0;        /* critical */
+  overflow-y: auto;
+}
+
 /* Big cards */
 .toolkit-column,
 .flashcards-column {
@@ -749,26 +790,18 @@ main a:hover, section a:hover {
 }
 
 @media (max-width: 900px) {
-    .main-layout {
-        display: block;
-        min-height: calc(100vh - 2rem);
-    }
+  .main-layout.flashcards-layout{
+    height: auto;
+    overflow: visible;
+  }
 
-    .toolkit-column,
-    .flashcards-column {
-        margin-bottom: 1rem;
-        overflow-y: auto;
-        min-height: 0;
-        max-height: calc(100vh - 4rem);
-    }
+  .main-layout.flashcards-layout .toolkit-body{
+    grid-template-columns: 1fr; /* history stacks above chat */
+  }
 
-    .toolkit-body {
-        grid-template-columns: 1fr;
-    }
-
-    .chat-history {
-        max-height: 220px;
-    }
+  .main-layout.flashcards-layout .chat-history{
+    max-height: 220px;
+  }
 }
 
 /* Flash message wrapper */
@@ -796,6 +829,43 @@ main a:hover, section a:hover {
 /* Show it */
 .flash-message.show {
     opacity: 1;
+}
+
+/* =========================
+   Flashcards page ONLY: lock height + internal scroll
+========================= */
+
+/* only applies when the flashcards page wrapper has BOTH classes */
+.main-layout.flashcards-layout{
+  height: calc(100dvh - 4rem);   /* body padding is 2rem top + 2rem bottom */
+  overflow: hidden;             /* stop page growing forever */
+  min-height: 0;
+}
+
+/* allow both columns to scroll internally */
+.main-layout.flashcards-layout .toolkit-column,
+.main-layout.flashcards-layout .flashcards-column{
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* allow the inner grid to shrink so scrolling works */
+.main-layout.flashcards-layout .toolkit-body{
+  flex: 1;
+  min-height: 0;
+}
+
+/* messages should scroll inside the chat panel */
+.main-layout.flashcards-layout .chat-panel{
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-layout.flashcards-layout .messages{
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 /* =========================
