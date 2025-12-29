@@ -57,9 +57,9 @@ Then present the selected flashcards:
 
 ---
 
-**Flashcard Title:** [Title]  
-**Summary:** [Brief summary]  
-**Flashcard ID:** [Just the ID number, no # symbols]
+Flashcard Title: [Title]  
+Summary: [Brief summary]  
+Flashcard ID: [Just the ID number, no # symbols]
 
 ---
 

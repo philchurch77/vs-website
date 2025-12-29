@@ -12,7 +12,7 @@
     --ink: #0f172a;              /* near-black, softer than pure black */
 
     /* Emphasis & actions */
-    --highlight: #2563eb;        /* toned down action blue */
+    --highlight: #1d4ed8;        /* more muted action blue */
     --light-highlight: #60a5fa;  /* softer accent blue */
 
     /* Backgrounds */
@@ -186,10 +186,6 @@ nav a:hover {
     margin: 0;
 }
 
-/* =========================
-   Flashcards page: lock height + internal scroll
-========================= */
-
 .flashcards-layout{
   height: calc(100dvh - 4rem);  /* body has 2rem top + 2rem bottom padding */
   overflow: hidden;             /* stop the page growing forever */
@@ -251,6 +247,11 @@ nav a:hover {
 .panel-heading h2 {
     margin-bottom: 0.25rem;
     text-align: left;
+}
+
+.panel-heading h1 {
+    text-align: center;
+    margin-bottom: 0.25rem;
 }
 
 .panel-subtitle {
@@ -477,9 +478,15 @@ nav a:hover {
 }
 
 .user {
-    background-color: #a0ced9;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(135deg, #a0ced9 0%, #7bb3c7 100%);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     text-align: left;
+    border-right: 4px solid #5a9bb3;
+    padding: 16px 20px;
+    line-height: 1.6;
+    font-size: 15px;
+    color: #2c3e50;
+    font-weight: 500;
 }
 
 .assistant {
@@ -595,7 +602,7 @@ button:not(.chip):not(.save):not(.menu-toggle):hover {
 }
 
 .flashcard img {
-    max-width: 80px;
+    max-width: 150px;
     height: auto;
     border-radius: 8px;
     margin: 0.5rem auto;
@@ -931,10 +938,6 @@ main a:hover, section a:hover {
     opacity: 1;
 }
 
-/* =========================
-   Flashcards page ONLY: lock height + internal scroll
-========================= */
-
 /* only applies when the flashcards page wrapper has BOTH classes */
 .main-layout.flashcards-layout{
   height: calc(100dvh - 4rem);   /* body padding is 2rem top + 2rem bottom */
@@ -967,10 +970,6 @@ main a:hover, section a:hover {
   min-height: 0;
   overflow-y: auto;
 }
-
-/* =========================
-   Window of Tolerance layout
-========================= */
 
 .tolerance-content {
   max-width: 1100px;
@@ -1007,10 +1006,6 @@ main a:hover, section a:hover {
   gap: 0.6rem;
   margin-top: 0.5rem;
 }
-
-/* =========================
-   Keyword chips (improved)
-========================= */
 
 .tolerance-page .chip {
   appearance: none;
