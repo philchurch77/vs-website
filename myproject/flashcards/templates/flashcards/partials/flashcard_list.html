@@ -3,13 +3,25 @@
 {% if flashcards %}
     {% for card in flashcards %}
         <div class="flashcard">
-            <h3>{{ card.title }}</h3>
-            <p><strong>Who? Where? When? Why?:</strong> {{ card.who_where_when_why }}</p>
-            <p><strong>How to do it:</strong> {{ card.how_to_do_it }}</p>
-            <p><strong>What you need:</strong> {{ card.what_you_need }}</p>
-            <p><strong>Flashcard ID:</strong> {{ card.flashcard_id }}</p>
+            <h3 class="card-title">{{ card.title }}</h3>
+            <div class="content-section">
+                <strong>Who? Where? When? Why?</strong>
+                {{ card.who_where_when_why }}
+            </div>
+            <div class="content-section">
+                <strong>How to do it:</strong>
+                {{ card.how_to_do_it }}
+            </div>
+            <div class="content-section">
+                <strong>What you need:</strong>
+                {{ card.what_you_need }}
+            </div>
+            <div class="content-section">
+                <strong>Flashcard ID:</strong>
+                {{ card.flashcard_id }}
+            </div>
             {% if card.image %}
-                <img src="{{ card.image.url }}" alt="{{ card.title }}" style="max-width: 100%;">
+                <img src="{{ card.image.url }}" alt="{{ card.title }}">
             {% endif %}
         </div>
     {% endfor %}

@@ -6,9 +6,9 @@ def get_flashcard_texts():
     flashcard_texts = []
     for card in flashcards:
         flashcard_texts.append(f"""
-**Flashcard ID:** {card.flashcard_id}
-**Flashcard Title:** {card.title}
-**Who? Where? When? Why?** {card.who_where_when_why}
+Flashcard ID: {card.flashcard_id}
+Flashcard Title: {card.title}
+Who? Where? When? Why? {card.who_where_when_why}
 """)
     return flashcard_texts
 
@@ -62,7 +62,6 @@ Then present the selected flashcards:
 **Flashcard ID:** [Just the ID number, no # symbols]
 
 ---
-
 
 End with a supportive message:
 
