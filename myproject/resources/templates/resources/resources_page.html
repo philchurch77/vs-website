@@ -3,37 +3,54 @@
 {% block title %}{{ topic.title }}{% endblock %}
 
 {% block content %}
-<section>
-    <h1>{{ topic.title }}</h1>
+<div class="resource-container">
+    <article class="resource-card">
+        <header class="resource-header">
+            <h1 class="resource-title">{{ topic.title }}</h1>
+            <div class="resource-meta">
+                <div class="meta-item">
+                    <span class="meta-icon">📅</span>
+                    <span>{{ topic.date|date:"j M Y, H:i" }}</span>
+                </div>
+                {% if topic.author %}
+                <div class="meta-item">
+                    <span class="meta-icon">👤</span>
+                    <span>{{ topic.author }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </header>
 
-    <p>
-        <em>
-            {{ topic.date|date:"j M Y, H:i" }} 
-            {% if topic.author %} by {{ topic.author }}{% endif %}
-        </em>
-    </p>
-
-    {% if topic.tags.all %}
-        <p class="tags">
-            Tags:
+        {% if topic.tags.all %}
+        <div class="resource-tags">
+            <span class="tags-label">🏷️ Tags:</span>
             {% for t in topic.tags.all %}
-                <a href="{% url 'resources:resource_list_by_tag' t.slug %}">{{ t.name }}</a>{% if not forloop.last %}, {% endif %}
+                <a href="{% url 'resources:resource_list_by_tag' t.slug %}" class="tag-link">{{ t.name }}</a>{% if not forloop.last %}, {% endif %}
             {% endfor %}
-        </p>
-    {% endif %}
+        </div>
+        {% endif %}
 
-    {% if topic.body %}
-        <div class="prose">
+        {% if topic.body %}
+        <div class="resource-body prose">
             {{ topic.body |linebreaks }}
         </div>
-    {% endif %}
+        {% endif %}
 
-    {% if topic.link %}
-        <p><a href="{{ topic.link }}" target="_blank" rel="noopener">Open related link</a></p>
-    {% endif %}
+        <footer class="resource-footer">
+            {% if topic.link %}
+            <a href="{{ topic.link }}" target="_blank" rel="noopener" class="action-link">
+                <span class="link-icon">🔗</span>
+                Open related link
+            </a>
+            {% endif %}
 
-    {% if topic.file %}
-        <p><a href="{{ topic.file.url }}" download>Download attachment</a></p>
-    {% endif %}
-</section>
+            {% if topic.file %}
+            <a href="{{ topic.file.url }}" download class="action-link">
+                <span class="link-icon">📎</span>
+                Download attachment
+            </a>
+            {% endif %}
+        </footer>
+    </article>
+</div>
 {% endblock %}
