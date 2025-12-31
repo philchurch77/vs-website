@@ -4,39 +4,41 @@
 
 {% block content %}
 <section>
-  <h1>Training Resources</h1>
-  <h2>Resources and links from training sessions with the Cambridgeshire Virtual School</h2>
+  <h1 style="margin-bottom:0.2em;">Training Resources</h1>
+  <p style="color:#555; margin-bottom:1.5em;">Resources and links from training sessions with the Cambridgeshire Virtual School</p>
   {% if tag %}
-    <h2>Resources tagged with "{{ tag.name }}"</h2>
+    <h2 style="margin-bottom:1em;">Resources tagged with "{{ tag.name }}"</h2>
   {% endif %}
 
-  <p>Here is a list of training resources:</p>
-
-  {% for topic in resources %}
-    <article class="resource">
-      <h2>
-        <a href="{% url 'resources:page' slug=topic.slug %}">{{ topic.title }}</a>
-      </h2>
-
-      <p class="tags">
-        Tags:
-        {% for t in topic.tags.all %}
-          <a href="{% url 'resources:resource_list_by_tag' t.slug %}">{{ t.name }}</a>{% if not forloop.last %}, {% endif %}
-        {% empty %}
-          No tags
-        {% endfor %}
-      </p>
-
-      <p><em>{{ topic.date }} by {{ topic.author }}</em></p>
-
-      {% if topic.body %}
-        <p>{{ topic.body|truncatewords:30 }}</p>
-      {% endif %}
-    </article>
-  {% empty %}
+  {% if resources %}
+    <div class="resources-container">
+      {% for topic in resources %}
+        <article class="resource-list-card">
+          <div class="resource-list-title">
+            <a href="{% url 'resources:page' slug=topic.slug %}">{{ topic.title }}</a>
+          </div>
+          <div class="resource-list-meta">
+            {{ topic.date }} &middot; by {{ topic.author }}
+          </div>
+          <div class="resource-list-tags">
+            {% for t in topic.tags.all %}
+              <a class="tag-badge" href="{% url 'resources:resource_list_by_tag' t.slug %}">{{ t.name }}</a>
+            {% empty %}
+              <span style="color:#aaa;">No tags</span>
+            {% endfor %}
+          </div>
+          {% if topic.body %}
+            <div class="resource-list-body">{{ topic.body|truncatewords:30 }}</div>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
     <p>No resources yet.</p>
-  {% endfor %}
+  {% endif %}
 
-  {% include "pagination.html" with page=resources %}
+  <div style="margin-top:2em;">
+    {% include "pagination.html" with page=resources %}
+  </div>
 </section>
 {% endblock %}
