@@ -48,6 +48,9 @@
             <a href="{% url 'sdq:sdq_form_view' %}"{% if request.path|slice:':4' == '/sdq' %} class="active"{% endif %}>
                 <span aria-label="SDQ" title="SDQ">SDQ</span>
             </a>
+            <a href="{% url 'animation:chat_page' %}"{% if request.path|slice:':10' == '/animation' %} class="active"{% endif %}>
+                <span aria-label="Animation Assistant" title="Animation Assistant">Animation Assistant</span>
+            </a>
             <form class="logout" action="{% url 'users:logout' %}" method="post">
                 {% csrf_token %}
                 <button class="nav-button-link" aria-label="User Logout" title="User Logout">

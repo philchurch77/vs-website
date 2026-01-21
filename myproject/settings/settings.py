@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "myproject.sdq",
     "myproject.resources",
     "myproject.tolerance",
+    "myproject.animation",
 ]
 
 MIDDLEWARE = [
