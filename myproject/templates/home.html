@@ -1,11 +1,25 @@
 {% extends 'layout.html' %}
-
-{%block title %}
-    Home
-{% endblock %}
+{% load static %}
 
 {% block content %}
-    <h1>Recovery Through Relationships</h1>
-    <p>Click here for the <a href="/about">About</a> page.</p>
-
+    <div class="home-page-bg">
+        <section class="home-hero">
+            <h1>The Cambridgeshire Virtual School</h1>
+            <p class="narrow-text">
+                Supporting children in care, care leavers and previously looked after children
+                to thrive in education through relationships, creativity and collaboration.
+            </p>
+            <div class="home-hero-images">
+                <img src="{% static 'images/vision_banner.png' %}" alt="Cambridgeshire Virtual School vision banner" class="home-hero-main" />
+                <img src="{% static 'images/flow.png' %}" alt="Flow of support" class="home-hero-secondary" />
+            </div>
+        </section>
+        <section class="home-video">
+            <div class="home-video-inner">
+                <a href="https://www.youtube.com/watch?v=ixrmZ8E5nKk" target="_blank" rel="noopener" class="home-video-link">
+                    <span class="home-video-title">▶ Watch our animation on YouTube</span>
+                </a>
+            </div>
+        </section>
+    </div>
 {% endblock %}

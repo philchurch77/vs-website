@@ -1,13 +1,65 @@
+
+from django.db.models import Max
+from django.http import JsonResponse
+import re
+
+# Partial for chat history list (session list)
+from django.template.loader import render_to_string
+
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def chat_history_partial(request):
+    chat_sessions = (
+        ChatTurn.objects
+        .filter(user=request.user)
+        .values("session_id")
+        .annotate(last_timestamp=Max("timestamp"))
+        .order_by("-last_timestamp")[:20]
+    )
+
+
+    def strip_tags(value):
+        return re.sub(r'<[^>]*?>', '', value) if value else value
+
+    for session in chat_sessions:
+        # Prefer the first assistant message as the summary/title
+        first_assistant = (
+            ChatTurn.objects
+            .filter(session_id=session["session_id"], user=request.user, role="assistant")
+            .order_by("timestamp")
+            .first()
+        )
+        if first_assistant and first_assistant.content:
+            plain = strip_tags(first_assistant.content)
+            session["title"] = (plain[:47] + "...") if len(plain) > 50 else plain
+        else:
+            # Fallback to first user message
+            first_turn = (
+                ChatTurn.objects
+                .filter(session_id=session["session_id"], user=request.user)
+                .order_by("timestamp")
+                .first()
+            )
+            if first_turn and first_turn.content:
+                plain = strip_tags(first_turn.content)
+                session["title"] = (plain[:47] + "...") if len(plain) > 50 else plain
+            else:
+                session["title"] = "Untitled"
+
+    html = render_to_string("animation/partials/chat_history_list.html", {"chat_sessions": chat_sessions}, request=request)
+    return HttpResponse(html)
 import json
 import asyncio
 import re
 
-from django.http import StreamingHttpResponse, HttpResponse, JsonResponse
+from django.http import StreamingHttpResponse, HttpResponse, JsonResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.crypto import get_random_string
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
+from django.urls import reverse
 from django.template.loader import render_to_string
 
 
@@ -108,12 +160,12 @@ def stream_animation_api(request):
 @login_required
 def chat_page(request):
     user = request.user
-
-    # Reset to clean chat session
-    chat_turns = []
-    request.session["chat_session_id"] = None
-    request.session["chat_history"] = []
-
+    session_id = request.session.get("chat_session_id")
+    if not session_id:
+        from django.utils.crypto import get_random_string
+        session_id = get_random_string(32)
+        request.session["chat_session_id"] = session_id
+    chat_turns = ChatTurn.objects.filter(session_id=session_id, user=user).order_by("timestamp")
     return render(request, "animation/animationchat.html", {
         "chat_turns": chat_turns
     })
@@ -140,5 +192,37 @@ def new_chat_session(request):
     request.session["chat_session_id"] = get_random_string(32)
     request.session["chat_history"] = []
     return redirect("animation:chat_page")
+
+
+@login_required
+def delete_chat_session(request, session_id):
+    ChatTurn.objects.filter(user=request.user, session_id=session_id).delete()
+    # If current session was deleted clear it
+    if request.session.get("chat_session_id") == session_id:
+        request.session["chat_session_id"] = None
+        request.session["chat_history"] = []
+    return HttpResponseRedirect(reverse("animation:chat_page"))
+
+
+@login_required
+def rename_chat_session(request, session_id):
+    data = json.loads(request.body)
+    new_title = data.get("title", "").strip()
+    if new_title:
+        first_turn = ChatTurn.objects.filter(session_id=session_id, user=request.user).order_by("timestamp").first()
+        if first_turn:
+            first_turn.content = new_title
+            first_turn.save()
+        return JsonResponse({"status": "ok"})
+    return JsonResponse({"error": "Invalid title"}, status=400)
+
+
+@login_required
+def export_chat_session(request, session_id):
+    turns = ChatTurn.objects.filter(session_id=session_id, user=request.user).order_by("timestamp")
+    lines = [f"{turn.role.upper()}: {turn.content}" for turn in turns]
+    response = HttpResponse("\n\n".join(lines), content_type="text/plain")
+    response["Content-Disposition"] = f'attachment; filename="animation_chat_{session_id}.txt"'
+    return response
 
 

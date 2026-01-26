@@ -183,6 +183,11 @@
         }
     }
 
+    function exportSession(sessionId) {
+        // Trigger download of the selected chat session
+        window.location.href = `/flashcards/session/${sessionId}/export/`;
+    }
+
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== "") {

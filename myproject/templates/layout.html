@@ -20,9 +20,6 @@
         <a href="/"{% if request.path == '/' %} class="active"{% endif %}>
             <span aria-label="Home" title="Home">Home</span>
         </a>
-        <a href="/about"{% if request.path|slice:':6' == '/about' %} class="active"{% endif %}>
-            <span aria-label="About" title="About">About</span>
-        </a>
         <a href="{% url 'posts:list' %}"{% if request.path|slice:':7' == '/posts/' or request.path == '/posts' %} class="active"{% endif %}>
             <span aria-label="Posts" title="Posts">Virtual School Posts</span>
         </a>

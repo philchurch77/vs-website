@@ -13,7 +13,6 @@ urlpatterns = [
     # Admin and core pages
     path('admin/', admin.site.urls),
     path('', views.homepage),
-    path('about/', views.about),
 
     # App routes
     path('posts/',      include('myproject.posts.urls', namespace='posts')),

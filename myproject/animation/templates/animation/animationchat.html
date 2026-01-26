@@ -5,9 +5,17 @@
 {% endblock %}
 
 {% block content %}
-<div class="main-layout single-column">
-    <!-- Single big column that uses the same layout as the Toolkit page -->
-    <section class="toolkit-column">
+<link rel="stylesheet" href="/static/css/style.css">
+<div class="main-layout two-column">
+        <!-- Sidebar for chat history -->
+        <aside class="sidebar chat-history-sidebar">
+                <h3>Chat History</h3>
+                <div id="chat-history" hx-get="{% url 'animation:chat_history_partial' %}" hx-trigger="load, revealed" hx-swap="innerHTML">
+                        <!-- Chat history will be loaded here -->
+                </div>
+        </aside>
+        <!-- Main chat column -->
+        <section class="toolkit-column">
         <header class="panel-header">
             <div class="panel-heading">
                 <h2>Animation Assistant</h2>
@@ -17,14 +25,14 @@
             </div>
         </header>
 
-        <div class="toolkit-body">
-            <section class="chat-panel" style="width:100%;">
+        <div class="toolkit-body animation-toolkit-body">
+            <section class="chat-panel animation-chat-panel">
                 <!-- Chat messages -->
-                <div class="messages" id="messages">
+                <div class="messages animation-messages" id="messages">
                     {% if chat_turns %}
                         {% for turn in chat_turns %}
                             <div class="message {{ turn.role }}">
-                                <p>{{ turn.content }}</p>
+                                {{ turn.content|linebreaks }}
                             </div>
                         {% endfor %}
                     {% endif %}
@@ -32,7 +40,7 @@
 
                 <div class="panel-actions">
                     <!-- New Chat Button -->
-                    <form method="post" action="{% url 'evaluation:new_chat_session' %}" id="newChatForm">
+                    <form method="post" action="{% url 'animation:new_chat_session' %}" id="newChatForm">
                         {% csrf_token %}
                         <button type="submit" name="new" value="1" class="new-chat-btn">
                             New Chat
@@ -56,16 +64,16 @@
         const text = input.value.trim();
         if (!text) return;
 
+        // Always allow sending a message; set session as active if not already
         if (!sessionStorage.getItem("session_active")) {
-            alert("Please start a new chat or select a previous one.");
-            return;
+            sessionStorage.setItem("session_active", "1");
         }
 
         appendMessage("user", text);
         input.value = "";
 
         try {
-            const response = await fetch("/evaluation/stream/", {
+            const response = await fetch("/animation/stream/", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -84,6 +92,7 @@
             let fullText = "";
             appendMessage("assistant", ""); // Placeholder
 
+            // Remove dependency on [SUMMARY_SAVED] and always refresh chat history after assistant reply
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
@@ -91,21 +100,19 @@
                 const chunk = decoder.decode(value, { stream: true });
                 fullText += chunk;
 
-            if (chunk.includes("[SUMMARY_SAVED]")) {
-                const historyEl = document.querySelector("#chat-history");
-                if (historyEl) {
-                    htmx.ajax('GET', historyEl.getAttribute("hx-get"), {
-                        target: historyEl,
-                        swap: historyEl.getAttribute("hx-swap") || "innerHTML"
-                    });
-                }
-            }
-
                 const lastMessage = document.querySelector(".message.assistant:last-child");
                 if (lastMessage) {
                     const paragraphs = fullText.split(/\n+/).map(p => `<p>${p}</p>`).join("");
                     lastMessage.innerHTML = paragraphs;
                 }
+            }
+            // Always refresh chat history after assistant reply
+            const historyEl = document.querySelector("#chat-history");
+            if (historyEl) {
+                htmx.ajax('GET', historyEl.getAttribute("hx-get"), {
+                    target: historyEl,
+                    swap: historyEl.getAttribute("hx-swap") || "innerHTML"
+                });
             }
 
         } catch (err) {
@@ -121,6 +128,44 @@
         div.innerHTML = `<p>${text}</p>`;
         messagesDiv.appendChild(div);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    // Toggle dropdown visibility for chat history menu (works after HTMX updates)
+    document.addEventListener("click", (e) => {
+        const button = e.target.closest(".menu-toggle");
+        if (!button) return;
+        const sessionId = button.getAttribute("data-session-id");
+        const dropdown = document.getElementById(`menu-${sessionId}`);
+        if (dropdown) {
+            dropdown.classList.toggle("show");
+        }
+    });
+
+    async function renameSession(sessionId) {
+        const newTitle = prompt("Enter a new title for this chat:");
+        if (newTitle) {
+            await fetch(`/animation/session/${sessionId}/rename/`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCookie("csrftoken")
+                },
+                body: JSON.stringify({ title: newTitle })
+            });
+            // Refresh chat history so the new title appears
+            const historyEl = document.querySelector("#chat-history");
+            if (historyEl) {
+                htmx.ajax('GET', historyEl.getAttribute("hx-get"), {
+                    target: historyEl,
+                    swap: historyEl.getAttribute("hx-swap") || "innerHTML"
+                });
+            }
+        }
+    }
+
+    function exportSession(sessionId) {
+        // Trigger download of the selected chat session
+        window.location.href = `/animation/session/${sessionId}/export/`;
     }
 
     function getCookie(name) {
@@ -140,11 +185,12 @@
 
     // Enable input if session is active
     window.onload = () => {
-        if (sessionStorage.getItem("session_active")) {
-            document.getElementById("messageInput").disabled = false;
-            document.getElementById("sendBtn").disabled = false;
+        // Always enable input on load
+        document.getElementById("messageInput").disabled = false;
+        document.getElementById("sendBtn").disabled = false;
+        if (!sessionStorage.getItem("session_active")) {
+            sessionStorage.setItem("session_active", "1");
         }
-
         const messagesDiv = document.getElementById("messages");
         if (messagesDiv) {
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
@@ -158,7 +204,7 @@
 
     // Mark session active when a summary is clicked
     document.addEventListener("click", function (e) {
-        if (e.target.closest("a[href*='/evaluation/session/']")) {
+        if (e.target.closest("a[href*='/animation/session/']")) {
             sessionStorage.setItem("session_active", "1");
         }
     });
@@ -175,7 +221,7 @@
 
 <script>
     window.addEventListener("beforeunload", function () {
-        navigator.sendBeacon("/evaluation/reset-chat-session/");
+        navigator.sendBeacon("/animation/reset-chat-session/");
     });
 </script>
 {% endblock %}
