@@ -20,14 +20,14 @@
         <a href="/"{% if request.path == '/' %} class="active"{% endif %}>
             <span aria-label="Home" title="Home">Home</span>
         </a>
-        <a href="{% url 'posts:list' %}"{% if request.path|slice:':7' == '/posts/' or request.path == '/posts' %} class="active"{% endif %}>
+        <a href="{% url 'posts:list' %}"{% if request.path|slice:':7' == '/posts/' and request.path|slice:':15' != '/posts/new-post' or request.path == '/posts' %} class="active"{% endif %}>
             <span aria-label="Posts" title="Posts">Virtual School Posts</span>
         </a>
         <a href="{% url 'training:training_request' %}"{% if request.path|slice:':9' == '/training' %} class="active"{% endif %}>
             <span aria-label="Training Requests" title="Training Requests">Request Training</span>
         </a>
         {% if user.is_authenticated %}
-            <a href="{% url 'posts:new-post' %}"{% if request.path|slice:':11' == '/posts/new' %} class="active"{% endif %}>
+            <a href="{% url 'posts:new-post' %}"{% if request.path|slice:':15' == '/posts/new-post' %} class="active"{% endif %}>
                 <span aria-label="New Post" title="New Post">New Post</span>
             </a>
             <a href="{% url 'resources:resource_list' %}"{% if request.path|slice:':10' == '/resources' %} class="active"{% endif %}>

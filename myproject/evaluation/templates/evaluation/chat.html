@@ -5,12 +5,23 @@
 {% endblock %}
 
 {% block content %}
-<div class="main-layout single-column">
-    <!-- Single big column that uses the same layout as the Toolkit page -->
+<div class="main-layout two-column">
+    <!-- Sidebar for training summary history -->
+    <aside class="sidebar chat-history-sidebar">
+        <h3>Training Summary History</h3>
+        <div id="chat-history"
+             hx-get="{% url 'evaluation:chat_history_partial' %}"
+             hx-trigger="load, revealed"
+             hx-swap="innerHTML">
+            <p>No Training Summaries Yet</p>
+        </div>
+    </aside>
+
+    <!-- Main chat column -->
     <section class="toolkit-column">
         <header class="panel-header">
             <div class="panel-heading">
-                <h2>Training Evaluation</h2>
+                <h1>Training Evaluation</h1>
                 <p class="panel-subtitle">
                     Please complete your training impact evaluation with our friendly assistant.
                     Select a training summary to review past evaluations or begin a new chat.
@@ -18,22 +29,10 @@
             </div>
         </header>
 
-        <div class="toolkit-body">
-            <!-- LEFT: Training summary history -->
-            <aside class="chat-history">
-                <h3>Training Summary History</h3>
-                <div id="chat-history"
-                     hx-get="{% url 'evaluation:chat_history_partial' %}"
-                     hx-trigger="load"
-                     hx-swap="innerHTML">
-                    <p>No Training Summaries Yet</p>
-                </div>
-            </aside>
-
-            <!-- RIGHT: Chat panel -->
-            <section class="chat-panel">
+        <div class="toolkit-body evaluation-toolkit-body">
+            <section class="chat-panel evaluation-chat-panel">
                 <!-- Chat messages -->
-                <div class="messages" id="messages">
+                <div class="messages evaluation-messages" id="messages">
                     {% if chat_turns %}
                         {% for turn in chat_turns %}
                             <div class="message {{ turn.role }}">
@@ -43,15 +42,15 @@
                     {% endif %}
                 </div>
 
-            <div class="panel-actions">
-                <!-- New Chat Button -->
-                <form method="post" action="{% url 'evaluation:new_chat_session' %}" id="newChatForm">
-                    {% csrf_token %}
-                    <button type="submit" name="new" value="1" class="new-chat-btn">
-                        New Chat
-                    </button>
-                </form>
-            </div>
+                <div class="panel-actions">
+                    <!-- New Chat Button -->
+                    <form method="post" action="{% url 'evaluation:new_chat_session' %}" id="newChatForm">
+                        {% csrf_token %}
+                        <button type="submit" name="new" value="1" class="new-chat-btn">
+                            New Chat
+                        </button>
+                    </form>
+                </div>
 
                 <!-- Input area -->
                 <div class="input-area">

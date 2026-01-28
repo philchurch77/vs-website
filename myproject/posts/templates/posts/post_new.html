@@ -10,7 +10,31 @@
         <p>Complete and submit this form to post your news or updates 😊</p>
         <form class="form-with-validation" action="{% url 'posts:new-post' %}" method = "POST" enctype="multipart/form-data">
             {% csrf_token %}
-            {{ form }}
+            {% if form.non_field_errors %}
+                <div class="form-errors" role="alert">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% for field in form %}
+                <div class="form-field{% if field.errors %} has-error{% endif %}">
+                    <label for="{{ field.id_for_label }}">
+                        {{ field.label }}
+                        {% if field.field.required %}
+                            <span class="required-star" aria-hidden="true">*</span>
+                        {% endif %}
+                    </label>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <p class="form-help">{{ field.help_text }}</p>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <p class="field-error">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endfor %}
             <button class="form-submit">Add Post</button>
         </form>
     </section>

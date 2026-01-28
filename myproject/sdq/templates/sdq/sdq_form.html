@@ -61,10 +61,171 @@
   </div>
 
 
-  <form class="form-with-validation" method="post">
+  <form class="form-with-validation sdq-form-cards" method="post">
     {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Submit</button>
+
+    <div class="sdq-card">
+      <h2>Section 1 of 5: Everyday behaviour</h2>
+      <p class="sdq-card-intro">Start with some general questions about how the child usually behaves.</p>
+      <div class="sdq-questions">
+        <div class="sdq-question">
+          <div class="sdq-question-text">{{ form.q1.label }}</div>
+          <div class="sdq-question-field">{{ form.q1 }}</div>
+          {% for error in form.q1.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="sdq-question">
+          <div class="sdq-question-text">{{ form.q2.label }}</div>
+          <div class="sdq-question-field">{{ form.q2 }}</div>
+          {% for error in form.q2.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="sdq-question">
+          <div class="sdq-question-text">{{ form.q3.label }}</div>
+          <div class="sdq-question-field">{{ form.q3 }}</div>
+          {% for error in form.q3.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="sdq-question">
+          <div class="sdq-question-text">{{ form.q4.label }}</div>
+          <div class="sdq-question-field">{{ form.q4 }}</div>
+          {% for error in form.q4.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="sdq-question">
+          <div class="sdq-question-text">{{ form.q5.label }}</div>
+          <div class="sdq-question-field">{{ form.q5 }}</div>
+          {% for error in form.q5.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="sdq-card">
+      <h2>Section 2 of 5: Friends and feelings</h2>
+      <p class="sdq-card-intro">These items focus on friendships, confidence and worries.</p>
+      <div class="sdq-questions">
+        <div class="sdq-question">
+          <div class="sdq-question-text">{{ form.q6.label }}</div>
+          <div class="sdq-question-field">{{ form.q6 }}</div>
+          {% for error in form.q6.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="sdq-question">
+          <div class="sdq-question-text">{{ form.q7.label }}</div>
+          <div class="sdq-question-field">{{ form.q7 }}</div>
+          {% for error in form.q7.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="sdq-question">
+          <div class="sdq-question-text">{{ form.q8.label }}</div>
+          <div class="sdq-question-field">{{ form.q8 }}</div>
+          {% for error in form.q8.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="sdq-question">
+          <div class="sdq-question-text">{{ form.q9.label }}</div>
+          <div class="sdq-question-field">{{ form.q9 }}</div>
+          {% for error in form.q9.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="sdq-question">
+          <div class="sdq-question-text">{{ form.q10.label }}</div>
+          <div class="sdq-question-field">{{ form.q10 }}</div>
+          {% for error in form.q10.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="sdq-card">
+      <h2>Section 3 of 5: Getting along with others</h2>
+      <p class="sdq-card-intro">Questions about relationships with other children and adults.</p>
+      <div class="sdq-questions">
+        <div class="sdq-question">
+          <div class="sdq-question-text">{{ form.q11.label }}</div>
+          <div class="sdq-question-field">{{ form.q11 }}</div>
+          {% for error in form.q11.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="sdq-question">
+          <div class="sdq-question-text">{{ form.q12.label }}</div>
+          <div class="sdq-question-field">{{ form.q12 }}</div>
+          {% for error in form.q12.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="sdq-question">
+          <div class="sdq-question-text">{{ form.q13.label }}</div>
+          <div class="sdq-question-field">{{ form.q13 }}</div>
+          {% for error in form.q13.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="sdq-question">
+          <div class="sdq-question-text">{{ form.q14.label }}</div>
+          <div class="sdq-question-field">{{ form.q14 }}</div>
+          {% for error in form.q14.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="sdq-question">
+          <div class="sdq-question-text">{{ form.q15.label }}</div>
+          <div class="sdq-question-field">{{ form.q15 }}</div>
+          {% for error in form.q15.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="sdq-card">
+      <h2>Section 4 of 5: Worries and behaviour</h2>
+      <p class="sdq-card-intro">This section looks at confidence, honesty and worries.</p>
+      <div class="sdq-questions">
+        <div class="sdq-question">
+          <div class="sdq-question-text">{{ form.q16.label }}</div>
+          <div class="sdq-question-field">{{ form.q16 }}</div>
+          {% for error in form.q16.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="sdq-question">
+          <div class="sdq-question-text">{{ form.q17.label }}</div>
+          <div class="sdq-question-field">{{ form.q17 }}</div>
+          {% for error in form.q17.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="sdq-question">
+          <div class="sdq-question-text">{{ form.q18.label }}</div>
+          <div class="sdq-question-field">{{ form.q18 }}</div>
+          {% for error in form.q18.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="sdq-question">
+          <div class="sdq-question-text">{{ form.q19.label }}</div>
+          <div class="sdq-question-field">{{ form.q19 }}</div>
+          {% for error in form.q19.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="sdq-question">
+          <div class="sdq-question-text">{{ form.q20.label }}</div>
+          <div class="sdq-question-field">{{ form.q20 }}</div>
+          {% for error in form.q20.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="sdq-card">
+      <h2>Section 5 of 5: Attention and strengths</h2>
+      <p class="sdq-card-intro">Finally, some questions about focus and strengths.</p>
+      <div class="sdq-questions">
+        <div class="sdq-question">
+          <div class="sdq-question-text">{{ form.q21.label }}</div>
+          <div class="sdq-question-field">{{ form.q21 }}</div>
+          {% for error in form.q21.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="sdq-question">
+          <div class="sdq-question-text">{{ form.q22.label }}</div>
+          <div class="sdq-question-field">{{ form.q22 }}</div>
+          {% for error in form.q22.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="sdq-question">
+          <div class="sdq-question-text">{{ form.q23.label }}</div>
+          <div class="sdq-question-field">{{ form.q23 }}</div>
+          {% for error in form.q23.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="sdq-question">
+          <div class="sdq-question-text">{{ form.q24.label }}</div>
+          <div class="sdq-question-field">{{ form.q24 }}</div>
+          {% for error in form.q24.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="sdq-question">
+          <div class="sdq-question-text">{{ form.q25.label }}</div>
+          <div class="sdq-question-field">{{ form.q25 }}</div>
+          {% for error in form.q25.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+        </div>
+      </div>
+
+      <button type="submit" class="form-submit">Submit questionnaire</button>
+    </div>
+
   </form>
 </section>
 {% endblock %}
