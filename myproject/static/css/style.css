@@ -625,7 +625,7 @@ nav a:hover {
 }
 
 .panel-subtitle {
-    font-size: 0.9rem;
+    font-size: 1.2rem;
     color: var(--muted-text);
     margin-bottom: 0;
     text-align: left;

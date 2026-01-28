@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Django App{% endblock %}</title>
+  <title>{% block title %}Virtual School{% endblock %}</title>
 
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <script src="{% static 'js/main.js' %}" defer></script>
@@ -48,6 +48,13 @@
             <a href="{% url 'animation:chat_page' %}"{% if request.path|slice:':10' == '/animation' %} class="active"{% endif %}>
                 <span aria-label="Animation Assistant" title="Animation Assistant">Animation Assistant</span>
             </a>
+            {% if user.is_superuser %}
+                <a href="{% url 'admin:index' %}"{% if request.path|slice:':7' == '/admin/' %} class="active"{% endif %}>
+                    <span aria-label="Admin" title="Admin">Admin</span>
+                </a>
+            {% else %}
+                <span class="nav-admin-disabled" aria-label="Admin (superusers only)" title="Admin (superusers only)">Admin</span>
+            {% endif %}
             <form class="logout" action="{% url 'users:logout' %}" method="post">
                 {% csrf_token %}
                 <button class="nav-button-link" aria-label="User Logout" title="User Logout">
