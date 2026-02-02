@@ -27,3 +27,17 @@ class Flashcard(models.Model):
 
     def __str__(self):
         return f"{self.sort_order}. {self.title}"
+    
+class Scenario(models.Model):
+    scenario_id = models.IntegerField(unique=True)
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    sort_order = models.IntegerField()
+
+    class Meta:
+        ordering = ["sort_order"]
+        verbose_name = "Scenario"
+        verbose_name_plural = "Scenarios"
+
+    def __str__(self):
+        return f"{self.sort_order}. {self.title}"

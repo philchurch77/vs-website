@@ -998,83 +998,108 @@ button:not(.chip):not(.save):not(.menu-toggle):hover {
 }
 
 /* Flashcards */
+.flashcards-column h1 {
+  font-size: 1.3rem;
+  text-align: left;
+  margin-bottom: 0.75rem;
+}
+
+.flashcards-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.9rem;
+  color: var(--muted-text);
+  margin-bottom: 0.75rem;
+}
+
+.flashcards-summary-row span {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.flashcards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1rem;
+}
+
 .flashcard {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    margin-bottom: 1.5rem;
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background: radial-gradient(circle at top left, rgba(142, 202, 230, 0.14), transparent 60%),
+        radial-gradient(circle at bottom right, rgba(255, 183, 3, 0.12), transparent 60%),
+        rgba(255, 255, 255, 0.96);
+  border-radius: 18px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
+  padding: 1.2rem 1.3rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
 .flashcard:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 22px 55px rgba(15, 23, 42, 0.2);
+  border-color: rgba(56, 189, 248, 0.85);
 }
 
 .flashcard img {
-    max-width: 150px;
-    height: auto;
-    border-radius: 8px;
-    margin: 0.5rem auto;
-    display: block;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    border: 2px solid rgba(255, 255, 255, 0.8);
+  max-width: 130px;
+  height: auto;
+  border-radius: 12px;
+  margin: 0.25rem auto 0.5rem;
+  display: block;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.25);
+  border: 2px solid rgba(255, 255, 255, 0.9);
 }
 
 /* Flashcard content sections */
 .flashcard .content-section {
-    background: rgba(255, 255, 255, 0.6);
-    border-radius: 6px;
-    padding: 0.75rem;
-    margin-bottom: 0.75rem;
-    border: 1px solid rgba(0, 0, 0, 0.05);
+  background: rgba(248, 250, 252, 0.85);
+  border-radius: 10px;
+  padding: 0.65rem 0.8rem;
+  margin-bottom: 0.45rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
 }
 
 .flashcard .content-section strong {
-    color: var(--primary);
-    font-weight: 600;
-    display: block;
-    margin-bottom: 0.25rem;
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+  color: var(--primary);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 0.2rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .flashcard .card-title {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-    color: white;
-    font-size: 1.25rem;
-    font-weight: 600;
-    text-align: center;
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-    margin: -1.5rem -1.5rem 1rem -1.5rem;
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
+  background: radial-gradient(circle at top left, var(--primary), #2dd4bf);
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 650;
+  text-align: left;
+  padding: 0.7rem 0.85rem;
+  border-radius: 14px;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.32);
+  margin: 0 0 0.3rem 0;
 }
 
 .flashcard .section-title {
-    font-weight: 600;
-    font-size: 1rem;
-    color: var(--primary);
-    margin: 1rem 0 0.5rem 0;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  margin: 0.7rem 0 0.35rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
 }
 
 .flashcard p {
-    font-size: 0.95rem;
-    line-height: 1.6;
-    margin-bottom: 0.75rem;
-    color: var(--dark-text);
-    padding: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 0.4rem;
+  color: var(--dark-text);
+  padding: 0;
 }
 
 /* Chat History Styling */

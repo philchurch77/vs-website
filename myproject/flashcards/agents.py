@@ -1,5 +1,5 @@
 from agents import Agent
-from .models import Flashcard
+from .models import Flashcard, Scenario
 
 def get_flashcard_texts():
     flashcards = Flashcard.objects.all().order_by("sort_order")
@@ -12,13 +12,30 @@ Who? Where? When? Why? {card.who_where_when_why}
 """)
     return flashcard_texts
 
+
+def get_scenario_texts():
+    scenarios = Scenario.objects.all().order_by("sort_order")
+    scenario_texts = []
+    for scenario in scenarios:
+        scenario_texts.append(f"""
+Scenario ID: {scenario.scenario_id}
+Scenario Title: {scenario.title}
+Scenario Description: {scenario.description}
+""")
+    return scenario_texts
+
 def build_toolkit_agent():
     flashcards_text = "\n".join(get_flashcard_texts())
+    scenario_text = "\n".join(get_scenario_texts())
 
     return Agent(
         name="Toolkit Agent",
         instructions=f"""
 {flashcards_text}
+
+Relevant scenarios that describe patterns, contexts, or example situations:
+
+{scenario_text}
 
 ---
 
