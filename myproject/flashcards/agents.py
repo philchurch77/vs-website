@@ -103,5 +103,5 @@ At the end of your response, include a line like this:
 
 [SELECTED_FLASHCARD_IDS: ]
         """,
-        model="gpt-4.1"
+    model="gpt-4.1-mini"
     )
