@@ -55,12 +55,35 @@
                     <input type="text" id="messageInput" placeholder="Type here..." />
                     <button id="sendBtn" type="button" class="new-chat-btn" onclick="sendMessage()">Send</button>
                 </div>
+            <style>
+            .spinner {
+                display: inline-block;
+                width: 24px;
+                height: 24px;
+                border: 3px solid #ccc;
+                border-top: 3px solid #0078d7;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                vertical-align: middle;
+            }
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            .thinking-bubble {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                color: #555;
+                font-style: italic;
+            }
+            </style>
             </section>
         </div>
     </section>
 
     <!-- RIGHT: Flashcards -->
-    <aside class="sidebar flashcards-column">
+    <aside class="sidebar flashcards-column" id="flashcards-sidebar">
         <h1>Flashcards</h1>
         {% include "flashcards/partials/flashcard_list.html" %}
     </aside>
@@ -91,6 +114,15 @@
         appendMessage("user", text);
         input.value = "";
 
+        // Add spinner as a temporary assistant message bubble
+        const messagesDiv = document.getElementById("messages");
+        const thinkingDiv = document.createElement("div");
+        thinkingDiv.className = "message assistant thinking-bubble";
+        thinkingDiv.id = "ai-thinking-bubble";
+        thinkingDiv.innerHTML = '<span class="spinner"></span> <span>Echo is thinking...</span>';
+        messagesDiv.appendChild(thinkingDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
         try {
             const response = await fetch("/flashcards/stream/", {
                 method: "POST",
@@ -102,6 +134,9 @@
             });
 
             if (!response.ok || !response.body) {
+                // Remove spinner bubble
+                const thinkingBubble = document.getElementById("ai-thinking-bubble");
+                if (thinkingBubble) thinkingBubble.remove();
                 appendMessage("assistant", "⚠️ Error: Failed to stream response.");
                 return;
             }
@@ -109,6 +144,10 @@
             const reader = response.body.getReader();
             const decoder = new TextDecoder("utf-8");
             let fullText = "";
+
+            // Remove spinner bubble and add real assistant message bubble
+            const thinkingBubble = document.getElementById("ai-thinking-bubble");
+            if (thinkingBubble) thinkingBubble.remove();
             appendMessage("assistant", "");
 
             while (true) {
@@ -118,9 +157,12 @@
                 const chunk = decoder.decode(value, { stream: true });
                 fullText += chunk;
 
+                // Remove the [SELECTED_FLASHCARD_IDS: ...] marker from the text before displaying
+                let displayText = fullText.replace(/\[SELECTED_FLASHCARD_IDS:[^\]]*\]/g, "").trim();
+
                 const lastMessage = document.querySelector(".message.assistant:last-child");
                 if (lastMessage) {
-                    const paragraphs = fullText.split(/\n+/).map(p => `<p>${p}</p>`).join("");
+                    const paragraphs = displayText.split(/\n+/).map(p => `<p>${p}</p>`).join("");
                     lastMessage.innerHTML = paragraphs;
                 }
             }
@@ -146,11 +188,13 @@
             await fetch("/flashcards/filtered/")
                 .then(res => res.json())
                 .then(data => {
-                    const sidebar = document.querySelector(".sidebar");
-                    sidebar.innerHTML = "<h2>Flashcards</h2>" + data.html;
+                    const flashcardsSidebar = document.getElementById("flashcards-sidebar");
+                    if (flashcardsSidebar) {
+                        flashcardsSidebar.innerHTML = "<h1>Flashcards</h1>" + data.html;
+                    }
                 });
 
-                        // ✅ Refresh chat history after assistant reply
+            // ✅ Refresh chat history after assistant reply
             await fetch("/flashcards/chat_history_partial/")
             .then(res => res.json())
             .then(data => {
@@ -159,6 +203,9 @@
             });
 
         } catch (err) {
+            // Remove spinner bubble
+            const thinkingBubble = document.getElementById("ai-thinking-bubble");
+            if (thinkingBubble) thinkingBubble.remove();
             appendMessage("assistant", "⚠️ Network error. See console.");
             console.error("Network error:", err);
         }

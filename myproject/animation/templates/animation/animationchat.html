@@ -17,9 +17,12 @@
         <!-- Main chat column -->
         <section class="toolkit-column">
         <header class="panel-header">
-            <div class="panel-heading">
-                <h1 class="animation-title">Animation Assistant</h1>
-                <p class="panel-subtitle animation-subtitle">Plan and design your animation with our friendly Animation Assistant. Start a new chat to brainstorm ideas, get tips, and receive creative support for your virtual school project.</p>
+            <div class="panel-heading" style="display: flex; align-items: center; gap: 1rem; flex-direction: row; justify-content: space-between;">
+                <div style="flex:1;">
+                    <h1 class="animation-title" style="margin-bottom: 0.2em;">Gizmo - The Animation Assistant</h1>
+                    <p class="panel-subtitle animation-subtitle" style="text-align: center;">Plan and design your animation with our friendly Animation Assistant, <strong>Gizmo</strong>. Start a new chat to brainstorm ideas, get tips, and receive creative support for your virtual school project.</p>
+                </div>
+                <img src="/static/images/Gizmo.png.png" alt="Gizmo" style="height: 54px; width: 54px; object-fit: contain; background: none; border-radius: 0; box-shadow: none; margin-left: 1rem;" />
             </div>
         </header>
 
@@ -58,6 +61,29 @@
                     <input type="text" id="messageInput" placeholder="Type your animation idea or question here..." style="flex: 1; border-radius: 8px; border: 1px solid #e0e6ed; padding: 0.6em 1em; font-size: 1.08rem;"/>
                     <button id="sendBtn" type="button" class="new-chat-btn" onclick="sendMessage()">Send</button>
                 </div>
+                <style>
+                .spinner {
+                    display: inline-block;
+                    width: 24px;
+                    height: 24px;
+                    border: 3px solid #ccc;
+                    border-top: 3px solid #0078d7;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                    vertical-align: middle;
+                }
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+                .thinking-bubble {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    color: #555;
+                    font-style: italic;
+                }
+                </style>
             </section>
         </div>
     </section>
@@ -77,6 +103,15 @@
         appendMessage("user", text);
         input.value = "";
 
+        // Add spinner as a temporary assistant message bubble (Gizmo)
+        const messagesDiv = document.getElementById("messages");
+        const thinkingDiv = document.createElement("div");
+        thinkingDiv.className = "message assistant thinking-bubble";
+        thinkingDiv.id = "ai-thinking-bubble";
+        thinkingDiv.innerHTML = '<span class="spinner"></span> <span>Gizmo is thinking...</span>';
+        messagesDiv.appendChild(thinkingDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
         try {
             const response = await fetch("/animation/stream/", {
                 method: "POST",
@@ -88,6 +123,9 @@
             });
 
             if (!response.ok || !response.body) {
+                // Remove spinner bubble
+                const thinkingBubble = document.getElementById("ai-thinking-bubble");
+                if (thinkingBubble) thinkingBubble.remove();
                 appendMessage("assistant", "⚠️ Error: Failed to stream response.");
                 return;
             }
@@ -95,7 +133,11 @@
             const reader = response.body.getReader();
             const decoder = new TextDecoder("utf-8");
             let fullText = "";
-            appendMessage("assistant", ""); // Placeholder
+
+            // Remove spinner bubble and add real assistant message bubble
+            const thinkingBubble = document.getElementById("ai-thinking-bubble");
+            if (thinkingBubble) thinkingBubble.remove();
+            appendMessage("assistant", "");
 
             // Remove dependency on [SUMMARY_SAVED] and always refresh chat history after assistant reply
             while (true) {
@@ -121,6 +163,9 @@
             }
 
         } catch (err) {
+            // Remove spinner bubble
+            const thinkingBubble = document.getElementById("ai-thinking-bubble");
+            if (thinkingBubble) thinkingBubble.remove();
             appendMessage("assistant", "⚠️ Network error. See console.");
             console.error("Network error:", err);
         }

@@ -9,12 +9,11 @@
     <!-- Sidebar for training summary history -->
     <aside class="sidebar chat-history-sidebar">
         <h3>Training Summary History</h3>
-        <div id="chat-history"
-             hx-get="{% url 'evaluation:chat_history_partial' %}"
-             hx-trigger="load, revealed"
-             hx-swap="innerHTML">
-            <p>No Training Summaries Yet</p>
-        </div>
+           <div id="chat-history"
+               hx-get="{% url 'evaluation:chat_history_partial' %}"
+               hx-trigger="load, revealed"
+               hx-swap="innerHTML">
+           </div>
     </aside>
 
     <!-- Main chat column -->
