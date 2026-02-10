@@ -33,10 +33,15 @@
             <section class="chat-panel evaluation-chat-panel">
                 <!-- Chat messages -->
                 <div class="messages evaluation-messages" id="messages">
+                    {% if not chat_turns %}
+                        <div class="message assistant welcome-bubble">
+                            👋 Hi! I can help you reflect on your training, share feedback, or summarize your experience.
+                        </div>
+                    {% endif %}
                     {% if chat_turns %}
                         {% for turn in chat_turns %}
                             <div class="message {{ turn.role }}">
-                                <p>{{ turn.content }}</p>
+                                {{ turn.content|linebreaks }}
                             </div>
                         {% endfor %}
                     {% endif %}

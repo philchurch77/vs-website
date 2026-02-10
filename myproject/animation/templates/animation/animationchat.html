@@ -9,19 +9,17 @@
 <div class="main-layout two-column">
         <!-- Sidebar for chat history -->
         <aside class="sidebar chat-history-sidebar">
-                <h3>Chat History</h3>
-                <div id="chat-history" hx-get="{% url 'animation:chat_history_partial' %}" hx-trigger="load, revealed" hx-swap="innerHTML">
-                        <!-- Chat history will be loaded here -->
-                </div>
+            <h3 class="chat-history-heading">Chat history</h3>
+            <div id="chat-history" hx-get="{% url 'animation:chat_history_partial' %}" hx-trigger="load, revealed" hx-swap="innerHTML">
+            <!-- Chat history will be loaded here -->
+            </div>
         </aside>
         <!-- Main chat column -->
         <section class="toolkit-column">
         <header class="panel-header">
             <div class="panel-heading">
-				<h1>Animation Assistant</h1>
-                <p class="panel-subtitle">
-                    Plan and design your animation with our friendly Animation Assistant. Start a new chat to brainstorm ideas, get tips, and receive creative support for your virtual school project.
-                </p>
+                <h1 class="animation-title">Animation Assistant</h1>
+                <p class="panel-subtitle animation-subtitle">Plan and design your animation with our friendly Animation Assistant. Start a new chat to brainstorm ideas, get tips, and receive creative support for your virtual school project.</p>
             </div>
         </header>
 
@@ -29,6 +27,11 @@
             <section class="chat-panel animation-chat-panel">
                 <!-- Chat messages -->
                 <div class="messages animation-messages" id="messages">
+                    {% if not chat_turns %}
+                        <div class="message assistant welcome-bubble">
+                            👋 Hi! I can help you plan animations, scripts, characters, or storyboards.
+                        </div>
+                    {% endif %}
                     {% if chat_turns %}
                         {% for turn in chat_turns %}
                             <div class="message {{ turn.role }}">
@@ -39,18 +42,20 @@
                 </div>
 
                 <div class="panel-actions">
-                    <!-- New Chat Button -->
-                    <form method="post" action="{% url 'animation:new_chat_session' %}" id="newChatForm">
-                        {% csrf_token %}
-                        <button type="submit" name="new" value="1" class="new-chat-btn">
-                            New Chat
-                        </button>
-                    </form>
+                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                        <form method="post" action="{% url 'animation:new_chat_session' %}" id="newChatForm" style="margin: 0;">
+                            {% csrf_token %}
+                            <button type="submit" name="new" value="1" class="new-chat-btn">
+                                New Chat
+                            </button>
+                        </form>
+                        <img src="/static/images/monsters.png.png" alt="Monsters Decorative" style="width: 110px; height: 64px; object-fit: contain; margin-left: 18px; background: none; border-radius: 0; box-shadow: none;" />
+                    </div>
                 </div>
 
                 <!-- Input area -->
-                <div class="input-area">
-                    <input type="text" id="messageInput" placeholder="Type your animation idea or question here..."/>
+                <div class="input-area" style="background: #fff; border-radius: 14px; box-shadow: 0 2px 12px rgba(30,60,90,0.06); padding: 0.7em 1em 0.7em 1em; margin-top: 0.7em; display: flex; gap: 0.7em; align-items: center;">
+                    <input type="text" id="messageInput" placeholder="Type your animation idea or question here..." style="flex: 1; border-radius: 8px; border: 1px solid #e0e6ed; padding: 0.6em 1em; font-size: 1.08rem;"/>
                     <button id="sendBtn" type="button" class="new-chat-btn" onclick="sendMessage()">Send</button>
                 </div>
             </section>

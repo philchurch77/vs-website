@@ -17,9 +17,9 @@
         </header>
 
         <div class="toolkit-body">
-            <!-- Chat history, now a narrow panel on the left -->
-            <aside class="chat-history">
-                <h3>Chat History</h3>
+            <!-- Chat history styled as sidebar, matching animation page -->
+            <aside class="sidebar chat-history-sidebar">
+                <h3 class="chat-history-heading">Chat History</h3>
                 <div id="chat-history">
                     {% include "flashcards/partials/chat_history_list.html" %}
                 </div>
@@ -29,6 +29,18 @@
             <section class="chat-panel">
                 <div class="messages" id="messages"></div>
             <div class="panel-actions">
+                                                <script>
+                                                // Add a welcome message if no messages exist
+                                                document.addEventListener("DOMContentLoaded", function() {
+                                                    const messagesDiv = document.getElementById("messages");
+                                                    if (messagesDiv && messagesDiv.children.length === 0) {
+                                                        const welcome = document.createElement("div");
+                                                        welcome.className = "message assistant welcome-bubble";
+                                                        welcome.textContent = "👋 Hi! How can I help you?";
+                                                        messagesDiv.appendChild(welcome);
+                                                    }
+                                                });
+                                                </script>
                 <form method="get" action="{% url 'flashcards:flashcards_page' %}">
                     <button type="submit" name="new" value="1" class="new-chat-btn">
                         New Chat
