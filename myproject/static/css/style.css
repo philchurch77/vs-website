@@ -270,8 +270,8 @@ body {
 .toolkit-column {
   flex: 1 1 0%;
   min-width: 520px;
-  max-width: 900px;
-  padding: 2.5em 2.5em 2.5em 2.5em;
+  max-width: 1200px;
+  padding: 2.5em 1.5em 2.5em 2.5em;
   background: #fff;
   display: flex;
   flex-direction: column;
@@ -293,12 +293,12 @@ body {
 .animation-chat-panel,
 .evaluation-chat-panel {
   width: 100%;
-  max-width: 960px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
   background: transparent;
   border-radius: var(--border-radius-md, 12px);
   box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-  padding: 1.5rem 2rem 1rem 2rem;
+  padding: 1.5rem 1.5rem 1rem 1.5rem;
   display: flex;
   flex-direction: column;
   min-height: 500px;
@@ -310,13 +310,16 @@ body {
   border-radius: var(--border-radius-md, 12px);
   border: 1px solid #e0e0e0;
   margin-bottom: 1rem;
-  padding: 1rem;
+  padding: 1.2rem 1.5rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 /* Make animation/evaluation chat messages use more width and spacing */
 .animation-messages .message,
 .evaluation-messages .message {
-  max-width: 100%;
+  max-width: 98%;
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
 }
 .animation-messages .user,
 .animation-messages .assistant,
