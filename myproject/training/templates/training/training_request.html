@@ -1,14 +1,19 @@
 {% extends 'layout.html' %}
+{% load static %}
 
 {% block title %}
     New Training Request
 {% endblock %}
 
 {% block content %}
-
-    <section>
-        <h1>Training Request</h1>
-        <p>Complete and submit this form to request a training session with the Virtual School</p>
+    <section class="training-request-vibrant-bg">
+        <div class="training-request-header">
+            <img src="{% static 'images/VS_Banner.png' %}" alt="Virtual School Banner" class="training-request-icon" />
+            <h1 class="training-request-title">Request Training!</h1>
+        </div>
+        <div class="training-request-highlight">
+            <strong>Ready to grow?</strong> Fill out the form below to book a training session with the Virtual School team. We can't wait to help you learn and succeed!
+        </div>
         <form class="form-with-validation" action="{% url 'training:training_request' %}" method="POST" enctype="multipart/form-data">
             {% csrf_token %}
             {% if form.non_field_errors %}
@@ -52,6 +57,7 @@
             const flash = document.querySelector('#flash-messages .flash-message');
             if (flash) {
                 flash.classList.add('show');  // fade in
+
                 setTimeout(() => flash.classList.remove('show'), 3000);  // fade out
                 setTimeout(() => flash.remove(), 4000);  // remove from DOM
             }

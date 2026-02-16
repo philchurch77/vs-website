@@ -5,21 +5,32 @@
 {% endblock %}
 
 {% block content %}
-    <section>
+<section class="vs-posts-list vs-posts-single">
+    <article class="vs-post-card vs-post-single-card">
         {% if post.image %}
-            <img
-                class="image"
-                src="{{ post.image.url }}"
-                alt="{{ post.title }}"
-            />
+        <div class="vs-post-image-wrap">
+            <img src="{{ post.image.url }}" alt="{{ post.title }} image" class="vs-post-image">
+        </div>
         {% endif %}
-
-        <h1>{{ post.title }}</h1>
-        <p>{{ post.date }}</p>
-        
-        {% if post.body %}
-            <p>{{ post.body }}</p>
-        {% endif %}
-    </section>
+        <div class="vs-post-content">
+            <h1 class="vs-post-title">{{ post.title }}</h1>
+            <div class="vs-post-meta">
+                <span class="vs-post-date">{{ post.date|date:"M d, Y" }}</span>
+                <span class="vs-post-author">by {{ post.author }}</span>
+            </div>
+            <div class="vs-post-body">
+                {{ post.body|linebreaks }}
+            </div>
+            <div class="vs-post-tags">
+                <span>Tags:</span>
+                {% for post_tag in post.tags.all %}
+                    <a href="{% url 'posts:post_list_by_tag' post_tag.slug %}" class="vs-post-tag">{{ post_tag.name }}</a>{% if not forloop.last %}, {% endif %}
+                {% empty %}
+                    <span class="vs-post-tag-none">No tags</span>
+                {% endfor %}
+            </div>
+        </div>
+    </article>
+</section>
 {% endblock %}
 

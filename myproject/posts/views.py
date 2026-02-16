@@ -27,17 +27,5 @@ def post_page(request, slug):
     post = get_object_or_404(Post, slug=slug)
     return render(request, 'posts/post_page.html', {'post': post})
 
-@login_required(login_url="/users/login/")
-def post_new(request):
-    if request.method == 'POST':
-        form = forms.CreatePost(request.POST, request.FILES)
-        if form.is_valid():
-            newpost = form.save(commit=False)
-            newpost.author = request.user
-            newpost.save()
-            form.save_m2m() 
-            return redirect('posts:list')
-    else:    
-        form = forms.CreatePost()
-    return render(request, 'posts/post_new.html', {'form': form})
+# Post creation via website form is disabled. Please use the admin interface to create posts.
 

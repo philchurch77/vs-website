@@ -22,4 +22,20 @@
             </div>
         </section>
     </div>
+
+    <div class="home-qr-floating" aria-label="Share the Virtual School website">
+        <div class="home-qr-floating-copy">
+            <p class="home-qr-floating-title">Need the site on your phone?</p>
+            <p class="home-qr-floating-subtext">Scan to open the Virtual School instantly and share it in meetings.</p>
+        </div>
+        <div class="home-qr-floating-code">
+            <img
+                src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data={{ request.build_absolute_uri|urlencode }}"
+                alt="QR code linking to the Virtual School home page"
+                width="220"
+                height="220"
+                loading="lazy"
+            />
+        </div>
+    </div>
 {% endblock %}

@@ -5,42 +5,43 @@
 {% endblock %}
 
 {% block content %}
-    <section>
-        <h1>Posts from the Cambridgeshire Virtual School</h1>
-
+    <section class="vs-posts-list">
+        <h1 class="vs-posts-title">Virtual School News & Updates</h1>
         {% if tag %}
-            <h2>Posts tagged with "{{ tag.name }}"</h2>
+            <h2 class="vs-posts-tag">Posts tagged with "{{ tag.name }}"</h2>
         {% endif %}
-
-        <p>Here are some of our most recent events and training activities.</p>
-
+        <p class="vs-posts-intro">Here are some of our most recent events and training activities.</p>
+        <div class="vs-posts-grid">
         {% for post in posts %}
-            <article class="post">
-                <h2>
-                    <a href="{% url 'posts:page' slug=post.slug %}">
-                        {{ post.title }}
-                    </a>
-                </h2>
-
+            <article class="vs-post-card">
                 {% if post.image %}
-                    <div style="text-align: center;">
-                        <img src="{{ post.image.url }}" alt="{{ post.title }} image" style="max-width: 150px; height: auto; ">
+                    <div class="vs-post-image-wrap">
+                        <img src="{{ post.image.url }}" alt="{{ post.title }} image" class="vs-post-image">
                     </div>
                 {% endif %}
-
-                <p class="tags">
-                    Tags:
-                    {% for post_tag in post.tags.all %}
-                        <a href="{% url 'posts:post_list_by_tag' post_tag.slug %}">{{ post_tag.name }}</a>{% if not forloop.last %}, {% endif %}
-                    {% empty %}
-                        No tags
-                    {% endfor %}
-                </p>
-
-                <p><em>{{ post.date }} by {{ post.author }}</em></p>
-                <p>{{ post.body }}</p>
+                <div class="vs-post-content">
+                    <h2 class="vs-post-title-text">
+                        <a href="{% url 'posts:page' slug=post.slug %}" class="vs-post-title-link">{{ post.title }}</a>
+                    </h2>
+                    <div class="vs-post-meta">
+                        <span class="vs-post-date">{{ post.date|date:"M d, Y" }}</span>
+                        <span class="vs-post-author">by {{ post.author }}</span>
+                    </div>
+                    <div class="vs-post-body">{{ post.body|truncatewords:40 }}</div>
+                    <div class="vs-post-tags">
+*** End Patch
+                        <span>Tags:</span>
+                        {% for post_tag in post.tags.all %}
+                            <a href="{% url 'posts:post_list_by_tag' post_tag.slug %}" class="vs-post-tag">{{ post_tag.name }}</a>{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                            <span class="vs-post-tag-none">No tags</span>
+                        {% endfor %}
+                    </div>
+                    <a href="{% url 'posts:page' slug=post.slug %}" class="vs-post-readmore">Read More &rarr;</a>
+                </div>
             </article>
         {% endfor %}
+        </div>
 
         {% include "pagination.html" with page=posts %}
     </section>
