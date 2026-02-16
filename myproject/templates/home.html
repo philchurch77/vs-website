@@ -3,17 +3,25 @@
 
 {% block content %}
     <div class="home-page-bg">
-        <section class="home-hero">
-            <h1 class="reveal-on-load">The Cambridgeshire Virtual School</h1>
-            <p class="narrow-text reveal-on-load">
-                Supporting children in care, care leavers and previously looked after children
-                to thrive in education through relationships, creativity and collaboration.
-            </p>
-            <div class="home-hero-images">
-                <img src="{% static 'images/vision_banner.png' %}" alt="Cambridgeshire Virtual School vision banner" class="home-hero-main reveal-on-load" />
-                <img src="{% static 'images/flow.png' %}" alt="Flow of support" class="home-hero-secondary reveal-on-load" />
-            </div>
-        </section>
+        <div class="home-hero-layout">
+            <aside class="home-hero-vertical" aria-hidden="true">
+                <div class="home-hero-vertical-frame">
+                    <img src="{% static 'images/vertical_banner.png.png' %}" alt="Virtual School mission markers" />
+                </div>
+            </aside>
+            <section class="home-hero">
+                <h1 class="home-hero-heading reveal-on-load">The Cambridgeshire Virtual School</h1>
+                <p class="narrow-text reveal-on-load">
+                    Supporting children in care, care leavers and previously looked after children
+                    to thrive in education through relationships, creativity and collaboration.
+                </p>
+                <div class="home-hero-images">
+                    <img src="{% static 'images/vision_banner.png' %}" alt="Cambridgeshire Virtual School vision banner" class="home-hero-main reveal-on-load" />
+                    <img src="{% static 'images/flow.png' %}" alt="Flow of support" class="home-hero-secondary reveal-on-load" />
+                </div>
+            </section>
+            <div class="home-hero-balance" aria-hidden="true"></div>
+        </div>
         <section class="home-video">
             <div class="home-video-inner reveal-on-load">
                 <a href="https://www.youtube.com/watch?v=ixrmZ8E5nKk" target="_blank" rel="noopener" class="home-video-link">

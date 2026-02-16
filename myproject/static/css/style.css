@@ -129,8 +129,93 @@ p {
   overflow: hidden;
 }
 
+.home-hero-layout {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  justify-content: center;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding-top: 1.5rem;
+  background: transparent;
+}
+
+
+.home-hero-vertical {
+  flex: 0 0 clamp(220px, 18vw, 320px);
+  width: clamp(220px, 18vw, 320px);
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  position: relative;
+  overflow: visible;
+  background: transparent;
+  border-radius: 0;
+}
+
+.home-hero-vertical-frame {
+  display: inline-flex;
+  max-width: 100%;
+  border-radius: 32px;
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.22);
+  background: transparent;
+}
+
+.home-hero-balance {
+  flex: 0 0 clamp(220px, 18vw, 320px);
+  width: clamp(220px, 18vw, 320px);
+  min-height: 1px;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.home-hero-vertical img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 540px;
+  object-fit: contain;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+@media (max-width: 1100px) {
+  .home-hero-layout {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .home-hero-vertical {
+    flex: none;
+    max-width: 320px;
+    width: 100%;
+  }
+
+  .home-hero-balance {
+    display: none;
+  }
+
+  .home-hero-vertical img {
+    max-height: 320px;
+  }
+}
+
+@media (max-width: 640px) {
+  .home-hero-vertical {
+    display: none;
+  }
+
+  .home-hero-balance {
+    display: none;
+  }
+}
+
 .home-hero {
-  max-width: 1100px;
+  flex: 0 1 960px;
+  max-width: 960px;
   margin: 0 auto;
   padding-top: 1.5rem;
   display: flex;
@@ -139,6 +224,31 @@ p {
   align-items: center;
   position: relative;
   overflow: hidden;
+  background: transparent;
+}
+
+.home-hero-heading {
+  padding: 0.85rem 2rem;
+  border-radius: var(--border-radius-full);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(33, 158, 188, 0.25);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+  max-width: 100%;
+  text-align: center;
+  color: var(--ink);
+  font-weight: 800;
+  background-clip: padding-box;
+  -webkit-text-fill-color: var(--ink);
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.home-hero-heading::after {
+  content: "✨";
+  font-size: 1.5rem;
+  filter: drop-shadow(0 2px 6px rgba(255, 183, 3, 0.4));
 }
 
 .reveal-on-load {
@@ -162,6 +272,7 @@ p {
   flex-direction: column;
   gap: 1rem;
   align-items: center;
+  background: transparent;
 }
 
 .home-hero-main,
