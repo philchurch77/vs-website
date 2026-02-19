@@ -15,6 +15,9 @@
                     Supporting children in care, care leavers and previously looked after children
                     to thrive in education through relationships, creativity and collaboration.
                 </p>
+                <button type="button" class="home-share-cta" data-share-url="{{ request.build_absolute_uri }}">
+                    Share this page
+                </button>
                 <div class="home-hero-images">
                     <img src="{% static 'images/vision_banner.png' %}" alt="Cambridgeshire Virtual School vision banner" class="home-hero-main reveal-on-load" />
                     <img src="{% static 'images/flow.png' %}" alt="Flow of support" class="home-hero-secondary reveal-on-load" />
@@ -46,4 +49,46 @@
             />
         </div>
     </div>
-{% endblock %}
+    {% endblock %}
+
+    {% block scripts %}
+        {{ block.super }}
+        <script>
+            (function () {
+                const shareButton = document.querySelector('.home-share-cta');
+                if (!shareButton) {
+                    return;
+                }
+
+                const defaultLabel = shareButton.textContent.trim();
+                const shareUrl = shareButton.getAttribute('data-share-url') || window.location.href;
+
+                shareButton.addEventListener('click', async () => {
+                    if (navigator.share) {
+                        try {
+                            await navigator.share({ title: document.title, url: shareUrl });
+                        } catch (shareError) {
+                            if (shareError && shareError.name === 'AbortError') {
+                                return;
+                            }
+                        }
+                        return;
+                    }
+
+                    try {
+                        await navigator.clipboard.writeText(shareUrl);
+                        shareButton.classList.add('is-success');
+                        shareButton.textContent = 'Link copied to clipboard';
+                    } catch (clipboardError) {
+                        window.prompt('Copy this link', shareUrl);
+                        return;
+                    }
+
+                    setTimeout(() => {
+                        shareButton.classList.remove('is-success');
+                        shareButton.textContent = defaultLabel;
+                    }, 2600);
+                });
+            })();
+        </script>
+    {% endblock %}
