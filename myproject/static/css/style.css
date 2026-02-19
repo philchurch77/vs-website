@@ -523,7 +523,11 @@ p {
   margin-bottom: 0.7em;
   text-align: center;
   width: 100%;
-  flex: 1;
+  flex: 0 0 auto;
+}
+
+.chat-history-header .chat-history-heading {
+  flex: 1 1 auto;
 }
 
 /* --- Sidebar Layout --- */
@@ -986,7 +990,7 @@ nav {
 
 .nav-toggle {
   display: none;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
   width: 46px;
   height: 46px;
