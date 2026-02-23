@@ -8,8 +8,11 @@
 <link rel="stylesheet" href="/static/css/style.css">
 <div class="main-layout two-column animation-assistant-layout">
         <!-- Sidebar for chat history -->
-        <aside class="sidebar chat-history-sidebar">
-            <h3 class="chat-history-heading">Chat history</h3>
+        <aside class="sidebar chat-history-sidebar" id="animation-chat-history" tabindex="-1">
+            <div class="chat-history-header">
+                <h3 class="chat-history-heading">Chat history</h3>
+                <button type="button" class="chat-history-close" aria-label="Close chat history">Close</button>
+            </div>
             <div id="chat-history" hx-get="{% url 'animation:chat_history_partial' %}" hx-trigger="load, revealed" hx-swap="innerHTML">
             <!-- Chat history will be loaded here -->
             </div>
@@ -17,12 +20,24 @@
         <!-- Main chat column -->
         <section class="toolkit-column">
         <header class="panel-header">
-            <div class="panel-heading" style="display: flex; align-items: center; gap: 1rem; flex-direction: row; justify-content: space-between;">
-                <div style="flex:1;">
+            <div class="panel-heading animation-panel-heading">
+                <div class="animation-panel-copy">
                     <h1 class="animation-title" style="margin-bottom: 0.2em;">Gizmo - The Animation Assistant</h1>
                     <p class="panel-subtitle animation-subtitle" style="text-align: center;">Plan and design your animation with our friendly Animation Assistant, <strong>Gizmo</strong>. Start a new chat to brainstorm ideas, get tips, and receive creative support for your virtual school project.</p>
                 </div>
-                <img src="/static/images/Gizmo.png.png" alt="Gizmo" style="height: 54px; width: 54px; object-fit: contain; background: none; border-radius: 0; box-shadow: none; margin-left: 1rem;" />
+                <div class="animation-panel-actions">
+                    <button type="button"
+                            class="chat-history-hamburger"
+                            aria-controls="animation-chat-history"
+                            aria-expanded="false">
+                        <span class="visually-hidden">Open chat history</span>
+                        <span class="chat-history-hamburger-icon" aria-hidden="true">
+                            <span class="chat-history-hamburger-line"></span>
+                            <span class="chat-history-hamburger-line"></span>
+                        </span>
+                    </button>
+                    <img src="/static/images/Gizmo.png.png" alt="Gizmo" class="assistant-avatar" />
+                </div>
             </div>
         </header>
 
@@ -52,7 +67,7 @@
                                 New Chat
                             </button>
                         </form>
-                        <img src="/static/images/monsters.png.png" alt="Monsters Decorative" style="width: 110px; height: 64px; object-fit: contain; margin-left: 18px; background: none; border-radius: 0; box-shadow: none;" />
+                        <img src="/static/images/monsters.png.png" alt="Monsters Decorative" class="assistant-decoration" />
                     </div>
                 </div>
 
@@ -88,6 +103,8 @@
         </div>
     </section>
 </div>
+
+<div class="chat-history-overlay" data-chat-history-overlay aria-hidden="true"></div>
 
 <script>
     async function sendMessage() {

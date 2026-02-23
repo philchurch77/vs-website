@@ -7,8 +7,11 @@
 {% block content %}
 <div class="main-layout two-column">
     <!-- Sidebar for training summary history -->
-    <aside class="sidebar chat-history-sidebar">
-        <h3>Training Summary History</h3>
+    <aside class="sidebar chat-history-sidebar" id="evaluation-chat-history" tabindex="-1">
+        <div class="chat-history-header">
+            <h3 class="chat-history-heading">Training Summary History</h3>
+            <button type="button" class="chat-history-close" aria-label="Close chat history">Close</button>
+        </div>
            <div id="chat-history"
                hx-get="{% url 'evaluation:chat_history_partial' %}"
                hx-trigger="load, revealed"
@@ -26,6 +29,16 @@
                     Select a training summary to review past evaluations or begin a new chat.
                 </p>
             </div>
+            <button type="button"
+                    class="chat-history-hamburger"
+                    aria-controls="evaluation-chat-history"
+                    aria-expanded="false">
+                <span class="visually-hidden">Open chat history</span>
+                <span class="chat-history-hamburger-icon" aria-hidden="true">
+                    <span class="chat-history-hamburger-line"></span>
+                    <span class="chat-history-hamburger-line"></span>
+                </span>
+            </button>
         </header>
 
         <div class="toolkit-body evaluation-toolkit-body">
@@ -65,6 +78,8 @@
         </div>
     </section>
 </div>
+
+<div class="chat-history-overlay" data-chat-history-overlay aria-hidden="true"></div>
 
 <script>
     async function sendMessage() {

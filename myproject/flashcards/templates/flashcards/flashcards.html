@@ -14,9 +14,9 @@
                 <h1>Educational Toolkit</h1>
                 <p class="panel-subtitle">Ask Echo a question to begin.</p>
                 <button type="button"
-                        class="chat-history-hamburger"
-                        aria-controls="chat-history-panel"
-                        aria-expanded="false">
+                    class="chat-history-hamburger"
+                    aria-controls="flashcards-chat-history"
+                    aria-expanded="false">
                     <span class="visually-hidden">Open chat history</span>
                     <span class="chat-history-hamburger-icon" aria-hidden="true">
                         <span class="chat-history-hamburger-line"></span>
@@ -28,7 +28,7 @@
 
         <div class="toolkit-body">
             <!-- Chat history styled as sidebar, matching animation page -->
-            <aside class="sidebar chat-history-sidebar" id="chat-history-panel" tabindex="-1">
+            <aside class="sidebar chat-history-sidebar" id="flashcards-chat-history" tabindex="-1">
                 <div class="chat-history-header">
                     <h3 class="chat-history-heading">Chat History</h3>
                     <button type="button" class="chat-history-close" aria-label="Close chat history">
@@ -121,58 +121,7 @@
                 dropdown.classList.toggle("show");
             });
         });
-
-        setupChatHistoryDrawer();
     });
-
-    function setupChatHistoryDrawer() {
-        const trigger = document.querySelector(".chat-history-hamburger");
-        const chatSidebar = document.getElementById("chat-history-panel");
-        const closeButton = document.querySelector(".chat-history-close");
-        const overlay = document.querySelector('[data-chat-history-overlay]');
-        const mediaQuery = window.matchMedia("(min-width: 901px)");
-
-        if (!trigger || !chatSidebar) {
-            return;
-        }
-
-        const setOpenState = (isOpen) => {
-            chatSidebar.classList.toggle("is-open", isOpen);
-            document.body.classList.toggle("chat-history-open", isOpen);
-            trigger.setAttribute("aria-expanded", String(isOpen));
-            if (overlay) {
-                overlay.classList.toggle("is-visible", isOpen);
-            }
-            if (isOpen && !mediaQuery.matches) {
-                chatSidebar.focus();
-            }
-        };
-
-        trigger.addEventListener("click", () => {
-            const nextState = !chatSidebar.classList.contains("is-open");
-            setOpenState(nextState);
-        });
-
-        closeButton?.addEventListener("click", () => setOpenState(false));
-        overlay?.addEventListener("click", () => setOpenState(false));
-        window.addEventListener("keydown", (event) => {
-            if (event.key === "Escape") {
-                setOpenState(false);
-            }
-        });
-
-        const handleBreakpointChange = () => {
-            if (mediaQuery.matches) {
-                setOpenState(false);
-            }
-        };
-
-        if (mediaQuery.addEventListener) {
-            mediaQuery.addEventListener("change", handleBreakpointChange);
-        } else if (mediaQuery.addListener) {
-            mediaQuery.addListener(handleBreakpointChange);
-        }
-    }
 
     async function sendMessage() {
         const input = document.getElementById("messageInput");
