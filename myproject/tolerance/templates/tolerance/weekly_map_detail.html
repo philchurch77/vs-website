@@ -1,0 +1,503 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block title %}{{ wmap.pupil_name }} – w/c {{ wmap.week_commencing }}{% endblock %}
+
+{% block content %}
+<main class="main-layout wot-detail-layout">
+
+  <!-- ── Page header ─────────────────────────────────────────────────── -->
+  <div class="panel-header">
+    <div class="panel-heading">
+      <h1>{{ wmap.pupil_name }}</h1>
+      <p class="panel-subtitle">
+        Week commencing {{ wmap.week_commencing }}
+        {% if wmap.class_or_year_group %} · {{ wmap.class_or_year_group }}{% endif %}
+        · Recorded by {{ wmap.recorded_by.get_full_name|default:wmap.recorded_by.username }}
+        {% if wmap.key_adults %} · Key adults: {{ wmap.key_adults }}{% endif %}
+        {% if wmap.review_date %} · Review: {{ wmap.review_date }}{% endif %}
+      </p>
+    </div>
+    <div class="panel-actions">
+      <a href="{% url 'tolerance:dashboard' %}" class="btn btn-secondary btn-sm">← All maps</a>
+    </div>
+  </div>
+
+  <!-- ── Legend ──────────────────────────────────────────────────────── -->
+  <div class="wot-legend">
+    <span class="wot-legend-item wot-state-green">🟢 Within window</span>
+    <span class="wot-legend-item wot-state-red">🔴 Hyper-arousal</span>
+    <span class="wot-legend-item wot-state-blue">🔵 Hypo-arousal</span>
+    <span class="wot-legend-item wot-state-grey">⬜ Not observed</span>
+    <span class="wot-legend-hint">Click any cell to record an observation</span>
+  </div>
+
+  <!-- ── Two-column body: grid + sidebar ─────────────────────────────── -->
+  <div class="wot-body">
+
+    <!-- Grid column -->
+    <div class="wot-body__grid">
+      <div class="wot-grid-wrapper">
+        <table class="wot-grid" id="wotGrid">
+          <thead>
+            <tr>
+              <th class="wot-grid__slot-header">Time slot</th>
+              {% for day in days %}
+              <th>{{ day }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in grid %}
+            <tr>
+              <td class="wot-grid__slot-label">{{ row.slot }}</td>
+              {% for cell in row.cells %}
+              <td
+                class="wot-grid__cell wot-cell-{{ cell.state|lower }}"
+                data-day="{{ cell.day }}"
+                data-slot="{{ cell.slot }}"
+                tabindex="0"
+                role="button"
+                aria-label="Edit {{ cell.day }} {{ cell.slot }}"
+              >
+                <div class="wot-cell-inner">
+                  {% if cell.state != "GREY" %}
+                    <span class="wot-cell-dot"></span>
+                    {% if cell.obs.intensity %}<span class="wot-cell-intensity">{{ cell.obs.intensity }}</span>{% endif %}
+                  {% else %}
+                    <span class="wot-cell-empty">+</span>
+                  {% endif %}
+                </div>
+              </td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Sidebar: summary -->
+    <aside class="wot-body__sidebar">
+      <div class="wot-summary-panel" id="summaryPanel">
+        <h2>Pattern summary</h2>
+        <div id="summaryContent" class="wot-summary-list">
+          <!-- populated by JS -->
+        </div>
+      </div>
+    </aside>
+
+  </div><!-- /wot-body -->
+
+  <!-- ── Support plan (full-width, below grid) ───────────────────────── -->
+  <section class="wot-support-plan">
+    <div class="wot-support-plan__header">
+      <div>
+        <h2>Plan for Supporting the Pupil</h2>
+        <p class="wot-support-intro">Use the pattern summary above to inform this plan. Saves automatically.</p>
+      </div>
+      <div class="wot-support-save-row">
+        <button type="button" id="savePlanBtn" class="btn btn-primary btn-sm">Save plan</button>
+        <span id="planSaveMsg" class="wot-save-msg" hidden>Saved ✓</span>
+      </div>
+    </div>
+
+    <div class="wot-support-columns">
+
+      <div class="wot-support-col">
+        <h3 class="wot-support-col__heading">Understanding the pupil</h3>
+        {% for key, prompt in support_prompts %}
+          {% if forloop.counter <= 6 %}
+          <div class="wot-support-field">
+            <label for="sp_{{ key }}">{{ prompt }}</label>
+            <textarea id="sp_{{ key }}" rows="2" class="wot-support-textarea" data-plan-key="{{ key }}" placeholder="Add notes here…"></textarea>
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <div class="wot-support-col">
+        <h3 class="wot-support-col__heading">Adult actions &amp; plan</h3>
+        {% for key, prompt in support_prompts %}
+          {% if forloop.counter > 6 %}
+          <div class="wot-support-field">
+            <label for="sp_{{ key }}">{{ prompt }}</label>
+            <textarea id="sp_{{ key }}" rows="2" class="wot-support-textarea" data-plan-key="{{ key }}" placeholder="Add notes here…"></textarea>
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ── Observation modal ──────────────────────────────────────────────── -->
+<div id="obsModal" class="wot-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" hidden>
+  <div class="wot-modal__backdrop"></div>
+  <div class="wot-modal__panel">
+    <div class="wot-modal__header">
+      <h2 id="modalTitle" class="wot-modal__title">Record observation</h2>
+      <button type="button" id="modalClose" class="wot-modal__close" aria-label="Close">✕</button>
+    </div>
+
+    <div class="wot-modal__body">
+
+      <!-- State buttons -->
+      <div class="wot-modal__field">
+        <label class="wot-modal__label">Regulation state</label>
+        <div class="wot-state-btns" id="stateBtns">
+          <button type="button" class="wot-state-btn wot-state-btn--green" data-state="GREEN">🟢 Within window</button>
+          <button type="button" class="wot-state-btn wot-state-btn--red"   data-state="RED">🔴 Hyper-arousal</button>
+          <button type="button" class="wot-state-btn wot-state-btn--blue"  data-state="BLUE">🔵 Hypo-arousal</button>
+          <button type="button" class="wot-state-btn wot-state-btn--grey"  data-state="GREY">⬜ Not observed</button>
+        </div>
+      </div>
+
+      <!-- Intensity -->
+      <div class="wot-modal__field" id="intensityField">
+        <label class="wot-modal__label">Intensity</label>
+        <div class="wot-intensity-btns" id="intensityBtns">
+          <button type="button" class="wot-intensity-btn" data-intensity="1">1 – Mild</button>
+          <button type="button" class="wot-intensity-btn" data-intensity="2">2 – Moderate</button>
+          <button type="button" class="wot-intensity-btn" data-intensity="3">3 – Significant</button>
+        </div>
+      </div>
+
+      <!-- Observed behaviours -->
+      <div class="wot-modal__field">
+        <label class="wot-modal__label">Observed behaviours</label>
+        <div class="wot-chip-group" id="behaviourChips"></div>
+      </div>
+
+      <!-- Triggers -->
+      <div class="wot-modal__field">
+        <label class="wot-modal__label">Possible triggers</label>
+        <div class="wot-chip-group" id="triggerChips"></div>
+      </div>
+
+      <!-- Adult responses -->
+      <div class="wot-modal__field">
+        <label class="wot-modal__label">Adult response used</label>
+        <div class="wot-chip-group" id="responseChips"></div>
+      </div>
+
+      <!-- Helpfulness -->
+      <div class="wot-modal__field">
+        <label class="wot-modal__label">Did the response help?</label>
+        <div class="wot-help-btns" id="helpBtns">
+          <button type="button" class="wot-help-btn" data-help="YES">Yes</button>
+          <button type="button" class="wot-help-btn" data-help="PARTLY">Partly</button>
+          <button type="button" class="wot-help-btn" data-help="NO">No</button>
+          <button type="button" class="wot-help-btn" data-help="UNKNOWN">Unknown</button>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="wot-modal__field">
+        <label class="wot-modal__label" for="obsNotes">Notes</label>
+        <textarea id="obsNotes" rows="3" class="wot-notes-input" placeholder="Any other observations…"></textarea>
+      </div>
+
+    </div>
+
+    <div class="wot-modal__footer">
+      <button type="button" id="modalSave" class="btn btn-primary">Save observation</button>
+      <button type="button" id="modalCancel" class="btn btn-secondary">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Data passed from Django ────────────────────────────────────────────────
+const BEHAVIOURS  = {{ behaviours_json|safe }};
+const ALL_TRIGGERS = {{ triggers_json|safe }};
+const RESPONSES   = {{ responses_json|safe }};
+const SAVE_OBS_URL   = "{% url 'tolerance:api_save_observation' wmap.pk %}";
+const SAVE_PLAN_URL  = "{% url 'tolerance:api_save_support_plan' wmap.pk %}";
+const INITIAL_SUMMARY = {{ summary_json|safe }};
+const INITIAL_PLAN    = {{ support_plan_json|safe }};
+const OBS_DATA        = {{ obs_data_json|safe }};  // {"{day}:{slot}": {state, intensity, ...}}
+
+// ── State ──────────────────────────────────────────────────────────────────
+let activeCellEl = null;
+let currentObs = {
+  day_name: "",
+  time_slot: "",
+  state: "GREY",
+  intensity: null,
+  observed_behaviours: [],
+  possible_triggers: [],
+  adult_responses: [],
+  response_helpfulness: "",
+  notes: "",
+};
+
+// ── Grid: open modal on cell click ────────────────────────────────────────
+document.getElementById("wotGrid").addEventListener("click", openCellModal);
+document.getElementById("wotGrid").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" || e.key === " ") {
+    e.preventDefault();
+    openCellModal(e);
+  }
+});
+
+function openCellModal(e) {
+  const cell = e.target.closest(".wot-grid__cell");
+  if (!cell) return;
+
+  activeCellEl = cell;
+  const day  = cell.dataset.day;
+  const slot = cell.dataset.slot;
+  const key  = `${day}:${slot}`;
+  const saved = OBS_DATA[key] || {};
+
+  currentObs = {
+    day_name:             day,
+    time_slot:            slot,
+    state:                saved.state || "GREY",
+    intensity:            saved.intensity || null,
+    observed_behaviours:  saved.observed_behaviours  || [],
+    possible_triggers:    saved.possible_triggers    || [],
+    adult_responses:      saved.adult_responses      || [],
+    response_helpfulness: saved.response_helpfulness || "",
+    notes:                saved.notes                || "",
+  };
+
+  document.getElementById("modalTitle").textContent = `${day} – ${slot}`;
+  renderModal();
+  showModal();
+}
+
+
+// ── Modal rendering ────────────────────────────────────────────────────────
+function renderModal() {
+  // State buttons
+  document.querySelectorAll(".wot-state-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.state === currentObs.state);
+  });
+
+  // Intensity
+  const intensityField = document.getElementById("intensityField");
+  intensityField.hidden = (currentObs.state === "GREY");
+  document.querySelectorAll(".wot-intensity-btn").forEach(btn => {
+    btn.classList.toggle("active", parseInt(btn.dataset.intensity) === currentObs.intensity);
+  });
+
+  // Behaviour chips (depends on state)
+  const behaviours = currentObs.state === "GREY" ? [] : (BEHAVIOURS[currentObs.state] || []);
+  renderChips("behaviourChips", behaviours, currentObs.observed_behaviours);
+
+  // Trigger chips (same for all states)
+  renderChips("triggerChips", ALL_TRIGGERS, currentObs.possible_triggers);
+
+  // Response chips (depends on state)
+  const responses = currentObs.state === "GREY" ? [] : (RESPONSES[currentObs.state] || []);
+  renderChips("responseChips", responses, currentObs.adult_responses);
+
+  // Helpfulness
+  document.querySelectorAll(".wot-help-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.help === currentObs.response_helpfulness);
+  });
+
+  // Notes
+  document.getElementById("obsNotes").value = currentObs.notes;
+}
+
+function renderChips(containerId, options, selected) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = "";
+  options.forEach(opt => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "wot-chip" + (selected.includes(opt) ? " active" : "");
+    btn.textContent = opt;
+    btn.dataset.value = opt;
+    container.appendChild(btn);
+  });
+}
+
+// ── Modal events ───────────────────────────────────────────────────────────
+const modal = document.getElementById("obsModal");
+
+function showModal() { modal.hidden = false; document.body.classList.add("wot-modal-open"); }
+function hideModal() { modal.hidden = true;  document.body.classList.remove("wot-modal-open"); }
+
+document.getElementById("modalClose").addEventListener("click", hideModal);
+document.getElementById("modalCancel").addEventListener("click", hideModal);
+modal.querySelector(".wot-modal__backdrop").addEventListener("click", hideModal);
+
+// State button clicks
+document.getElementById("stateBtns").addEventListener("click", (e) => {
+  const btn = e.target.closest(".wot-state-btn");
+  if (!btn) return;
+  currentObs.state = btn.dataset.state;
+  currentObs.observed_behaviours = [];
+  currentObs.adult_responses = [];
+  renderModal();
+});
+
+// Intensity clicks
+document.getElementById("intensityBtns").addEventListener("click", (e) => {
+  const btn = e.target.closest(".wot-intensity-btn");
+  if (!btn) return;
+  const val = parseInt(btn.dataset.intensity);
+  currentObs.intensity = (currentObs.intensity === val) ? null : val;
+  document.querySelectorAll(".wot-intensity-btn").forEach(b => {
+    b.classList.toggle("active", parseInt(b.dataset.intensity) === currentObs.intensity);
+  });
+});
+
+// Chip clicks (behaviours, triggers, responses)
+["behaviourChips", "triggerChips", "responseChips"].forEach(id => {
+  document.getElementById(id).addEventListener("click", (e) => {
+    const btn = e.target.closest(".wot-chip");
+    if (!btn) return;
+    const val = btn.dataset.value;
+    const listKey = id === "behaviourChips" ? "observed_behaviours"
+                  : id === "triggerChips"   ? "possible_triggers"
+                                             : "adult_responses";
+    const arr = currentObs[listKey];
+    const idx = arr.indexOf(val);
+    if (idx === -1) arr.push(val); else arr.splice(idx, 1);
+    btn.classList.toggle("active", idx === -1);
+  });
+});
+
+// Helpfulness clicks
+document.getElementById("helpBtns").addEventListener("click", (e) => {
+  const btn = e.target.closest(".wot-help-btn");
+  if (!btn) return;
+  currentObs.response_helpfulness = (currentObs.response_helpfulness === btn.dataset.help) ? "" : btn.dataset.help;
+  document.querySelectorAll(".wot-help-btn").forEach(b => {
+    b.classList.toggle("active", b.dataset.help === currentObs.response_helpfulness);
+  });
+});
+
+// Notes
+document.getElementById("obsNotes").addEventListener("input", (e) => {
+  currentObs.notes = e.target.value;
+});
+
+// Save observation
+document.getElementById("modalSave").addEventListener("click", async () => {
+  const resp = await fetch(SAVE_OBS_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-CSRFToken": getCsrf() },
+    body: JSON.stringify(currentObs),
+  });
+  const data = await resp.json();
+  if (!data.ok) { alert("Could not save — please try again."); return; }
+
+  // Keep OBS_DATA in sync
+  const key = `${currentObs.day_name}:${currentObs.time_slot}`;
+  OBS_DATA[key] = { ...currentObs };
+
+  // Update the cell appearance
+  updateCell(activeCellEl, currentObs);
+
+  // Update summary
+  renderSummary(data.summary);
+
+  hideModal();
+});
+
+// ── Cell visual update ─────────────────────────────────────────────────────
+function updateCell(cellEl, obs) {
+  cellEl.classList.remove("wot-cell-green","wot-cell-red","wot-cell-blue","wot-cell-grey");
+  cellEl.classList.add("wot-cell-" + obs.state.toLowerCase());
+
+  const inner = cellEl.querySelector(".wot-cell-inner");
+  if (obs.state === "GREY") {
+    inner.innerHTML = '<span class="wot-cell-empty">+</span>';
+  } else {
+    inner.innerHTML = '<span class="wot-cell-dot"></span>'
+      + (obs.intensity ? `<span class="wot-cell-intensity">${obs.intensity}</span>` : "");
+  }
+}
+
+// ── Summary rendering ──────────────────────────────────────────────────────
+function renderSummary(s) {
+  const el = document.getElementById("summaryContent");
+  const fmt = arr => arr.length ? arr.map(t => `<span class="wot-summary-tag">${t}</span>`).join("") : '<em class="wot-summary-empty">None yet</em>';
+  el.innerHTML = `
+    <div class="wot-summary-row wot-summary-green">
+      <strong>Regulated times</strong>
+      <div>${fmt(s.regulated_times)}</div>
+    </div>
+    <div class="wot-summary-row wot-summary-red">
+      <strong>Hyper-arousal times</strong>
+      <div>${fmt(s.red_times)}</div>
+    </div>
+    <div class="wot-summary-row wot-summary-blue">
+      <strong>Hypo-arousal times</strong>
+      <div>${fmt(s.blue_times)}</div>
+    </div>
+    <div class="wot-summary-row">
+      <strong>Common triggers</strong>
+      <div>${fmt(s.top_triggers)}</div>
+    </div>
+    <div class="wot-summary-row">
+      <strong>Helpful responses</strong>
+      <div>${fmt(s.helpful_responses)}</div>
+    </div>
+    <div class="wot-summary-counts">
+      <span class="wot-count wot-count--green">${s.counts.green} regulated</span>
+      <span class="wot-count wot-count--red">${s.counts.red} hyper</span>
+      <span class="wot-count wot-count--blue">${s.counts.blue} hypo</span>
+      <span class="wot-count wot-count--grey">${s.counts.grey} not observed</span>
+    </div>
+  `;
+}
+
+// ── Support plan auto-save ─────────────────────────────────────────────────
+let planSaveTimer = null;
+
+document.querySelectorAll(".wot-support-textarea").forEach(ta => {
+  ta.addEventListener("input", () => {
+    clearTimeout(planSaveTimer);
+    planSaveTimer = setTimeout(savePlan, 2000);
+  });
+});
+
+document.getElementById("savePlanBtn").addEventListener("click", () => {
+  clearTimeout(planSaveTimer);
+  savePlan();
+});
+
+async function savePlan() {
+  const payload = {};
+  document.querySelectorAll(".wot-support-textarea").forEach(ta => {
+    payload[ta.dataset.planKey] = ta.value;
+  });
+  const resp = await fetch(SAVE_PLAN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-CSRFToken": getCsrf() },
+    body: JSON.stringify(payload),
+  });
+  const data = await resp.json();
+  if (data.ok) {
+    const msg = document.getElementById("planSaveMsg");
+    msg.hidden = false;
+    setTimeout(() => { msg.hidden = true; }, 3000);
+  }
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function getCsrf() {
+  return document.cookie.split(";")
+    .map(c => c.trim())
+    .find(c => c.startsWith("csrftoken="))
+    ?.split("=")[1] || "";
+}
+
+// ── Initialise on load ────────────────────────────────────────────────────
+renderSummary(INITIAL_SUMMARY);
+
+document.querySelectorAll(".wot-support-textarea").forEach(ta => {
+  const key = ta.dataset.planKey;
+  if (INITIAL_PLAN[key]) ta.value = INITIAL_PLAN[key];
+});
+</script>
+{% endblock %}

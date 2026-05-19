@@ -1,0 +1,83 @@
+{% extends "layout.html" %}
+{% load static %}
+
+{% block title %}Window of Tolerance – Weekly Mapping Tool{% endblock %}
+
+{% block content %}
+<main class="main-layout tolerance-centered-layout">
+  <section class="toolkit-column tolerance-page">
+
+    <div class="panel-header">
+      <div class="panel-heading">
+        <h1>Window of Tolerance Weekly Mapping Tool</h1>
+        <p class="panel-subtitle">
+          This tool helps staff notice when a pupil is within, above, or below their Window of Tolerance
+          across the school week. The aim is to identify patterns, possible triggers, and helpful adult
+          responses — not to blame or label the child.
+        </p>
+      </div>
+      <div class="panel-actions">
+        <a href="{% url 'tolerance:checkin_dashboard' %}" class="btn btn-secondary btn-sm">
+          Staff self check-in
+        </a>
+      </div>
+    </div>
+
+    <!-- Create new weekly map -->
+    <div class="wot-create-card">
+      <h2>Start a new weekly map</h2>
+      <form method="post" class="wot-create-form">
+        {% csrf_token %}
+        <div class="wot-form-row">
+          <div class="wot-form-group">
+            <label for="pupil_name">Pupil name</label>
+            <input type="text" id="pupil_name" name="pupil_name" required placeholder="e.g. Alex Smith">
+          </div>
+          <div class="wot-form-group">
+            <label for="week_commencing">Week commencing</label>
+            <input type="date" id="week_commencing" name="week_commencing" required value="{{ default_wc }}">
+          </div>
+          <div class="wot-form-group">
+            <label for="class_or_year_group">Class / year group</label>
+            <input type="text" id="class_or_year_group" name="class_or_year_group" placeholder="e.g. Year 4">
+          </div>
+        </div>
+        <div class="wot-form-row">
+          <div class="wot-form-group wot-form-group--wide">
+            <label for="key_adults">Key adults involved</label>
+            <input type="text" id="key_adults" name="key_adults" placeholder="e.g. Mrs Jones, Mr Smith">
+          </div>
+          <div class="wot-form-group">
+            <label for="review_date">Review date</label>
+            <input type="date" id="review_date" name="review_date">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Create weekly map →</button>
+      </form>
+    </div>
+
+    <!-- Existing maps -->
+    {% if maps %}
+    <div class="wot-maps-section">
+      <h2>Existing weekly maps</h2>
+      <div class="wot-maps-list">
+        {% for m in maps %}
+        <a href="{% url 'tolerance:weekly_map_detail' m.pk %}" class="wot-map-card">
+          <div class="wot-map-card__pupil">{{ m.pupil_name }}</div>
+          <div class="wot-map-card__meta">
+            Week commencing {{ m.week_commencing }}
+            {% if m.class_or_year_group %} · {{ m.class_or_year_group }}{% endif %}
+          </div>
+          <div class="wot-map-card__meta">
+            Recorded by {{ m.recorded_by.get_full_name|default:m.recorded_by.username }}
+            {% if m.review_date %} · Review: {{ m.review_date }}{% endif %}
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+  </section>
+</main>
+{% endblock %}

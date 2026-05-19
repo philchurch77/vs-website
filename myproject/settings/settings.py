@@ -125,6 +125,9 @@ USE_X_FORWARDED_HOST = True
 SESSION_COOKIE_SECURE = not DEBUG  # allow http locally
 CSRF_COOKIE_SECURE = not DEBUG     # allow http locally
 
+# --- Auth ---
+LOGIN_URL = "/users/login/"
+
 # --- Logging ---
 LOGGING = {
     "version": 1,
