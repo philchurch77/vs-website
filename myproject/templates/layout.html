@@ -32,53 +32,53 @@
         </div>
         <div class="nav-links" id="site-nav-links">
             <a href="/"{% if request.path == '/' %} class="active"{% endif %}>
-                <span aria-label="Home" title="Home">Home</span>
+                <span aria-label="Home" title="Home">🏠 Home</span>
             </a>
             <a href="{% url 'posts:list' %}"{% if request.path|slice:':7' == '/posts/' and request.path|slice:':15' != '/posts/new-post' or request.path == '/posts' %} class="active"{% endif %}>
-                <span aria-label="Posts" title="Posts">Virtual School Posts</span>
+                <span aria-label="Posts" title="Posts">📰 Virtual School Posts</span>
             </a>
             <a href="{% url 'training:training_request' %}"{% if request.path|slice:':9' == '/training' %} class="active"{% endif %}>
-                <span aria-label="Training Requests" title="Training Requests">Request Training</span>
+                <span aria-label="Training Requests" title="Training Requests">📋 Request Training</span>
             </a>
             {% if user.is_authenticated %}
                 <!-- New Post link removed: post creation is now admin-only -->
                 <a href="{% url 'resources:resource_list' %}"{% if request.path|slice:':10' == '/resources' %} class="active"{% endif %}>
-                    <span aria-label="Resources" title="Resources">Resources</span>
+                    <span aria-label="Resources" title="Resources">📚 Resources</span>
                 </a>
                 <a href="{% url 'flashcards:flashcards_page' %}"{% if request.path|slice:':10' == '/flashcard' %} class="active"{% endif %}>
-                    <span aria-label="Toolkit" title="Toolkit">Educational Toolkit</span>
+                    <span aria-label="Toolkit" title="Toolkit">🎒 Educational Toolkit</span>
                 </a>
                 <a href="{% url 'tolerance:dashboard' %}"{% if request.path|slice:':10' == '/tolerance' %} class="active"{% endif %}>
-                    <span aria-label="Tolerance" title="Window of Tolerance">Window of Tolerance</span>
+                    <span aria-label="Tolerance" title="Window of Tolerance">🌊 Window of Tolerance</span>
                 </a>
                 <a href="{% url 'evaluation:chat_page' %}"{% if request.path|slice:':11' == '/evaluation' %} class="active"{% endif %}>
-                    <span aria-label="Chat" title="Chat">Training Evaluation</span>
+                    <span aria-label="Chat" title="Chat">✅ Training Evaluation</span>
                 </a>
                 <a href="{% url 'sdq:sdq_form_view' %}"{% if request.path|slice:':4' == '/sdq' %} class="active"{% endif %}>
-                    <span aria-label="SDQ" title="SDQ">SDQ</span>
+                    <span aria-label="SDQ" title="SDQ">📊 SDQ</span>
                 </a>
                 <a href="{% url 'animation:chat_page' %}"{% if request.path|slice:':10' == '/animation' %} class="active"{% endif %}>
-                    <span aria-label="Animation Assistant" title="Animation Assistant">Animation Assistant</span>
+                    <span aria-label="Animation Assistant" title="Animation Assistant">🎨 Animation Assistant</span>
                 </a>
                 {% if user.is_superuser %}
                     <a href="{% url 'admin:index' %}"{% if request.path|slice:':7' == '/admin/' %} class="active"{% endif %}>
-                        <span aria-label="Admin" title="Admin">Admin</span>
+                        <span aria-label="Admin" title="Admin">⚙️ Admin</span>
                     </a>
                 {% else %}
-                    <span class="nav-admin-disabled" aria-label="Admin (superusers only)" title="Admin (superusers only)">Admin</span>
+                    <span class="nav-admin-disabled" aria-label="Admin (superusers only)" title="Admin (superusers only)">⚙️ Admin</span>
                 {% endif %}
                 <form class="logout" action="{% url 'users:logout' %}" method="post">
                     {% csrf_token %}
                     <button class="nav-button-link" aria-label="User Logout" title="User Logout">
-                        Logout
+                        🚪 Logout
                     </button>
                 </form>
             {% else %}
                 <a href="{% url 'users:register' %}"{% if request.path|slice:':9' == '/users/re' %} class="active"{% endif %}>
-                    <span aria-label="User Registration" title="User Registration">Registration</span>
+                    <span aria-label="User Registration" title="User Registration">📝 Registration</span>
                 </a>
                 <a href="{% url 'users:login' %}"{% if request.path|slice:':9' == '/users/lo' %} class="active"{% endif %}>
-                    <span aria-label="User Login" title="User Login">Login</span>
+                    <span aria-label="User Login" title="User Login">🔑 Login</span>
                 </a>
             {% endif %}
         </div>

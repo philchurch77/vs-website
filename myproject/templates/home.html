@@ -3,51 +3,121 @@
 
 {% block content %}
     <div class="home-page-bg">
-        <div class="home-hero-layout">
-            <aside class="home-hero-vertical" aria-hidden="true">
-                <div class="home-hero-vertical-frame">
-                    <img src="{% static 'images/vertical_banner.png.png' %}" alt="Virtual School mission markers" />
-                </div>
-            </aside>
-            <section class="home-hero">
-                <h1 class="home-hero-heading reveal-on-load">The Cambridgeshire Virtual School</h1>
-                <p class="narrow-text reveal-on-load">
-                    Supporting children in care, care leavers and previously looked after children
-                    to thrive in education through relationships, creativity and collaboration.
-                </p>
-                <button type="button" class="home-share-cta" data-share-url="{{ request.build_absolute_uri }}">
-                    Share this page
-                </button>
-                <div class="home-hero-images">
-                    <img src="{% static 'images/vision_banner.png' %}" alt="Cambridgeshire Virtual School vision banner" class="home-hero-main reveal-on-load" />
-                    <img src="{% static 'images/flow.png' %}" alt="Flow of support" class="home-hero-secondary reveal-on-load" />
-                </div>
-            </section>
-            <div class="home-hero-balance" aria-hidden="true"></div>
+
+        <!-- Decorative sky background elements -->
+        <div class="home-bg-clouds" aria-hidden="true">
+            <span class="home-cloud home-cloud-1"></span>
+            <span class="home-cloud home-cloud-2"></span>
+            <span class="home-cloud home-cloud-3"></span>
+            <span class="home-star home-star-1">✦</span>
+            <span class="home-star home-star-2">✦</span>
+            <span class="home-star home-star-3">✦</span>
+            <span class="home-star home-star-4">✦</span>
+            <span class="home-star home-star-5">✦</span>
         </div>
-        <section class="home-video">
-            <div class="home-video-inner reveal-on-load">
+
+        <!-- Hero -->
+        <section class="home-hero reveal-on-load">
+            <h1 class="home-hero-heading">The Cambridgeshire Virtual School</h1>
+            <p class="home-hero-tagline">
+                Supporting children in care, care leavers and previously looked after children
+                to learn, aspire, achieve and thrive.
+            </p>
+            <div class="home-hero-ctas">
+                <a href="{% url 'training:training_request' %}" class="home-cta home-cta--primary">
+                    📋 Request Training
+                </a>
+                <a href="{% url 'resources:resource_list' %}" class="home-cta home-cta--secondary">
+                    📚 Explore Resources
+                </a>
+                <a href="{% url 'animation:chat_page' %}" class="home-cta home-cta--accent">
+                    🎨 Animation Assistant
+                </a>
+            </div>
+        </section>
+
+        <!-- Vision Cards: Learn · Aspire · Achieve · Thrive -->
+        <section class="home-vision reveal-on-load" aria-label="Our vision">
+            <div class="home-vision-cards">
+                <div class="vision-card vision-card--learn">
+                    <div class="vision-card-icon">🦉</div>
+                    <h3 class="vision-card-title">Learn</h3>
+                    <p class="vision-card-text">Children are supported to grow in confidence, curiosity and skills.</p>
+                </div>
+                <div class="vision-card vision-card--aspire">
+                    <div class="vision-card-icon">🦊</div>
+                    <h3 class="vision-card-title">Aspire</h3>
+                    <p class="vision-card-text">Children are encouraged to dream big and see positive futures.</p>
+                </div>
+                <div class="vision-card vision-card--achieve">
+                    <div class="vision-card-icon">🦡</div>
+                    <h3 class="vision-card-title">Achieve</h3>
+                    <p class="vision-card-text">Children are helped to succeed through the right support at the right time.</p>
+                </div>
+                <div class="vision-card vision-card--thrive">
+                    <div class="vision-card-icon">🦌</div>
+                    <h3 class="vision-card-title">Thrive</h3>
+                    <p class="vision-card-text">Children feel safe, cared for and ready to flourish.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Welcome Panel -->
+        <section class="home-welcome reveal-on-load">
+            <div class="home-welcome-inner">
+                <h2 class="home-welcome-title">Welcome to the Cambridgeshire Virtual School</h2>
+                <p class="home-welcome-text">Find guidance, training, resources and tools to support children and young people in care, care leavers and previously looked after children.</p>
+                <div class="home-audience-cards">
+                    <div class="audience-card">
+                        <div class="audience-card-icon">🏫</div>
+                        <h4 class="audience-card-title">For Schools</h4>
+                        <p class="audience-card-text">Training, guidance and support.</p>
+                    </div>
+                    <div class="audience-card">
+                        <div class="audience-card-icon">💼</div>
+                        <h4 class="audience-card-title">For Professionals</h4>
+                        <p class="audience-card-text">Resources, toolkits and referral pathways.</p>
+                    </div>
+                    <div class="audience-card">
+                        <div class="audience-card-icon">✨</div>
+                        <h4 class="audience-card-title">For Young People</h4>
+                        <p class="audience-card-text">Creative tools, information and support.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Video Link -->
+        <section class="home-video reveal-on-load">
+            <div class="home-video-inner">
                 <a href="https://www.youtube.com/watch?v=ixrmZ8E5nKk" target="_blank" rel="noopener" class="home-video-link">
                     <span class="home-video-title">▶ Watch our animation on YouTube</span>
                 </a>
             </div>
         </section>
-    </div>
 
-    <div class="home-qr-floating" aria-label="Share the Virtual School website">
-        <div class="home-qr-floating-copy">
-            <p class="home-qr-floating-title">Need the site on your phone?</p>
-            <p class="home-qr-floating-subtext">Scan to open the Virtual School instantly and share it in meetings.</p>
-        </div>
-        <div class="home-qr-floating-code">
-            <img
-                src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data={{ request.build_absolute_uri|urlencode }}"
-                alt="QR code linking to the Virtual School home page"
-                width="220"
-                height="220"
-                loading="lazy"
-            />
-        </div>
+        <!-- QR Code Footer Card -->
+        <section class="home-qr-card reveal-on-load" aria-label="Share the Virtual School website">
+            <div class="home-qr-card-inner">
+                <div class="home-qr-card-copy">
+                    <p class="home-qr-card-title">Need this site on your phone?</p>
+                    <p class="home-qr-card-text">Scan the QR code to open and share the Virtual School site.</p>
+                    <button type="button" class="home-share-cta" data-share-url="{{ request.build_absolute_uri }}">
+                        Share this page
+                    </button>
+                </div>
+                <div class="home-qr-card-code">
+                    <img
+                        src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data={{ request.build_absolute_uri|urlencode }}"
+                        alt="QR code linking to the Virtual School home page"
+                        width="160"
+                        height="160"
+                        loading="lazy"
+                    />
+                </div>
+            </div>
+        </section>
+
     </div>
     {% endblock %}
 
