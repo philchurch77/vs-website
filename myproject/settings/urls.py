@@ -23,7 +23,6 @@ urlpatterns = [
     path('sdq/',        include('myproject.sdq.urls', namespace='sdq')),
     path('resources/',  include('myproject.resources.urls', namespace='resources')),
     path('tolerance/',  include('myproject.tolerance.urls', namespace='tolerance')),
-    path('animation/',  include('myproject.animation.urls', namespace='animation')),
 ]
 
 # Serve static and media files in development mode

@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($file = \"c:\\\\Users\\\\philc\\\\OneDrive\\\\Desktop\\\\VS Code\\\\vs_website\\\\myproject\\\\static\\\\css\\\\style.css\"; $lines = \\(Get-Content $file\\).Count; Write-Output \"Total lines: $lines\")"
+    ]
+  }
+}
