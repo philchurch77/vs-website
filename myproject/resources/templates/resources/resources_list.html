@@ -3,41 +3,84 @@
 {% block title %}Resources{% endblock %}
 
 {% block content %}
-<section>
-  <h1 style="margin-bottom:0.2em;">Training Resources</h1>
-  <p style="color:#555; margin-bottom:1.5em;">Resources and links from training sessions with the Cambridgeshire Virtual School</p>
-  {% if tag %}
-    <h2 style="margin-bottom:1em;">Resources tagged with "{{ tag.name }}"</h2>
-  {% endif %}
+<section class="resources-page">
+  <div class="resources-hero">
+    <div class="resources-hero-copy">
+      <p class="resources-eyebrow">Cambridgeshire Virtual School</p>
+      <h1 class="resources-hero-title">Training resources</h1>
+      <p class="resources-hero-text">Guidance, reference materials, and follow-up resources from training sessions, gathered in one place and easier to scan.</p>
+    </div>
+    <div class="resources-hero-summary" aria-label="Resources summary">
+      <div class="resources-summary-value">{{ resources.paginator.count }}</div>
+      <div class="resources-summary-label">resources available</div>
+      {% if tag %}
+        <a class="resources-active-filter" href="{% url 'resources:resource_list' %}">Filtered by {{ tag.name }}. Clear filter</a>
+      {% else %}
+        <div class="resources-summary-note">Newest resources appear first.</div>
+      {% endif %}
+    </div>
+  </div>
 
   {% if resources %}
+    <div class="resources-toolbar">
+      <p class="resources-toolbar-text">
+        {% if tag %}
+          Showing resources tagged with <strong>{{ tag.name }}</strong>
+        {% else %}
+          Browse practical resources, downloadable materials, and related links.
+        {% endif %}
+      </p>
+    </div>
+
     <div class="resources-container">
       {% for topic in resources %}
         <article class="resource-list-card">
-          <div class="resource-list-title">
-            <a href="{% url 'resources:page' slug=topic.slug %}">{{ topic.title }}</a>
+          <div class="resource-list-card-top">
+            <div class="resource-list-meta">
+              <span>{{ topic.date|date:"j M Y" }}</span>
+              <span class="resource-meta-dot" aria-hidden="true"></span>
+              <span>{{ topic.author }}</span>
+            </div>
+            <h2 class="resource-list-title">
+              <a href="{% url 'resources:page' slug=topic.slug %}">{{ topic.title }}</a>
+            </h2>
           </div>
-          <div class="resource-list-meta">
-            {{ topic.date }} &middot; by {{ topic.author }}
-          </div>
-          <div class="resource-list-tags">
-            {% for t in topic.tags.all %}
-              <a class="tag-badge" href="{% url 'resources:resource_list_by_tag' t.slug %}">{{ t.name }}</a>
-            {% empty %}
-              <span style="color:#aaa;">No tags</span>
-            {% endfor %}
-          </div>
+
           {% if topic.body %}
-            <div class="resource-list-body">{{ topic.body|truncatewords:30 }}</div>
+            <div class="resource-list-body">{{ topic.body|truncatewords:32 }}</div>
+          {% else %}
+            <div class="resource-list-body resource-list-body--muted">Open this resource to view the full details and any supporting materials.</div>
           {% endif %}
+
+          <div class="resource-list-bottom">
+            <div class="resource-list-tags">
+              {% for t in topic.tags.all %}
+                <a class="tag-badge" href="{% url 'resources:resource_list_by_tag' t.slug %}">{{ t.name }}</a>
+              {% empty %}
+                <span class="resource-list-no-tags">General resource</span>
+              {% endfor %}
+            </div>
+
+            <div class="resource-list-actions">
+              <a class="resource-list-link" href="{% url 'resources:page' slug=topic.slug %}">View resource</a>
+              {% if topic.file %}
+                <span class="resource-list-attachment">Attachment</span>
+              {% elif topic.link %}
+                <span class="resource-list-attachment">External link</span>
+              {% endif %}
+            </div>
+          </div>
         </article>
       {% endfor %}
     </div>
   {% else %}
-    <p>No resources yet.</p>
+    <div class="resources-empty-state">
+      <h2 class="resources-empty-title">No resources yet</h2>
+      <p class="resources-empty-text">New training materials and follow-up links will appear here once they have been added.</p>
+    </div>
   {% endif %}
 
-  <div style="margin-top:2em;">
+  <div class="resources-pagination">
     {% include "pagination.html" with page=resources %}
   </div>
 </section>

@@ -5,6 +5,30 @@
 {% endblock %}
 
 {% block content %}
+<style>
+.spinner {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border: 3px solid #ccc;
+    border-top: 3px solid #0078d7;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    vertical-align: middle;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.thinking-bubble {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #555;
+    font-style: italic;
+}
+</style>
+
 <div class="main-layout flashcards-layout">
 
     <!-- LEFT: Toolkit + Chat history -->
@@ -13,22 +37,22 @@
             <div class="panel-heading">
                 <h1>Educational Toolkit</h1>
                 <p class="panel-subtitle">Ask Echo a question to begin.</p>
-                <button type="button"
-                    class="chat-history-hamburger"
-                    aria-controls="flashcards-chat-history"
-                    aria-expanded="false">
-                    <span class="visually-hidden">Open chat history</span>
-                    <span class="chat-history-hamburger-icon" aria-hidden="true">
-                        <span class="chat-history-hamburger-line"></span>
-                        <span class="chat-history-hamburger-line"></span>
-                    </span>
-                </button>
             </div>
+            <button type="button"
+                class="chat-history-hamburger"
+                aria-controls="flashcards-chat-history"
+                aria-expanded="false">
+                <span class="visually-hidden">Open chat history</span>
+                <span class="chat-history-hamburger-icon" aria-hidden="true">
+                    <span class="chat-history-hamburger-line"></span>
+                    <span class="chat-history-hamburger-line"></span>
+                </span>
+            </button>
         </header>
 
         <div class="toolkit-body">
-            <!-- Chat history styled as sidebar, matching animation page -->
-            <aside class="sidebar chat-history-sidebar" id="flashcards-chat-history" tabindex="-1">
+            <!-- Chat history sidebar -->
+            <aside class="chat-history-sidebar" id="flashcards-chat-history" tabindex="-1">
                 <div class="chat-history-header">
                     <h3 class="chat-history-heading">Chat History</h3>
                     <button type="button" class="chat-history-close" aria-label="Close chat history">
@@ -43,56 +67,20 @@
             <!-- Chat panel -->
             <section class="chat-panel">
                 <div class="messages" id="messages"></div>
-            <div class="panel-actions">
-                                                <script>
-                                                // Add a welcome message if no messages exist
-                                                document.addEventListener("DOMContentLoaded", function() {
-                                                    const messagesDiv = document.getElementById("messages");
-                                                    if (messagesDiv && messagesDiv.children.length === 0) {
-                                                        const welcome = document.createElement("div");
-                                                        welcome.className = "message assistant welcome-bubble";
-                                                        welcome.textContent = "👋 Hi! How can I help you?";
-                                                        messagesDiv.appendChild(welcome);
-                                                    }
-                                                });
-                                                </script>
-                <form method="get" action="{% url 'flashcards:flashcards_page' %}">
-                    <button type="submit" name="new" value="1" class="new-chat-btn">
-                        New Chat
+                <div class="panel-actions">
+                    <form method="get" action="{% url 'flashcards:flashcards_page' %}">
+                        <button type="submit" name="new" value="1" class="new-chat-btn">
+                            New Chat
+                        </button>
+                    </form>
+                    <button onclick="exportVisibleFlashcardsAsPNGs()" class="new-chat-btn">
+                        Export Flashcards
                     </button>
-                </form>
-
-                <button onclick="exportVisibleFlashcardsAsPNGs()" class="new-chat-btn">
-                    Export Flashcards
-                </button>
-            </div>
+                </div>
                 <div class="input-area">
                     <input type="text" id="messageInput" placeholder="Type here..." />
-                    <button id="sendBtn" type="button" class="new-chat-btn" onclick="sendMessage()">Send</button>
+                    <button id="sendBtn" type="button" onclick="sendMessage()">Send</button>
                 </div>
-            <style>
-            .spinner {
-                display: inline-block;
-                width: 24px;
-                height: 24px;
-                border: 3px solid #ccc;
-                border-top: 3px solid #0078d7;
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
-                vertical-align: middle;
-            }
-            @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-            }
-            .thinking-bubble {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                color: #555;
-                font-style: italic;
-            }
-            </style>
             </section>
         </div>
     </section>
@@ -111,6 +99,14 @@
         const messages = {{ messages|safe }};
         for (const msg of messages) {
             appendMessage(msg.role, msg.content);
+        }
+
+        if (messages.length === 0) {
+            const messagesDiv = document.getElementById("messages");
+            const welcome = document.createElement("div");
+            welcome.className = "message assistant welcome-bubble";
+            welcome.textContent = "👋 Hi! How can I help you?";
+            messagesDiv.appendChild(welcome);
         }
 
         // Toggle dropdown visibility

@@ -6,15 +6,20 @@
 <div class="resource-container">
     <article class="resource-card">
         <header class="resource-header">
+            <p class="resource-header-kicker">Training resource</p>
             <h1 class="resource-title">{{ topic.title }}</h1>
             <div class="resource-meta">
                 <div class="meta-item">
-                    <span class="meta-icon">📅</span>
+                    <span class="meta-icon" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3.75 18.75V8.25A2.25 2.25 0 0 1 6 6h12a2.25 2.25 0 0 1 2.25 2.25v10.5A2.25 2.25 0 0 1 18 21H6a2.25 2.25 0 0 1-2.25-2.25ZM3.75 9.75h16.5" /></svg>
+                    </span>
                     <span>{{ topic.date|date:"j M Y, H:i" }}</span>
                 </div>
                 {% if topic.author %}
                 <div class="meta-item">
-                    <span class="meta-icon">👤</span>
+                    <span class="meta-icon" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" /></svg>
+                    </span>
                     <span>{{ topic.author }}</span>
                 </div>
                 {% endif %}
@@ -23,9 +28,9 @@
 
         {% if topic.tags.all %}
         <div class="resource-tags">
-            <span class="tags-label">🏷️ Tags:</span>
+            <span class="tags-label">Tags</span>
             {% for t in topic.tags.all %}
-                <a href="{% url 'resources:resource_list_by_tag' t.slug %}" class="tag-link">{{ t.name }}</a>{% if not forloop.last %}, {% endif %}
+                <a href="{% url 'resources:resource_list_by_tag' t.slug %}" class="tag-link">{{ t.name }}</a>
             {% endfor %}
         </div>
         {% endif %}
@@ -39,17 +44,23 @@
         <footer class="resource-footer">
             {% if topic.link %}
             <a href="{{ topic.link }}" target="_blank" rel="noopener" class="action-link">
-                <span class="link-icon">🔗</span>
+                <span class="link-icon" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 6.364 6.364l-1.757 1.757a4.5 4.5 0 0 1-6.364 0l-1-1m2.12-5.242a4.5 4.5 0 0 0-6.364 0L4.43 12.325a4.5 4.5 0 0 0 0 6.364 4.5 4.5 0 0 0 6.364 0l1.757-1.757" /></svg>
+                </span>
                 Open related link
             </a>
             {% endif %}
 
             {% if topic.file %}
             <a href="{{ topic.file.url }}" download class="action-link">
-                <span class="link-icon">📎</span>
+                <span class="link-icon" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94a3 3 0 1 1 4.243 4.243L8.558 18.314a1.5 1.5 0 0 1-2.121-2.121l8.897-8.898" /></svg>
+                </span>
                 Download attachment
             </a>
             {% endif %}
+
+            <a href="{% url 'resources:resource_list' %}" class="action-link action-link--secondary">Back to resources</a>
         </footer>
     </article>
 </div>
