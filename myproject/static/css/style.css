@@ -27,6 +27,7 @@
   --score: #ea580c;
   --nav-height: 70px;
   --nav-width: 240px;
+  --nav-collapsed-width: 64px;
   --nav-gap: 20px;
   --border-radius-sm: 4px;
   --border-radius-md: 8px;
@@ -45,6 +46,7 @@ body {
   font-size: clamp(1rem, 2vw, 1.125rem);
   padding: 2rem;
   padding-left: calc(var(--nav-width) + var(--nav-gap));
+  transition: padding-left 0.25s ease;
 }
 
 @media (max-width: 900px) {
@@ -379,17 +381,27 @@ p {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse at 20% 10%, rgba(186, 225, 255, 0.35) 0%, transparent 55%),
-    radial-gradient(ellipse at 80% 90%, rgba(196, 237, 220, 0.28) 0%, transparent 55%);
+    radial-gradient(ellipse at 20% 40%, rgba(186, 225, 255, 0.20) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 90%, rgba(196, 237, 220, 0.18) 0%, transparent 55%);
   z-index: -1;
 }
 
 .home-video {
-  max-width: 700px;
+  max-width: 360px;
   margin: 0 auto 2rem;
   padding: 0 1.25rem;
   position: relative;
   z-index: 1;
+  text-align: center;
+}
+
+.home-video-heading {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 0.75rem;
+  background: none;
+  -webkit-text-fill-color: var(--ink);
 }
 
 .home-video-inner {
@@ -398,19 +410,37 @@ p {
   overflow: hidden;
 }
 
-.home-video-link {
+.home-video-thumb {
   display: block;
-  padding: 1.25rem 1.5rem;
-  background: linear-gradient(135deg, var(--primary), var(--accent));
-  color: #fff;
-  text-decoration: none;
-  text-align: center;
-  font-weight: 600;
-  font-size: 1.05rem;
+  position: relative;
+  overflow: hidden;
+  line-height: 0;
 }
 
-.home-video-link:hover {
-  filter: brightness(1.05);
+.home-video-thumb-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.home-video-thumb:hover .home-video-thumb-img {
+  transform: scale(1.03);
+  filter: brightness(0.85);
+}
+
+.home-video-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
+  transition: transform 0.2s ease;
+}
+
+.home-video-thumb:hover .home-video-play {
+  transform: translate(-50%, -50%) scale(1.1);
 }
 
 /* --- Training Request Spotlight --- */
@@ -615,100 +645,20 @@ p {
   border-radius: var(--border-radius-full);
 }
 
-/* --- Animation Title and Subtitle --- */
-.animation-title {
-  margin: 0;
-  font-size: 2.4rem;
-  font-weight: 600;
-  letter-spacing: -1px;
-  color: #0a3a53;
-}
-.animation-subtitle {
-  margin: 0.5em 0 0 2px;
-  font-size: 1.08rem;
-  color: #7da3b7;
-  font-weight: 400;
-}
-
-.animation-panel-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.animation-panel-copy {
-  flex: 1 1 260px;
-}
-
-.animation-panel-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.assistant-avatar,
-.assistant-decoration {
-  width: auto;
-  height: 64px;
-  object-fit: contain;
-  background: none;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-.assistant-avatar {
-  width: 54px;
-  height: 54px;
-}
-
-.assistant-decoration {
-  width: 110px;
-  height: 64px;
-}
-
-@media (max-width: 640px) {
-  .animation-panel-heading {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .animation-panel-actions {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .assistant-avatar,
-  .assistant-decoration {
-    height: 48px;
-  }
-
-  .assistant-decoration {
-    display: none;
-  }
-}
-
-
-.animation-chat-panel .input-area,
 .evaluation-chat-panel .input-area {
   flex-wrap: nowrap;
 }
 
 @media (max-width: 960px) {
-  .animation-chat-panel .input-area,
   .evaluation-chat-panel .input-area {
     flex-wrap: wrap;
     align-items: stretch;
   }
 
-  .animation-chat-panel .input-area input[type="text"],
   .evaluation-chat-panel .input-area input[type="text"] {
     flex: 1 1 100%;
   }
 
-  .animation-chat-panel .input-area button,
-  .animation-chat-panel .input-area .new-chat-btn,
   .evaluation-chat-panel .input-area button,
   .evaluation-chat-panel .input-area .new-chat-btn {
     width: 100%;
@@ -789,37 +739,6 @@ body.chat-history-open {
     display: none;
   }
 }
-/* --- Chat Bubble Styles --- */
-.animation-messages .message {
-  margin-bottom: 0.7em;
-  padding: 0.7em 1.1em;
-  border-radius: 16px;
-  max-width: 80%;
-  font-size: 1.08rem;
-  line-height: 1.5;
-  box-shadow: 0 1px 4px rgba(30,60,90,0.04);
-  word-break: break-word;
-}
-.animation-messages .assistant {
-  background: #e3f0fa;
-  color: #1976d2;
-  align-self: flex-start;
-}
-.animation-messages .user {
-  background: #dbeafe;
-  color: #0a3a53;
-  border: 1.5px solid #b6d0f7;
-  align-self: flex-end;
-}
-.animation-messages .welcome-bubble {
-  background: #f0f7fd;
-  color: #1976d2;
-  font-weight: 500;
-  text-align: center;
-  margin: 1.2em auto 1.5em auto;
-  box-shadow: none;
-  max-width: 90%;
-}
 .input-area {
   background: var(--panel-bg);
   border-radius: var(--border-radius-md);
@@ -885,7 +804,7 @@ body.chat-history-open {
   font-size: 1.08rem !important;
   font-weight: 400 !important;
 }
-/* --- Animation Chat Layout (migrated from animationchat.css) --- */
+/* --- Evaluation Chat Layout --- */
 .main-layout.two-column {
   display: flex;
   flex-direction: row;
@@ -922,33 +841,6 @@ body.chat-history-open {
   }
 }
 
-.animation-assistant-layout {
-  margin-left: 1.5rem;
-  padding-left: 0.5rem;
-}
-
-.animation-assistant-layout .chat-history-sidebar {
-  margin-left: 0.75rem;
-}
-
-@media (max-width: 1100px) {
-  .animation-assistant-layout {
-    margin-left: 0.75rem;
-    padding-left: 0.25rem;
-  }
-
-  .animation-assistant-layout .chat-history-sidebar {
-    margin-left: 0.4rem;
-  }
-}
-
-@media (max-width: 900px) {
-  .animation-assistant-layout,
-  .animation-assistant-layout .chat-history-sidebar {
-    margin-left: 0;
-    padding-left: 0;
-  }
-}
 .toolkit-column {
   flex: 1 1 0%;
   min-width: 520px;
@@ -959,8 +851,7 @@ body.chat-history-open {
   flex-direction: column;
   height: 100%;
 }
-/* Animation & Evaluation Chat Panel Styles */
-.animation-chat-panel,
+/* Evaluation Chat Panel Styles */
 .evaluation-chat-panel {
   width: 100%;
   max-width: 100%;
@@ -973,7 +864,6 @@ body.chat-history-open {
   flex-direction: column;
   min-height: 500px;
 }
-.animation-messages,
 .evaluation-messages {
   overflow-y: auto;
   background: var(--panel-bg, #fff);
@@ -983,16 +873,12 @@ body.chat-history-open {
   padding: 1.2rem 1.5rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
-/* Make animation/evaluation chat messages use more width and spacing */
-.animation-messages .message,
 .evaluation-messages .message {
   max-width: 98%;
   width: 100%;
   margin-left: 0;
   margin-right: 0;
 }
-.animation-messages .user,
-.animation-messages .assistant,
 .evaluation-messages .user,
 .evaluation-messages .assistant {
   margin-left: 0;
@@ -1015,6 +901,7 @@ nav {
   box-shadow: 8px 0 32px rgba(30,60,90,0.10);
   border-right: 1.5px solid rgba(33, 158, 188, 0.12);
   z-index: 1100;
+  transition: width 0.25s ease, padding 0.25s ease;
 }
 
 .nav-top {
@@ -1198,6 +1085,79 @@ body.nav-open {
   .nav-toggle {
     display: none !important;
   }
+}
+
+/* --- Nav Collapse (desktop only) --- */
+.nav-collapse-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  border-radius: var(--border-radius-full);
+  cursor: pointer;
+  color: rgba(2, 48, 71, 0.35);
+  transition: background 0.2s, color 0.2s;
+  padding: 0;
+}
+.nav-collapse-btn svg {
+  transition: transform 0.3s ease;
+  pointer-events: none;
+}
+.nav-collapse-btn:hover {
+  background: rgba(2, 48, 71, 0.08);
+  color: var(--ink);
+}
+.nav-collapse-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+nav.is-collapsed .nav-collapse-btn svg {
+  transform: rotate(180deg);
+}
+@media (min-width: 901px) {
+  .nav-collapse-btn {
+    display: inline-flex;
+  }
+}
+
+nav.is-collapsed {
+  width: var(--nav-collapsed-width);
+  padding: 1.5rem 0.5rem;
+  overflow: hidden;
+}
+nav.is-collapsed .vs-banner {
+  display: none;
+}
+nav.is-collapsed .nav-top {
+  justify-content: center;
+}
+nav.is-collapsed .nav-collapse-btn {
+  transform: none;
+}
+nav.is-collapsed .nav-label {
+  display: none;
+}
+nav.is-collapsed .nav-links a,
+nav.is-collapsed .nav-button-link {
+  justify-content: center;
+  padding: 0.75rem;
+  gap: 0;
+}
+nav.is-collapsed .nav-admin-disabled {
+  justify-content: center;
+  padding: 0.75rem;
+  gap: 0;
+}
+nav.is-collapsed .logout {
+  margin-top: auto;
+}
+
+body.nav-is-collapsed {
+  padding-left: calc(var(--nav-collapsed-width) + var(--nav-gap));
 }
 @media (max-width: 900px) {
   nav {
@@ -2042,28 +2002,41 @@ body.nav-open {
 /* Individual Chat History Item */
 .chat-item {
     position: relative;
-    padding: 0.75em 1em;
-    background: var(--panel-bg);
-    border-radius: var(--border-radius-md);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    margin-bottom: 1em;
-    transition: background 0.2s ease;
+    padding: 0.5em 0.75em 0.5em 0.9em;
+    background: var(--secondary);
+    border: 1.5px solid var(--primary);
+    border-radius: var(--border-radius-full);
+    box-shadow: 0 2px 8px rgba(25, 118, 210, 0.07);
+    margin-bottom: 0.45em;
+    transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
 .chat-item:hover {
-    background: #f2f6fc;
+    background: #d0e7fa;
+    border-color: var(--primary-hover);
+    box-shadow: 0 4px 14px rgba(25, 118, 210, 0.13);
 }
 
 .chat-item a {
     display: block;
-    color: var(--ink);
+    color: var(--primary);
     text-decoration: none;
-    font-weight: 500;
-    font-size: 1rem;
-    margin-right: 2rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    line-height: 1.35;
+    transition: color 0.15s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    flex: 1;
+}
+
+.chat-item:hover a {
+    color: var(--primary-hover);
 }
 
 @media (max-width: 640px) {
@@ -2099,9 +2072,8 @@ body.nav-open {
 
 /* Three Dots Menu Position */
 .chat-menu {
-    position: absolute;
-    top: 0.75em;
-    right: 0.75em;
+    position: relative;
+    flex-shrink: 0;
 }
 
 @media (max-width: 640px) {
@@ -2126,12 +2098,18 @@ body.nav-open {
 .menu-toggle {
     background: none;
     border: none;
-    font-size: 1.5rem;
+    font-size: 1.1rem;
     cursor: pointer;
-    color: var(--ink);
-    padding: 0;
+    color: var(--primary);
+    padding: 0.1em 0.25em;
     outline: none;
     box-shadow: none;
+    border-radius: var(--border-radius-sm);
+    transition: color 0.15s ease, background 0.15s ease;
+    line-height: 1;
+    opacity: 0.65;
+    flex-shrink: 0;
+    margin-left: 0.3em;
 }
 
 .menu-toggle:focus,
@@ -2139,52 +2117,38 @@ body.nav-open {
 .menu-toggle:hover {
     outline: none;
     box-shadow: none;
-    background: none;
-    color: var(--ink); /* or your preferred color */
+    background: rgba(33, 158, 188, 0.15);
+    opacity: 1;
+    color: var(--primary-hover);
 }
 
 /* Dropdown Styling */
 .menu-dropdown {
     display: none;
     position: absolute;
-    right: -20px;
-    top: 2.5em;
-    background: var(--light-bg);
-    border-radius: var(--border-radius-md);
-    padding: 0.5em 0;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    right: 0;
+    top: calc(100% + 6px);
+    background: var(--panel-bg);
+    border-radius: var(--border-radius-lg);
+    padding: 0.6em;
+    box-shadow: 0 8px 24px rgba(2, 48, 71, 0.14), 0 0 0 1px rgba(33, 158, 188, 0.12);
     z-index: 100;
-    width: 150px;
-    transition: all 0.3s ease;
+    width: 145px;
+    display: none;
+    flex-direction: column;
+    gap: 0.6em;
 }
 
 .menu-dropdown.show {
-    display: block;
+    display: flex;
 }
 
-/* Buttons & Links inside Dropdown */
-.menu-dropdown button,
-.menu-dropdown a {
-    color: var(--dark-text) !important;
-    text-decoration: none !important;
-    font-size: 0.9rem !important;
-    text-align: left;
-    display: block;
-    box-shadow: none;
+/* Ensure dropdown buttons fill the full dropdown width */
+.menu-dropdown .new-chat-btn {
     width: 100%;
-    padding: 0.5em 1em;
-    background: none;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
+    font-size: 0.82rem;
 }
 
-.menu-dropdown button:hover,
-.menu-dropdown a:hover {
-    background-color: var(--primary);
-    color: #fff;
-    text-decoration: none !important;
-}
 
 /* Wrapper */
 .wrapper {
@@ -2240,7 +2204,7 @@ body.nav-open {
 }
 
 .assistant::before {
-    content: "Assistant";
+    content: "Echo";
     position: absolute;
     top: -8px;
     right: -12px;
@@ -2253,15 +2217,9 @@ body.nav-open {
     border: 1px solid rgba(100, 116, 139, 0.2);
 }
 
-/* Enhanced styling for flashcard content in assistant messages */
 .assistant strong {
-    color: var(--primary);
-    font-weight: 600;
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 4px;
-    display: block;
+    color: var(--ink);
+    font-weight: 700;
 }
 
 .assistant p {
@@ -2291,13 +2249,45 @@ body.nav-open {
 }
 
 .assistant blockquote {
-    background: rgba(255, 255, 255, 0.8);
-    border-left: 3px solid var(--accent);
-    padding: 8px 12px;
-    margin: 12px 0;
+    background: rgba(33, 158, 188, 0.06);
+    border-left: 3px solid var(--primary);
+    padding: 0.65rem 1rem 0.65rem 1.1rem;
+    margin: 0.75rem 0;
     font-style: italic;
-    color: var(--dark-text);
-    border-radius: 0 6px 6px 0;
+    color: var(--ink);
+    border-radius: 0 8px 8px 0;
+}
+
+.assistant blockquote p {
+    margin: 0;
+    padding: 0;
+}
+
+.assistant hr {
+    border: none;
+    border-top: 1px solid rgba(33, 158, 188, 0.2);
+    margin: 1rem 0;
+}
+
+.assistant ul,
+.assistant ol {
+    padding-left: 1.4rem;
+    margin: 0.4rem 0;
+}
+
+.assistant li {
+    margin-bottom: 0.3rem;
+    line-height: 1.6;
+    font-size: 15px;
+}
+
+.chat-flashcard-entry {
+    background: rgba(33, 158, 188, 0.05);
+    border: 1px solid rgba(33, 158, 188, 0.18);
+    border-radius: 10px;
+    padding: 0.75rem 1rem !important;
+    margin: 0.25rem 0 0.5rem !important;
+    line-height: 1.65;
 }
 
 input[type="text"] {
@@ -2310,7 +2300,7 @@ input[type="text"] {
     border-bottom-left-radius: 5px;
 }
 
-button:not(.chip):not(.save):not(.menu-toggle):not(.new-chat-btn) {
+button:not(.chip):not(.save):not(.menu-toggle):not(.new-chat-btn):not(.nav-collapse-btn):not(.nav-toggle):not(.nav-button-link):not(.wot-view-toggle__btn):not(.wot-day-tab) {
     padding: 12px 28px;
     font-size: 16px;
     background: linear-gradient(135deg, var(--primary), var(--accent));
@@ -2331,7 +2321,7 @@ button:not(.chip):not(.save):not(.menu-toggle):not(.new-chat-btn) {
     margin: 0;
   }
 
-button:not(.chip):not(.save):not(.menu-toggle):not(.new-chat-btn):hover {
+button:not(.chip):not(.save):not(.menu-toggle):not(.new-chat-btn):not(.nav-collapse-btn):not(.nav-toggle):not(.nav-button-link):not(.wot-view-toggle__btn):not(.wot-day-tab):hover {
     background: linear-gradient(135deg, var(--accent), var(--primary));
 }
 
@@ -3228,210 +3218,564 @@ main a:hover, section a:hover {
    WINDOW OF TOLERANCE – WEEKLY MAPPING TOOL
    ═══════════════════════════════════════════════════════════════ */
 
-/* List page: create form card */
-.wot-create-card {
-  background: var(--card-bg, #fff);
-  border: 1px solid var(--border, #e2e8f0);
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-}
-.wot-create-card h2 { margin-top: 0; font-size: 1.1rem; }
-
-.wot-create-form { display: flex; flex-direction: column; gap: 1rem; }
-
-.wot-form-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-.wot-form-group {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 180px;
-  gap: 0.3rem;
-}
-.wot-form-group--wide { flex: 2 1 280px; }
-.wot-form-group label { font-size: 0.82rem; font-weight: 600; color: var(--text-muted, #64748b); }
-.wot-form-group input {
-  padding: 0.45rem 0.7rem;
-  border: 1px solid var(--border, #cbd5e1);
-  border-radius: 6px;
-  font-size: 0.92rem;
-}
-
-/* List of existing maps */
-.wot-maps-section h2 { font-size: 1.1rem; margin-bottom: 0.8rem; }
-.wot-maps-list { display: flex; flex-direction: column; gap: 0.6rem; }
-
-.wot-map-card {
-  display: block;
-  padding: 0.9rem 1.1rem;
-  background: var(--card-bg, #fff);
-  border: 1px solid var(--border, #e2e8f0);
-  border-radius: 10px;
-  text-decoration: none;
-  color: inherit;
-  transition: box-shadow 0.15s, border-color 0.15s;
-}
-.wot-map-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); border-color: var(--accent, #6366f1); }
-.wot-map-card__pupil { font-weight: 700; font-size: 1rem; }
-.wot-map-card__meta { font-size: 0.8rem; color: var(--text-muted, #64748b); margin-top: 0.2rem; }
-
-/* Detail page layout */
-.wot-detail-layout {
-  max-width: 1300px;
+/* ── List page ──────────────────────────────────────────────────── */
+.wot-list-layout {
+  max-width: 1100px;
   margin: 0 auto;
   padding: 1rem 1.5rem 3rem;
 }
 
-/* Legend */
-.wot-legend {
+.wot-list-header {
   display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 0.8rem;
-  margin-bottom: 1.25rem;
 }
-.wot-legend-hint {
+
+.wot-list-title {
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  font-weight: 800;
+  background: linear-gradient(90deg, var(--ink), var(--primary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  margin: 0 0 0.3rem;
+  text-align: left;
+}
+
+.wot-list-subtitle {
+  font-size: 0.95rem;
+  color: #64748b;
+  max-width: 560px;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.wot-list-body {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .wot-list-body { grid-template-columns: 1fr; }
+}
+
+/* Create form card */
+.wot-create-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1.6rem;
+  box-shadow: 0 2px 12px rgba(2,48,71,0.06);
+}
+
+.wot-create-card__head { margin-bottom: 1.25rem; }
+.wot-create-card__head h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 0.25rem;
+}
+.wot-create-card__head p {
+  font-size: 0.82rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.wot-create-form { display: flex; flex-direction: column; gap: 0.85rem; }
+
+.wot-form-row { display: flex; gap: 0.85rem; flex-wrap: wrap; }
+
+.wot-form-group {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 160px;
+  gap: 0.3rem;
+}
+
+.wot-form-group label {
   font-size: 0.78rem;
-  color: var(--text-muted, #94a3b8);
-  margin-left: auto;
-  font-style: italic;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
-.wot-legend-item {
+
+.wot-optional { font-weight: 400; text-transform: none; color: #94a3b8; }
+
+.wot-form-group input {
+  padding: 0.48rem 0.75rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: var(--ink);
+  background: #fafbfc;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.wot-form-group input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(33,158,188,0.12);
+  background: #fff;
+}
+
+.wot-submit-btn { margin-top: 0.3rem; align-self: flex-start; }
+
+/* Maps column */
+.wot-maps-col { min-width: 0; }
+.wot-maps-heading {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  margin: 0 0 0.75rem;
+}
+
+.wot-maps-list { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.wot-map-card {
+  display: block;
+  padding: 0.9rem 1.1rem 0.9rem 1.25rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid var(--primary);
+  border-radius: 10px;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.15s, border-left-color 0.15s, transform 0.1s;
+}
+
+.wot-map-card:hover {
+  box-shadow: 0 4px 16px rgba(2,48,71,0.1);
+  border-left-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.wot-map-card__pupil {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.wot-map-card__week {
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin-top: 0.15rem;
+}
+
+.wot-map-card__meta {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin-top: 0.2rem;
+}
+
+.wot-maps-empty {
+  padding: 2rem;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  border: 1.5px dashed #e2e8f0;
+  border-radius: 12px;
+}
+
+/* ── Detail page layout ─────────────────────────────────────────── */
+.wot-detail-layout {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0.5rem 1.5rem 3rem;
+}
+
+/* Header */
+.wot-header {
+  margin-bottom: 1.75rem;
+}
+
+.wot-back-link {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #94a3b8;
+  text-decoration: none;
+  margin-bottom: 0.6rem;
+  transition: color 0.15s;
+}
+.wot-back-link:hover { color: var(--primary); }
+
+.wot-pupil-name {
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  font-weight: 800;
+  background: linear-gradient(90deg, var(--ink), var(--primary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  margin: 0 0 0.3rem;
+  text-align: left;
+}
+
+.wot-pupil-meta {
   font-size: 0.85rem;
-  padding: 0.3rem 0.7rem;
-  border-radius: var(--border-radius-full);
-  border: 1px solid rgba(0,0,0,.1);
+  color: #64748b;
+  margin: 0;
+  line-height: 1.6;
 }
-.wot-state-green { background: #dcfce7; color: #166534; }
-.wot-state-red   { background: #fee2e2; color: #991b1b; }
-.wot-state-blue  { background: #dbeafe; color: #1e40af; }
-.wot-state-grey  { background: #f1f5f9; color: #475569; }
 
-/* Two-column body layout */
-.wot-body {
+/* Two-column content */
+.wot-content {
   display: grid;
-  grid-template-columns: 1fr 260px;
-  gap: 1.25rem;
+  grid-template-columns: 1fr 270px;
+  gap: 1.5rem;
   align-items: start;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.75rem;
 }
-@media (max-width: 900px) {
-  .wot-body { grid-template-columns: 1fr; }
-}
-.wot-body__grid { min-width: 0; }
-.wot-body__sidebar { position: sticky; top: 1rem; }
 
-/* Grid */
+@media (max-width: 960px) {
+  .wot-content { grid-template-columns: 1fr; }
+}
+
+.wot-main { min-width: 0; }
+
+/* View controls */
+.wot-view-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.wot-view-toggle {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 0.2rem;
+  gap: 0.1rem;
+}
+
+.wot-view-toggle__btn {
+  padding: 0.38em 1.1em;
+  font-size: 0.82rem;
+  font-weight: 600;
+  background: transparent;
+  color: #64748b;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.wot-view-toggle__btn.active {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 1px 4px rgba(2,48,71,0.12);
+}
+
+.wot-day-selector {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.wot-day-tab {
+  padding: 0.3em 0.8em;
+  border-radius: var(--border-radius-full);
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1.5px solid #e2e8f0;
+  background: #fff;
+  color: #475569;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.wot-day-tab:hover { border-color: var(--primary); color: var(--primary); }
+.wot-day-tab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+/* Band chart */
+.wot-band-chart {
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 2px 14px rgba(2,48,71,0.07);
+  margin-bottom: 1.25rem;
+}
+
+.wot-band {
+  display: flex;
+  align-items: stretch;
+  min-height: 80px;
+}
+
+.wot-band--red   { background: linear-gradient(180deg, #fecaca 0%, #fee2e2 100%); border-bottom: 1px solid #fca5a5; }
+.wot-band--green { background: linear-gradient(180deg, #bbf7d0 0%, #dcfce7 100%); border-top: 2.5px solid #22c55e; border-bottom: 2.5px solid #22c55e; }
+.wot-band--blue  { background: linear-gradient(180deg, #dbeafe 0%, #bfdbfe 100%); }
+
+.wot-band__label {
+  width: 112px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 0.67rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.4em 0.6em;
+  line-height: 1.3;
+}
+
+.wot-band--red   .wot-band__label { color: #b91c1c; background: rgba(254,202,202,0.45); }
+.wot-band--green .wot-band__label { color: #15803d; background: rgba(187,247,208,0.45); }
+.wot-band--blue  .wot-band__label { color: #1d4ed8; background: rgba(191,219,254,0.45); }
+
+.wot-band__slots {
+  flex: 1;
+  display: grid;
+  border-left: 1px solid rgba(0,0,0,0.06);
+  border-right: 1px solid rgba(0,0,0,0.06);
+}
+
+.wot-band__slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-right: 1px dashed rgba(0,0,0,0.08);
+  transition: background 0.12s;
+  position: relative;
+  min-height: 80px;
+}
+
+.wot-band__slot:last-child { border-right: none; }
+.wot-band--red   .wot-band__slot:hover { background: rgba(220,38,38,0.08); }
+.wot-band--green .wot-band__slot:hover { background: rgba(22,163,74,0.08); }
+.wot-band--blue  .wot-band__slot:hover { background: rgba(37,99,235,0.08); }
+
+.wot-band__marker {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  transition: transform 0.1s;
+}
+
+.wot-band__slot:hover .wot-band__marker { transform: scale(1.1); }
+.wot-band__marker--red   { background: #dc2626; }
+.wot-band__marker--green { background: #16a34a; }
+.wot-band__marker--blue  { background: #2563eb; }
+
+.wot-band-chart__xaxis-row {
+  display: flex;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.wot-band-chart__xaxis-spacer { width: 112px; flex-shrink: 0; }
+
+.wot-band-chart__xaxis {
+  flex: 1;
+  display: grid;
+  border-left: 1px solid rgba(0,0,0,0.06);
+  border-right: 1px solid rgba(0,0,0,0.06);
+}
+
+.wot-band__xlabel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3em;
+  padding: 0.5em 0.15em;
+  border-right: 1px dashed rgba(0,0,0,0.08);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: center;
+  line-height: 1.2;
+  min-height: 46px;
+}
+
+.wot-band__xlabel:last-child { border-right: none; }
+.wot-band__xlabel span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+.wot-band-chart--daily .wot-band__xlabel span {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  max-height: 72px;
+  white-space: normal;
+  overflow: hidden;
+}
+
+.wot-band-chart--daily .wot-band__xlabel {
+  min-height: 82px;
+  padding: 0.5em 0.1em;
+  justify-content: flex-end;
+}
+
+.wot-drill-btn {
+  font-size: 0.6rem;
+  padding: 0.16em 0.4em;
+  border: 1px solid var(--primary);
+  background: transparent;
+  color: var(--primary);
+  border-radius: var(--border-radius-full);
+  cursor: pointer;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+  box-shadow: none;
+}
+.wot-drill-btn:hover { background: var(--primary); color: #fff; }
+
+/* Grid (daily detail) */
 .wot-grid-wrapper {
   overflow-x: auto;
   border-radius: 12px;
-  border: 1px solid var(--border, #e2e8f0);
+  border: 1px solid #e2e8f0;
+  margin-top: 0.5rem;
 }
-.wot-grid {
-  border-collapse: collapse;
-  width: 100%;
-  min-width: 700px;
-}
+
+.wot-grid { border-collapse: collapse; width: 100%; min-width: 680px; }
+
 .wot-grid th {
-  background: var(--card-bg, #f8fafc);
-  font-size: 0.85rem;
+  background: #f8fafc;
+  font-size: 0.82rem;
   font-weight: 700;
   padding: 0.6rem 0.5rem;
   text-align: center;
-  border-bottom: 2px solid var(--border, #e2e8f0);
-  border-right: 1px solid var(--border, #e2e8f0);
+  border-bottom: 2px solid #e2e8f0;
+  border-right: 1px solid #e2e8f0;
 }
 .wot-grid th:last-child, .wot-grid td:last-child { border-right: none; }
-
-.wot-grid__slot-header { text-align: left; padding-left: 0.8rem; min-width: 160px; }
+.wot-grid__slot-header { text-align: left; padding-left: 0.8rem; min-width: 155px; }
 .wot-grid__slot-label {
-  font-size: 0.8rem;
-  color: var(--text-muted, #64748b);
+  font-size: 0.78rem;
+  color: #64748b;
   padding: 0.45rem 0.8rem;
-  border-right: 1px solid var(--border, #e2e8f0);
+  border-right: 1px solid #e2e8f0;
   white-space: nowrap;
-  background: var(--card-bg, #f8fafc);
+  background: #f8fafc;
 }
 .wot-grid tr + tr .wot-grid__slot-label,
-.wot-grid tr + tr td { border-top: 1px solid var(--border, #e2e8f0); }
+.wot-grid tr + tr td { border-top: 1px solid #e2e8f0; }
 
 .wot-grid__cell {
-  width: calc((100% - 160px) / 5);
-  height: 52px;
+  width: calc((100% - 155px) / 5);
+  height: 50px;
   text-align: center;
   cursor: pointer;
-  border-right: 1px solid var(--border, #e2e8f0);
+  border-right: 1px solid #e2e8f0;
   transition: filter 0.1s;
-  position: relative;
 }
-.wot-grid__cell:hover { filter: brightness(0.93); }
-.wot-grid__cell:focus { outline: 2px solid var(--accent, #6366f1); outline-offset: -2px; }
+.wot-grid__cell:hover  { filter: brightness(0.93); }
+.wot-grid__cell:focus  { outline: 2px solid var(--primary); outline-offset: -2px; }
 
 .wot-cell-green { background: #dcfce7; }
 .wot-cell-red   { background: #fee2e2; }
 .wot-cell-blue  { background: #dbeafe; }
 .wot-cell-grey  { background: #f8fafc; }
 
-.wot-cell-inner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  gap: 4px;
-}
-.wot-cell-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: currentColor;
-  opacity: 0.5;
-}
+.wot-cell-inner { display: flex; align-items: center; justify-content: center; height: 100%; gap: 4px; }
+.wot-cell-dot   { width: 11px; height: 11px; border-radius: 50%; opacity: 0.7; }
 .wot-cell-green .wot-cell-dot { background: #16a34a; }
 .wot-cell-red   .wot-cell-dot { background: #dc2626; }
 .wot-cell-blue  .wot-cell-dot { background: #2563eb; }
+.wot-cell-intensity { font-size: 0.68rem; font-weight: 700; color: rgba(0,0,0,.45); }
+.wot-cell-empty { color: #cbd5e1; font-size: 1.05rem; line-height: 1; }
 
-.wot-cell-intensity {
-  font-size: 0.7rem;
+/* Sidebar */
+.wot-sidebar {
+  position: sticky;
+  top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.wot-sidebar-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1.1rem 1.2rem;
+  box-shadow: 0 1px 8px rgba(2,48,71,0.05);
+}
+
+.wot-sidebar-heading {
+  font-size: 0.72rem;
   font-weight: 700;
-  color: rgba(0,0,0,.5);
-}
-.wot-cell-empty {
-  color: #cbd5e1;
-  font-size: 1.1rem;
-  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #94a3b8;
+  margin: 0 0 0.75rem;
 }
 
-/* Summary sidebar panel */
-.wot-summary-panel {
-  background: var(--card-bg, #fff);
-  border: 1px solid var(--border, #e2e8f0);
-  border-radius: 12px;
-  padding: 1.1rem 1.25rem;
+/* Legend */
+.wot-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
 }
-.wot-summary-panel h2 { margin: 0 0 0.9rem; font-size: 0.95rem; }
 
-.wot-summary-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.wot-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.22rem 0.6rem;
+  border-radius: var(--border-radius-full);
+  border: 1px solid rgba(0,0,0,.08);
+}
+
+.wot-state-green { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
+.wot-state-red   { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
+.wot-state-blue  { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
+.wot-state-grey  { background: #f8fafc; color: #475569; border-color: #e2e8f0; }
+
+.wot-legend-hint {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  margin: 0.25rem 0 0;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* Summary */
+.wot-summary-list { display: flex; flex-direction: column; gap: 0.45rem; }
 
 .wot-summary-row {
-  padding: 0.55rem 0.7rem;
+  padding: 0.5rem 0.65rem;
   border-radius: 8px;
-  background: var(--surface, #f8fafc);
-  font-size: 0.8rem;
+  background: #f8fafc;
+  font-size: 0.79rem;
   border-left: 3px solid transparent;
 }
 .wot-summary-row strong {
   display: block;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: .04em;
-  color: var(--text-muted, #64748b);
-  margin-bottom: 0.3rem;
+  color: #94a3b8;
+  margin-bottom: 0.25rem;
 }
 .wot-summary-green { border-left-color: #16a34a; background: #f0fdf4; }
 .wot-summary-red   { border-left-color: #dc2626; background: #fff5f5; }
@@ -3441,24 +3785,14 @@ main a:hover, section a:hover {
   display: inline-block;
   background: rgba(0,0,0,.06);
   border-radius: var(--border-radius-full);
-  padding: 0.15rem 0.5rem;
-  font-size: 0.75rem;
-  margin: 0.15rem 0.15rem 0 0;
+  padding: 0.12rem 0.45rem;
+  font-size: 0.73rem;
+  margin: 0.12rem 0.12rem 0 0;
 }
-.wot-summary-empty { font-style: italic; color: #94a3b8; font-size: 0.78rem; }
+.wot-summary-empty { font-style: italic; color: #94a3b8; font-size: 0.76rem; }
 
-.wot-summary-counts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  padding-top: 0.4rem;
-}
-.wot-count {
-  font-size: 0.72rem;
-  font-weight: 600;
-  padding: 0.2rem 0.55rem;
-  border-radius: var(--border-radius-full);
-}
+.wot-summary-counts { display: flex; flex-wrap: wrap; gap: 0.3rem; padding-top: 0.35rem; }
+.wot-count { font-size: 0.7rem; font-weight: 600; padding: 0.18rem 0.5rem; border-radius: var(--border-radius-full); }
 .wot-count--green { background: #dcfce7; color: #166534; }
 .wot-count--red   { background: #fee2e2; color: #991b1b; }
 .wot-count--blue  { background: #dbeafe; color: #1e40af; }
@@ -3466,12 +3800,14 @@ main a:hover, section a:hover {
 
 /* Support plan */
 .wot-support-plan {
-  background: var(--card-bg, #fff);
-  border: 1px solid var(--border, #e2e8f0);
-  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
   padding: 1.5rem;
+  box-shadow: 0 1px 8px rgba(2,48,71,0.05);
   margin-bottom: 2rem;
 }
+
 .wot-support-plan__header {
   display: flex;
   justify-content: space-between;
@@ -3480,86 +3816,82 @@ main a:hover, section a:hover {
   margin-bottom: 1.25rem;
   flex-wrap: wrap;
 }
-.wot-support-plan h2 { margin: 0 0 0.2rem; font-size: 1.05rem; }
-.wot-support-intro { font-size: 0.82rem; color: var(--text-muted, #64748b); margin: 0; }
+
+.wot-support-plan h2 { margin: 0 0 0.2rem; font-size: 1.05rem; font-weight: 700; }
+.wot-support-intro { font-size: 0.8rem; color: #64748b; margin: 0; }
 
 .wot-support-columns {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
 }
-@media (max-width: 700px) {
-  .wot-support-columns { grid-template-columns: 1fr; }
-}
-.wot-support-col {}
+@media (max-width: 700px) { .wot-support-columns { grid-template-columns: 1fr; } }
+
 .wot-support-col__heading {
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: .05em;
-  color: var(--text-muted, #64748b);
+  letter-spacing: .06em;
+  color: #94a3b8;
   font-weight: 700;
   margin: 0 0 0.9rem;
   padding-bottom: 0.4rem;
-  border-bottom: 1px solid var(--border, #e2e8f0);
+  border-bottom: 1px solid #e2e8f0;
 }
+
 .wot-support-field { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.8rem; }
-.wot-support-field label { font-size: 0.8rem; font-weight: 600; color: #334155; }
+.wot-support-field label { font-size: 0.78rem; font-weight: 600; color: #334155; }
+
 .wot-support-textarea {
   resize: vertical;
-  padding: 0.5rem 0.7rem;
-  border: 1px solid var(--border, #cbd5e1);
-  border-radius: 6px;
-  font-size: 0.88rem;
+  padding: 0.48rem 0.7rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.86rem;
   font-family: inherit;
   line-height: 1.5;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
-.wot-support-save-row { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
-.wot-save-msg { font-size: 0.85rem; color: #16a34a; font-weight: 600; }
 
-/* ── Modal ────────────────────────────────────────────────────────────── */
+.wot-support-textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(33,158,188,0.1);
+}
+
+.wot-support-save-row { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
+.wot-save-msg { font-size: 0.82rem; color: #16a34a; font-weight: 600; }
+
+/* ── Modal ─────────────────────────────────────────────────────── */
 .wot-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
 }
 .wot-modal[hidden] { display: none; }
 
-.wot-modal__backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,.45);
-}
+.wot-modal__backdrop { position: absolute; inset: 0; background: rgba(2,48,71,0.5); }
+
 .wot-modal__panel {
-  position: relative;
-  z-index: 1;
+  position: relative; z-index: 1;
   background: #fff;
-  border-radius: 14px;
-  width: min(640px, 95vw);
+  border-radius: 16px;
+  width: min(620px, 95vw);
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0,0,0,.25);
-  display: flex;
-  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(2,48,71,0.22);
+  display: flex; flex-direction: column;
 }
+
 .wot-modal__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: flex; justify-content: space-between; align-items: center;
   padding: 1rem 1.25rem 0.75rem;
   border-bottom: 1px solid #e2e8f0;
+  position: sticky; top: 0; background: #fff; z-index: 1;
 }
-.wot-modal__title { margin: 0; font-size: 1rem; }
+.wot-modal__title { margin: 0; font-size: 1rem; font-weight: 700; }
 .wot-modal__close {
-  background: none;
-  border: none;
-  font-size: 1.1rem;
-  cursor: pointer;
-  color: #64748b;
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
+  background: none; border: none; font-size: 1.1rem;
+  cursor: pointer; color: #64748b;
+  padding: 0.25rem 0.5rem; border-radius: 6px;
 }
 .wot-modal__close:hover { background: #f1f5f9; }
 

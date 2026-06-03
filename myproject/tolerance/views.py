@@ -14,6 +14,8 @@ from .utils import compute_zone_summary
 
 DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 
+WEEKLY_SUMMARY_SLOT = "Weekly summary"
+
 TIME_SLOTS = [
     "Arrival",
     "Registration",
@@ -163,6 +165,9 @@ def weekly_map_detail(request, pk):
         "summary_json": json.dumps(summary),
         "support_plan_json": json.dumps(wmap.support_plan or {}),
         "obs_data_json": json.dumps(obs_data),
+        "time_slots_json": json.dumps(TIME_SLOTS),
+        "days_json": json.dumps(DAYS),
+        "weekly_summary_slot": WEEKLY_SUMMARY_SLOT,
     })
 
 
@@ -181,7 +186,7 @@ def api_save_observation(request, pk):
     day_name = payload.get("day_name", "")
     time_slot = payload.get("time_slot", "")
 
-    if day_name not in DAYS or time_slot not in TIME_SLOTS:
+    if day_name not in DAYS or (time_slot not in TIME_SLOTS and time_slot != WEEKLY_SUMMARY_SLOT):
         return JsonResponse({"ok": False, "error": "invalid day or time_slot"}, status=400)
 
     obs, _ = Observation.objects.get_or_create(

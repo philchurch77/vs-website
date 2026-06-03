@@ -109,13 +109,20 @@
             messagesDiv.appendChild(welcome);
         }
 
-        // Toggle dropdown visibility
-        document.querySelectorAll(".menu-toggle").forEach(button => {
-            button.addEventListener("click", () => {
-                const sessionId = button.getAttribute("data-session-id");
+        // Toggle dropdown visibility — event delegation so it works after AJAX partial refresh
+        document.addEventListener("click", (e) => {
+            const toggle = e.target.closest(".menu-toggle");
+            if (toggle) {
+                e.stopPropagation();
+                const sessionId = toggle.getAttribute("data-session-id");
                 const dropdown = document.getElementById(`menu-${sessionId}`);
-                dropdown.classList.toggle("show");
-            });
+                const isOpen = dropdown.classList.contains("show");
+                document.querySelectorAll(".menu-dropdown.show").forEach(d => d.classList.remove("show"));
+                if (!isOpen) dropdown.classList.add("show");
+                return;
+            }
+            // Close all dropdowns when clicking outside
+            document.querySelectorAll(".menu-dropdown.show").forEach(d => d.classList.remove("show"));
         });
     });
 
@@ -162,6 +169,7 @@
             const thinkingBubble = document.getElementById("ai-thinking-bubble");
             if (thinkingBubble) thinkingBubble.remove();
             appendMessage("assistant", "");
+            const assistantBubble = document.querySelector(".message.assistant:last-child");
 
             while (true) {
                 const { done, value } = await reader.read();
@@ -173,12 +181,13 @@
                 // Remove the [SELECTED_FLASHCARD_IDS: ...] marker from the text before displaying
                 let displayText = fullText.replace(/\[SELECTED_FLASHCARD_IDS:[^\]]*\]/g, "").trim();
 
-                const lastMessage = document.querySelector(".message.assistant:last-child");
-                if (lastMessage) {
-                    const paragraphs = displayText.split(/\n+/).map(p => `<p>${p}</p>`).join("");
-                    lastMessage.innerHTML = paragraphs;
+                if (assistantBubble) {
+                    assistantBubble.innerHTML = renderMarkdown(displayText);
+                    assistantBubble.scrollIntoView({ block: "end", behavior: "smooth" });
                 }
             }
+
+            if (assistantBubble) polishAssistantMessage(assistantBubble);
 
             const idMatch = fullText.match(/\[SELECTED_FLASHCARD_IDS:\s*(.*?)\]/);
             if (idMatch) {
@@ -224,16 +233,36 @@
         }
     }
 
+    function renderMarkdown(text) {
+        if (typeof marked === "undefined") {
+            return text.split(/\n+/).map(p => `<p>${p}</p>`).join("");
+        }
+        return marked.parse(text, { gfm: true });
+    }
+
+    function polishAssistantMessage(el) {
+        el.querySelectorAll("p").forEach(p => {
+            if (p.textContent.trim().startsWith("Flashcard Title:")) {
+                p.classList.add("chat-flashcard-entry");
+            }
+        });
+    }
+
     function appendMessage(sender, text) {
         const messagesDiv = document.getElementById("messages");
         const div = document.createElement("div");
         div.classList.add("message", sender);
 
-        const paragraphs = text.split(/\n+/);
-        for (const paragraph of paragraphs) {
-            const p = document.createElement("p");
-            p.textContent = paragraph;
-            div.appendChild(p);
+        if (sender === "assistant" && text) {
+            div.innerHTML = renderMarkdown(text);
+            polishAssistantMessage(div);
+        } else {
+            const paragraphs = text.split(/\n+/);
+            for (const paragraph of paragraphs) {
+                const p = document.createElement("p");
+                p.textContent = paragraph;
+                div.appendChild(p);
+            }
         }
 
         messagesDiv.appendChild(div);
@@ -243,7 +272,7 @@
     async function renameSession(sessionId) {
         const newTitle = prompt("Enter a new title for this chat:");
         if (newTitle) {
-            await fetch(`/flashcards/session/${sessionId}/rename/`, {
+            await fetch(`/flashcards/rename/${sessionId}/`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -257,7 +286,7 @@
 
     function exportSession(sessionId) {
         // Trigger download of the selected chat session
-        window.location.href = `/flashcards/session/${sessionId}/export/`;
+        window.location.href = `/flashcards/export/${sessionId}/`;
     }
 
     function getCookie(name) {
@@ -279,6 +308,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <script>

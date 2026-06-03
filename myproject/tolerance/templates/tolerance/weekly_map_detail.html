@@ -1,109 +1,145 @@
 {% extends "layout.html" %}
 {% load static %}
 
-{% block title %}{{ wmap.pupil_name }} – w/c {{ wmap.week_commencing }}{% endblock %}
+{% block title %}{{ wmap.pupil_name }} – Window of Tolerance{% endblock %}
 
 {% block content %}
-<main class="main-layout wot-detail-layout">
+<main class="wot-detail-layout">
 
-  <!-- ── Page header ─────────────────────────────────────────────────── -->
-  <div class="panel-header">
-    <div class="panel-heading">
-      <h1>{{ wmap.pupil_name }}</h1>
-      <p class="panel-subtitle">
-        Week commencing {{ wmap.week_commencing }}
-        {% if wmap.class_or_year_group %} · {{ wmap.class_or_year_group }}{% endif %}
-        · Recorded by {{ wmap.recorded_by.get_full_name|default:wmap.recorded_by.username }}
-        {% if wmap.key_adults %} · Key adults: {{ wmap.key_adults }}{% endif %}
-        {% if wmap.review_date %} · Review: {{ wmap.review_date }}{% endif %}
-      </p>
-    </div>
-    <div class="panel-actions">
-      <a href="{% url 'tolerance:dashboard' %}" class="btn btn-secondary btn-sm">← All maps</a>
-    </div>
+  <!-- ── Header ──────────────────────────────────────────────────────────── -->
+  <div class="wot-header">
+    <a href="{% url 'tolerance:dashboard' %}" class="wot-back-link">← All maps</a>
+    <h1 class="wot-pupil-name">{{ wmap.pupil_name }}</h1>
+    <p class="wot-pupil-meta">
+      Week commencing {{ wmap.week_commencing }}
+      {% if wmap.class_or_year_group %} · {{ wmap.class_or_year_group }}{% endif %}
+      · Recorded by {{ wmap.recorded_by.get_full_name|default:wmap.recorded_by.username }}
+      {% if wmap.key_adults %} · Key adults: {{ wmap.key_adults }}{% endif %}
+      {% if wmap.review_date %} · Review: {{ wmap.review_date }}{% endif %}
+    </p>
   </div>
 
-  <!-- ── Legend ──────────────────────────────────────────────────────── -->
-  <div class="wot-legend">
-    <span class="wot-legend-item wot-state-green">🟢 Within window</span>
-    <span class="wot-legend-item wot-state-red">🔴 Hyper-arousal</span>
-    <span class="wot-legend-item wot-state-blue">🔵 Hypo-arousal</span>
-    <span class="wot-legend-item wot-state-grey">⬜ Not observed</span>
-    <span class="wot-legend-hint">Click any cell to record an observation</span>
-  </div>
+  <!-- ── Two-column content ──────────────────────────────────────────────── -->
+  <div class="wot-content">
 
-  <!-- ── Two-column body: grid + sidebar ─────────────────────────────── -->
-  <div class="wot-body">
+    <!-- Main column -->
+    <div class="wot-main">
 
-    <!-- Grid column -->
-    <div class="wot-body__grid">
-      <div class="wot-grid-wrapper">
-        <table class="wot-grid" id="wotGrid">
-          <thead>
-            <tr>
-              <th class="wot-grid__slot-header">Time slot</th>
-              {% for day in days %}
-              <th>{{ day }}</th>
-              {% endfor %}
-            </tr>
-          </thead>
-          <tbody>
-            {% for row in grid %}
-            <tr>
-              <td class="wot-grid__slot-label">{{ row.slot }}</td>
-              {% for cell in row.cells %}
-              <td
-                class="wot-grid__cell wot-cell-{{ cell.state|lower }}"
-                data-day="{{ cell.day }}"
-                data-slot="{{ cell.slot }}"
-                tabindex="0"
-                role="button"
-                aria-label="Edit {{ cell.day }} {{ cell.slot }}"
-              >
-                <div class="wot-cell-inner">
-                  {% if cell.state != "GREY" %}
-                    <span class="wot-cell-dot"></span>
-                    {% if cell.obs.intensity %}<span class="wot-cell-intensity">{{ cell.obs.intensity }}</span>{% endif %}
-                  {% else %}
-                    <span class="wot-cell-empty">+</span>
-                  {% endif %}
-                </div>
-              </td>
-              {% endfor %}
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Sidebar: summary -->
-    <aside class="wot-body__sidebar">
-      <div class="wot-summary-panel" id="summaryPanel">
-        <h2>Pattern summary</h2>
-        <div id="summaryContent" class="wot-summary-list">
-          <!-- populated by JS -->
+      <!-- View toggle -->
+      <div class="wot-view-controls">
+        <div class="wot-view-toggle">
+          <button class="wot-view-toggle__btn active" id="btnWeekly">Weekly overview</button>
+          <button class="wot-view-toggle__btn"        id="btnDaily">Daily detail</button>
+        </div>
+        <div class="wot-day-selector" id="daySelectorRow" hidden>
+          {% for day in days %}
+          <button class="wot-day-tab {% if forloop.first %}active{% endif %}" data-day="{{ day }}">{{ day }}</button>
+          {% endfor %}
         </div>
       </div>
+
+      <!-- Band chart -->
+      <div class="wot-band-chart" id="bandChart">
+        <div class="wot-band wot-band--red">
+          <div class="wot-band__label">Hyper-arousal</div>
+          <div class="wot-band__slots" id="bandRedSlots"></div>
+          <div class="wot-band__label">Hyper-arousal</div>
+        </div>
+        <div class="wot-band wot-band--green">
+          <div class="wot-band__label">Window of<br>Tolerance</div>
+          <div class="wot-band__slots" id="bandGreenSlots"></div>
+          <div class="wot-band__label">Window of<br>Tolerance</div>
+        </div>
+        <div class="wot-band wot-band--blue">
+          <div class="wot-band__label">Hypo-arousal</div>
+          <div class="wot-band__slots" id="bandBlueSlots"></div>
+          <div class="wot-band__label">Hypo-arousal</div>
+        </div>
+        <div class="wot-band-chart__xaxis-row">
+          <div class="wot-band-chart__xaxis-spacer"></div>
+          <div class="wot-band-chart__xaxis" id="bandXAxis"></div>
+          <div class="wot-band-chart__xaxis-spacer"></div>
+        </div>
+      </div>
+
+      <!-- Detailed grid (daily mode only) -->
+      <div id="gridSection" hidden>
+        <div class="wot-grid-wrapper">
+          <table class="wot-grid" id="wotGrid">
+            <thead>
+              <tr>
+                <th class="wot-grid__slot-header">Time slot</th>
+                {% for day in days %}<th>{{ day }}</th>{% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in grid %}
+              <tr>
+                <td class="wot-grid__slot-label">{{ row.slot }}</td>
+                {% for cell in row.cells %}
+                <td
+                  class="wot-grid__cell wot-cell-{{ cell.state|lower }}"
+                  data-day="{{ cell.day }}"
+                  data-slot="{{ cell.slot }}"
+                  tabindex="0"
+                  role="button"
+                  aria-label="Edit {{ cell.day }} {{ cell.slot }}"
+                >
+                  <div class="wot-cell-inner">
+                    {% if cell.state != "GREY" %}
+                      <span class="wot-cell-dot"></span>
+                      {% if cell.obs.intensity %}<span class="wot-cell-intensity">{{ cell.obs.intensity }}</span>{% endif %}
+                    {% else %}
+                      <span class="wot-cell-empty">+</span>
+                    {% endif %}
+                  </div>
+                </td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /wot-main -->
+
+    <!-- Sidebar -->
+    <aside class="wot-sidebar">
+
+      <div class="wot-sidebar-card">
+        <h3 class="wot-sidebar-heading">Key</h3>
+        <div class="wot-legend">
+          <span class="wot-legend-item wot-state-green">🟢 Within window</span>
+          <span class="wot-legend-item wot-state-red">🔴 Hyper-arousal</span>
+          <span class="wot-legend-item wot-state-blue">🔵 Hypo-arousal</span>
+          <span class="wot-legend-item wot-state-grey">⬜ Not recorded</span>
+        </div>
+        <p class="wot-legend-hint">Click any slot in the chart to record an observation.</p>
+      </div>
+
+      <div class="wot-sidebar-card" id="summaryPanel">
+        <h3 class="wot-sidebar-heading">Pattern summary</h3>
+        <div id="summaryContent" class="wot-summary-list"></div>
+      </div>
+
     </aside>
 
-  </div><!-- /wot-body -->
+  </div><!-- /wot-content -->
 
-  <!-- ── Support plan (full-width, below grid) ───────────────────────── -->
+  <!-- ── Support plan ────────────────────────────────────────────────────── -->
   <section class="wot-support-plan">
     <div class="wot-support-plan__header">
       <div>
-        <h2>Plan for Supporting the Pupil</h2>
-        <p class="wot-support-intro">Use the pattern summary above to inform this plan. Saves automatically.</p>
+        <h2>Support Plan</h2>
+        <p class="wot-support-intro">Use the pattern summary to inform this plan. Saves automatically.</p>
       </div>
       <div class="wot-support-save-row">
         <button type="button" id="savePlanBtn" class="btn btn-primary btn-sm">Save plan</button>
         <span id="planSaveMsg" class="wot-save-msg" hidden>Saved ✓</span>
       </div>
     </div>
-
     <div class="wot-support-columns">
-
       <div class="wot-support-col">
         <h3 class="wot-support-col__heading">Understanding the pupil</h3>
         {% for key, prompt in support_prompts %}
@@ -115,7 +151,6 @@
           {% endif %}
         {% endfor %}
       </div>
-
       <div class="wot-support-col">
         <h3 class="wot-support-col__heading">Adult actions &amp; plan</h3>
         {% for key, prompt in support_prompts %}
@@ -127,13 +162,12 @@
           {% endif %}
         {% endfor %}
       </div>
-
     </div>
   </section>
 
 </main>
 
-<!-- ── Observation modal ──────────────────────────────────────────────── -->
+<!-- ── Observation modal ───────────────────────────────────────────────── -->
 <div id="obsModal" class="wot-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" hidden>
   <div class="wot-modal__backdrop"></div>
   <div class="wot-modal__panel">
@@ -141,10 +175,7 @@
       <h2 id="modalTitle" class="wot-modal__title">Record observation</h2>
       <button type="button" id="modalClose" class="wot-modal__close" aria-label="Close">✕</button>
     </div>
-
     <div class="wot-modal__body">
-
-      <!-- State buttons -->
       <div class="wot-modal__field">
         <label class="wot-modal__label">Regulation state</label>
         <div class="wot-state-btns" id="stateBtns">
@@ -154,8 +185,6 @@
           <button type="button" class="wot-state-btn wot-state-btn--grey"  data-state="GREY">⬜ Not observed</button>
         </div>
       </div>
-
-      <!-- Intensity -->
       <div class="wot-modal__field" id="intensityField">
         <label class="wot-modal__label">Intensity</label>
         <div class="wot-intensity-btns" id="intensityBtns">
@@ -164,26 +193,18 @@
           <button type="button" class="wot-intensity-btn" data-intensity="3">3 – Significant</button>
         </div>
       </div>
-
-      <!-- Observed behaviours -->
       <div class="wot-modal__field">
         <label class="wot-modal__label">Observed behaviours</label>
         <div class="wot-chip-group" id="behaviourChips"></div>
       </div>
-
-      <!-- Triggers -->
       <div class="wot-modal__field">
         <label class="wot-modal__label">Possible triggers</label>
         <div class="wot-chip-group" id="triggerChips"></div>
       </div>
-
-      <!-- Adult responses -->
       <div class="wot-modal__field">
         <label class="wot-modal__label">Adult response used</label>
         <div class="wot-chip-group" id="responseChips"></div>
       </div>
-
-      <!-- Helpfulness -->
       <div class="wot-modal__field">
         <label class="wot-modal__label">Did the response help?</label>
         <div class="wot-help-btns" id="helpBtns">
@@ -193,15 +214,11 @@
           <button type="button" class="wot-help-btn" data-help="UNKNOWN">Unknown</button>
         </div>
       </div>
-
-      <!-- Notes -->
       <div class="wot-modal__field">
         <label class="wot-modal__label" for="obsNotes">Notes</label>
         <textarea id="obsNotes" rows="3" class="wot-notes-input" placeholder="Any other observations…"></textarea>
       </div>
-
     </div>
-
     <div class="wot-modal__footer">
       <button type="button" id="modalSave" class="btn btn-primary">Save observation</button>
       <button type="button" id="modalCancel" class="btn btn-secondary">Cancel</button>
@@ -210,177 +227,131 @@
 </div>
 
 <script>
-// ── Data passed from Django ────────────────────────────────────────────────
-const BEHAVIOURS  = {{ behaviours_json|safe }};
-const ALL_TRIGGERS = {{ triggers_json|safe }};
-const RESPONSES   = {{ responses_json|safe }};
-const SAVE_OBS_URL   = "{% url 'tolerance:api_save_observation' wmap.pk %}";
-const SAVE_PLAN_URL  = "{% url 'tolerance:api_save_support_plan' wmap.pk %}";
-const INITIAL_SUMMARY = {{ summary_json|safe }};
-const INITIAL_PLAN    = {{ support_plan_json|safe }};
-const OBS_DATA        = {{ obs_data_json|safe }};  // {"{day}:{slot}": {state, intensity, ...}}
+// ── Data ──────────────────────────────────────────────────────────────────
+const BEHAVIOURS          = {{ behaviours_json|safe }};
+const ALL_TRIGGERS        = {{ triggers_json|safe }};
+const RESPONSES           = {{ responses_json|safe }};
+const SAVE_OBS_URL        = "{% url 'tolerance:api_save_observation' wmap.pk %}";
+const SAVE_PLAN_URL       = "{% url 'tolerance:api_save_support_plan' wmap.pk %}";
+const INITIAL_SUMMARY     = {{ summary_json|safe }};
+const INITIAL_PLAN        = {{ support_plan_json|safe }};
+const OBS_DATA            = {{ obs_data_json|safe }};
+const DAYS_LIST           = {{ days_json|safe }};
+const TIME_SLOT_NAMES     = {{ time_slots_json|safe }};
+const WEEKLY_SUMMARY_SLOT = "{{ weekly_summary_slot }}";
 
-// ── State ──────────────────────────────────────────────────────────────────
-let activeCellEl = null;
+// ── State ─────────────────────────────────────────────────────────────────
+let viewMode    = 'weekly';
+let selectedDay = DAYS_LIST[0];
+let activeCellEl  = null;
+let activeBandKey = null;
 let currentObs = {
-  day_name: "",
-  time_slot: "",
-  state: "GREY",
-  intensity: null,
-  observed_behaviours: [],
-  possible_triggers: [],
-  adult_responses: [],
-  response_helpfulness: "",
-  notes: "",
+  day_name: "", time_slot: "", state: "GREY", intensity: null,
+  observed_behaviours: [], possible_triggers: [],
+  adult_responses: [], response_helpfulness: "", notes: "",
 };
 
-// ── Grid: open modal on cell click ────────────────────────────────────────
+// ── Grid cell click ───────────────────────────────────────────────────────
 document.getElementById("wotGrid").addEventListener("click", openCellModal);
 document.getElementById("wotGrid").addEventListener("keydown", (e) => {
-  if (e.key === "Enter" || e.key === " ") {
-    e.preventDefault();
-    openCellModal(e);
-  }
+  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openCellModal(e); }
 });
 
 function openCellModal(e) {
   const cell = e.target.closest(".wot-grid__cell");
   if (!cell) return;
-
-  activeCellEl = cell;
-  const day  = cell.dataset.day;
-  const slot = cell.dataset.slot;
-  const key  = `${day}:${slot}`;
-  const saved = OBS_DATA[key] || {};
-
+  activeCellEl = cell; activeBandKey = null;
+  const day = cell.dataset.day, slot = cell.dataset.slot;
+  const saved = OBS_DATA[`${day}:${slot}`] || {};
   currentObs = {
-    day_name:             day,
-    time_slot:            slot,
-    state:                saved.state || "GREY",
-    intensity:            saved.intensity || null,
-    observed_behaviours:  saved.observed_behaviours  || [],
-    possible_triggers:    saved.possible_triggers    || [],
-    adult_responses:      saved.adult_responses      || [],
+    day_name: day, time_slot: slot,
+    state: saved.state || "GREY", intensity: saved.intensity || null,
+    observed_behaviours: saved.observed_behaviours || [],
+    possible_triggers: saved.possible_triggers || [],
+    adult_responses: saved.adult_responses || [],
     response_helpfulness: saved.response_helpfulness || "",
-    notes:                saved.notes                || "",
+    notes: saved.notes || "",
   };
-
   document.getElementById("modalTitle").textContent = `${day} – ${slot}`;
-  renderModal();
-  showModal();
+  renderModal(); showModal();
 }
 
-
-// ── Modal rendering ────────────────────────────────────────────────────────
+// ── Modal ─────────────────────────────────────────────────────────────────
 function renderModal() {
-  // State buttons
-  document.querySelectorAll(".wot-state-btn").forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.state === currentObs.state);
-  });
-
-  // Intensity
-  const intensityField = document.getElementById("intensityField");
-  intensityField.hidden = (currentObs.state === "GREY");
-  document.querySelectorAll(".wot-intensity-btn").forEach(btn => {
-    btn.classList.toggle("active", parseInt(btn.dataset.intensity) === currentObs.intensity);
-  });
-
-  // Behaviour chips (depends on state)
-  const behaviours = currentObs.state === "GREY" ? [] : (BEHAVIOURS[currentObs.state] || []);
-  renderChips("behaviourChips", behaviours, currentObs.observed_behaviours);
-
-  // Trigger chips (same for all states)
+  document.querySelectorAll(".wot-state-btn").forEach(b =>
+    b.classList.toggle("active", b.dataset.state === currentObs.state));
+  document.getElementById("intensityField").hidden = currentObs.state === "GREY";
+  document.querySelectorAll(".wot-intensity-btn").forEach(b =>
+    b.classList.toggle("active", parseInt(b.dataset.intensity) === currentObs.intensity));
+  renderChips("behaviourChips",
+    currentObs.state === "GREY" ? [] : (BEHAVIOURS[currentObs.state] || []),
+    currentObs.observed_behaviours);
   renderChips("triggerChips", ALL_TRIGGERS, currentObs.possible_triggers);
-
-  // Response chips (depends on state)
-  const responses = currentObs.state === "GREY" ? [] : (RESPONSES[currentObs.state] || []);
-  renderChips("responseChips", responses, currentObs.adult_responses);
-
-  // Helpfulness
-  document.querySelectorAll(".wot-help-btn").forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.help === currentObs.response_helpfulness);
-  });
-
-  // Notes
+  renderChips("responseChips",
+    currentObs.state === "GREY" ? [] : (RESPONSES[currentObs.state] || []),
+    currentObs.adult_responses);
+  document.querySelectorAll(".wot-help-btn").forEach(b =>
+    b.classList.toggle("active", b.dataset.help === currentObs.response_helpfulness));
   document.getElementById("obsNotes").value = currentObs.notes;
 }
 
-function renderChips(containerId, options, selected) {
-  const container = document.getElementById(containerId);
-  container.innerHTML = "";
+function renderChips(id, options, selected) {
+  const c = document.getElementById(id);
+  c.innerHTML = "";
   options.forEach(opt => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "wot-chip" + (selected.includes(opt) ? " active" : "");
-    btn.textContent = opt;
-    btn.dataset.value = opt;
-    container.appendChild(btn);
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "wot-chip" + (selected.includes(opt) ? " active" : "");
+    b.textContent = opt; b.dataset.value = opt;
+    c.appendChild(b);
   });
 }
 
-// ── Modal events ───────────────────────────────────────────────────────────
 const modal = document.getElementById("obsModal");
-
-function showModal() { modal.hidden = false; document.body.classList.add("wot-modal-open"); }
-function hideModal() { modal.hidden = true;  document.body.classList.remove("wot-modal-open"); }
+const showModal = () => { modal.hidden = false; document.body.classList.add("wot-modal-open"); };
+const hideModal = () => { modal.hidden = true;  document.body.classList.remove("wot-modal-open"); };
 
 document.getElementById("modalClose").addEventListener("click", hideModal);
 document.getElementById("modalCancel").addEventListener("click", hideModal);
 modal.querySelector(".wot-modal__backdrop").addEventListener("click", hideModal);
 
-// State button clicks
 document.getElementById("stateBtns").addEventListener("click", (e) => {
-  const btn = e.target.closest(".wot-state-btn");
-  if (!btn) return;
-  currentObs.state = btn.dataset.state;
-  currentObs.observed_behaviours = [];
-  currentObs.adult_responses = [];
+  const b = e.target.closest(".wot-state-btn"); if (!b) return;
+  currentObs.state = b.dataset.state;
+  currentObs.observed_behaviours = []; currentObs.adult_responses = [];
   renderModal();
 });
 
-// Intensity clicks
 document.getElementById("intensityBtns").addEventListener("click", (e) => {
-  const btn = e.target.closest(".wot-intensity-btn");
-  if (!btn) return;
-  const val = parseInt(btn.dataset.intensity);
-  currentObs.intensity = (currentObs.intensity === val) ? null : val;
-  document.querySelectorAll(".wot-intensity-btn").forEach(b => {
-    b.classList.toggle("active", parseInt(b.dataset.intensity) === currentObs.intensity);
-  });
+  const b = e.target.closest(".wot-intensity-btn"); if (!b) return;
+  const v = parseInt(b.dataset.intensity);
+  currentObs.intensity = currentObs.intensity === v ? null : v;
+  document.querySelectorAll(".wot-intensity-btn").forEach(x =>
+    x.classList.toggle("active", parseInt(x.dataset.intensity) === currentObs.intensity));
 });
 
-// Chip clicks (behaviours, triggers, responses)
-["behaviourChips", "triggerChips", "responseChips"].forEach(id => {
+["behaviourChips","triggerChips","responseChips"].forEach(id => {
   document.getElementById(id).addEventListener("click", (e) => {
-    const btn = e.target.closest(".wot-chip");
-    if (!btn) return;
-    const val = btn.dataset.value;
-    const listKey = id === "behaviourChips" ? "observed_behaviours"
-                  : id === "triggerChips"   ? "possible_triggers"
-                                             : "adult_responses";
-    const arr = currentObs[listKey];
-    const idx = arr.indexOf(val);
+    const b = e.target.closest(".wot-chip"); if (!b) return;
+    const val = b.dataset.value;
+    const key = id === "behaviourChips" ? "observed_behaviours"
+              : id === "triggerChips"   ? "possible_triggers" : "adult_responses";
+    const arr = currentObs[key], idx = arr.indexOf(val);
     if (idx === -1) arr.push(val); else arr.splice(idx, 1);
-    btn.classList.toggle("active", idx === -1);
+    b.classList.toggle("active", idx === -1);
   });
 });
 
-// Helpfulness clicks
 document.getElementById("helpBtns").addEventListener("click", (e) => {
-  const btn = e.target.closest(".wot-help-btn");
-  if (!btn) return;
-  currentObs.response_helpfulness = (currentObs.response_helpfulness === btn.dataset.help) ? "" : btn.dataset.help;
-  document.querySelectorAll(".wot-help-btn").forEach(b => {
-    b.classList.toggle("active", b.dataset.help === currentObs.response_helpfulness);
-  });
+  const b = e.target.closest(".wot-help-btn"); if (!b) return;
+  currentObs.response_helpfulness =
+    currentObs.response_helpfulness === b.dataset.help ? "" : b.dataset.help;
+  document.querySelectorAll(".wot-help-btn").forEach(x =>
+    x.classList.toggle("active", x.dataset.help === currentObs.response_helpfulness));
 });
 
-// Notes
-document.getElementById("obsNotes").addEventListener("input", (e) => {
-  currentObs.notes = e.target.value;
-});
+document.getElementById("obsNotes").addEventListener("input", e => { currentObs.notes = e.target.value; });
 
-// Save observation
 document.getElementById("modalSave").addEventListener("click", async () => {
   const resp = await fetch(SAVE_OBS_URL, {
     method: "POST",
@@ -389,115 +360,165 @@ document.getElementById("modalSave").addEventListener("click", async () => {
   });
   const data = await resp.json();
   if (!data.ok) { alert("Could not save — please try again."); return; }
-
-  // Keep OBS_DATA in sync
   const key = `${currentObs.day_name}:${currentObs.time_slot}`;
   OBS_DATA[key] = { ...currentObs };
-
-  // Update the cell appearance
-  updateCell(activeCellEl, currentObs);
-
-  // Update summary
+  if (activeCellEl) updateCell(activeCellEl, currentObs);
+  renderBandChart();
   renderSummary(data.summary);
-
+  activeCellEl = null; activeBandKey = null;
   hideModal();
 });
 
-// ── Cell visual update ─────────────────────────────────────────────────────
 function updateCell(cellEl, obs) {
   cellEl.classList.remove("wot-cell-green","wot-cell-red","wot-cell-blue","wot-cell-grey");
   cellEl.classList.add("wot-cell-" + obs.state.toLowerCase());
-
   const inner = cellEl.querySelector(".wot-cell-inner");
-  if (obs.state === "GREY") {
-    inner.innerHTML = '<span class="wot-cell-empty">+</span>';
-  } else {
-    inner.innerHTML = '<span class="wot-cell-dot"></span>'
-      + (obs.intensity ? `<span class="wot-cell-intensity">${obs.intensity}</span>` : "");
-  }
+  inner.innerHTML = obs.state === "GREY"
+    ? '<span class="wot-cell-empty">+</span>'
+    : '<span class="wot-cell-dot"></span>' + (obs.intensity ? `<span class="wot-cell-intensity">${obs.intensity}</span>` : "");
 }
 
-// ── Summary rendering ──────────────────────────────────────────────────────
+// ── Summary ───────────────────────────────────────────────────────────────
 function renderSummary(s) {
-  const el = document.getElementById("summaryContent");
-  const fmt = arr => arr.length ? arr.map(t => `<span class="wot-summary-tag">${t}</span>`).join("") : '<em class="wot-summary-empty">None yet</em>';
-  el.innerHTML = `
-    <div class="wot-summary-row wot-summary-green">
-      <strong>Regulated times</strong>
-      <div>${fmt(s.regulated_times)}</div>
-    </div>
-    <div class="wot-summary-row wot-summary-red">
-      <strong>Hyper-arousal times</strong>
-      <div>${fmt(s.red_times)}</div>
-    </div>
-    <div class="wot-summary-row wot-summary-blue">
-      <strong>Hypo-arousal times</strong>
-      <div>${fmt(s.blue_times)}</div>
-    </div>
-    <div class="wot-summary-row">
-      <strong>Common triggers</strong>
-      <div>${fmt(s.top_triggers)}</div>
-    </div>
-    <div class="wot-summary-row">
-      <strong>Helpful responses</strong>
-      <div>${fmt(s.helpful_responses)}</div>
-    </div>
+  const fmt = arr => arr.length
+    ? arr.map(t => `<span class="wot-summary-tag">${t}</span>`).join("")
+    : '<em class="wot-summary-empty">None yet</em>';
+  document.getElementById("summaryContent").innerHTML = `
+    <div class="wot-summary-row wot-summary-green"><strong>Regulated times</strong><div>${fmt(s.regulated_times)}</div></div>
+    <div class="wot-summary-row wot-summary-red"><strong>Hyper-arousal times</strong><div>${fmt(s.red_times)}</div></div>
+    <div class="wot-summary-row wot-summary-blue"><strong>Hypo-arousal times</strong><div>${fmt(s.blue_times)}</div></div>
+    <div class="wot-summary-row"><strong>Common triggers</strong><div>${fmt(s.top_triggers)}</div></div>
+    <div class="wot-summary-row"><strong>Helpful responses</strong><div>${fmt(s.helpful_responses)}</div></div>
     <div class="wot-summary-counts">
       <span class="wot-count wot-count--green">${s.counts.green} regulated</span>
       <span class="wot-count wot-count--red">${s.counts.red} hyper</span>
       <span class="wot-count wot-count--blue">${s.counts.blue} hypo</span>
       <span class="wot-count wot-count--grey">${s.counts.grey} not observed</span>
-    </div>
-  `;
+    </div>`;
 }
 
-// ── Support plan auto-save ─────────────────────────────────────────────────
-let planSaveTimer = null;
-
+// ── Support plan ──────────────────────────────────────────────────────────
+let planTimer = null;
 document.querySelectorAll(".wot-support-textarea").forEach(ta => {
-  ta.addEventListener("input", () => {
-    clearTimeout(planSaveTimer);
-    planSaveTimer = setTimeout(savePlan, 2000);
-  });
+  ta.addEventListener("input", () => { clearTimeout(planTimer); planTimer = setTimeout(savePlan, 2000); });
 });
-
-document.getElementById("savePlanBtn").addEventListener("click", () => {
-  clearTimeout(planSaveTimer);
-  savePlan();
-});
-
+document.getElementById("savePlanBtn").addEventListener("click", () => { clearTimeout(planTimer); savePlan(); });
 async function savePlan() {
   const payload = {};
-  document.querySelectorAll(".wot-support-textarea").forEach(ta => {
-    payload[ta.dataset.planKey] = ta.value;
-  });
-  const resp = await fetch(SAVE_PLAN_URL, {
+  document.querySelectorAll(".wot-support-textarea").forEach(ta => { payload[ta.dataset.planKey] = ta.value; });
+  const data = await (await fetch(SAVE_PLAN_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-CSRFToken": getCsrf() },
     body: JSON.stringify(payload),
-  });
-  const data = await resp.json();
+  })).json();
   if (data.ok) {
-    const msg = document.getElementById("planSaveMsg");
-    msg.hidden = false;
-    setTimeout(() => { msg.hidden = true; }, 3000);
+    const m = document.getElementById("planSaveMsg");
+    m.hidden = false; setTimeout(() => { m.hidden = true; }, 3000);
   }
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────
 function getCsrf() {
-  return document.cookie.split(";")
-    .map(c => c.trim())
-    .find(c => c.startsWith("csrftoken="))
-    ?.split("=")[1] || "";
+  return document.cookie.split(";").map(c => c.trim())
+    .find(c => c.startsWith("csrftoken="))?.split("=")[1] || "";
 }
 
-// ── Initialise on load ────────────────────────────────────────────────────
-renderSummary(INITIAL_SUMMARY);
+// ── View toggle ───────────────────────────────────────────────────────────
+document.getElementById('btnWeekly').addEventListener('click', () => switchView('weekly'));
+document.getElementById('btnDaily').addEventListener('click',  () => switchView('daily'));
+document.querySelectorAll('.wot-day-tab').forEach(b => b.addEventListener('click', () => selectDay(b.dataset.day)));
 
+function switchView(mode) {
+  viewMode = mode;
+  document.getElementById('btnWeekly').classList.toggle('active', mode === 'weekly');
+  document.getElementById('btnDaily').classList.toggle('active',  mode === 'daily');
+  document.getElementById('daySelectorRow').hidden = mode === 'weekly';
+  document.getElementById('gridSection').hidden    = mode === 'weekly';
+  document.getElementById('bandChart').classList.toggle('wot-band-chart--daily', mode === 'daily');
+  renderBandChart();
+}
+
+function selectDay(day) {
+  selectedDay = day;
+  document.querySelectorAll('.wot-day-tab').forEach(b => b.classList.toggle('active', b.dataset.day === day));
+  renderBandChart();
+}
+
+// ── Band chart ────────────────────────────────────────────────────────────
+function renderBandChart() {
+  const isWeekly = viewMode === 'weekly';
+  const slots = isWeekly ? DAYS_LIST : TIME_SLOT_NAMES;
+  const slotData = slots.map(slot => {
+    const key = isWeekly ? `${slot}:${WEEKLY_SUMMARY_SLOT}` : `${selectedDay}:${slot}`;
+    return { slot, key, ...(OBS_DATA[key] || { state: 'GREY' }) };
+  });
+
+  [['RED','Red'],['GREEN','Green'],['BLUE','Blue']].forEach(([zone, cap]) => {
+    const el = document.getElementById(`band${cap}Slots`);
+    el.style.gridTemplateColumns = `repeat(${slots.length}, 1fr)`;
+    el.innerHTML = '';
+    slotData.forEach(d => {
+      const cell = document.createElement('div');
+      cell.className = 'wot-band__slot';
+      cell.addEventListener('click', () => openBandModal(d, isWeekly));
+      if (d.state === zone) {
+        const dot = document.createElement('div');
+        dot.className = `wot-band__marker wot-band__marker--${zone.toLowerCase()}`;
+        if (d.intensity) dot.textContent = d.intensity;
+        cell.appendChild(dot);
+      }
+      el.appendChild(cell);
+    });
+  });
+
+  const xAxis = document.getElementById('bandXAxis');
+  xAxis.style.gridTemplateColumns = `repeat(${slots.length}, 1fr)`;
+  xAxis.innerHTML = '';
+  slotData.forEach(d => {
+    const lbl = document.createElement('div');
+    lbl.className = 'wot-band__xlabel';
+    if (isWeekly) {
+      lbl.innerHTML = `<span>${d.slot.substring(0,3)}</span>
+        <button class="wot-drill-btn" data-day="${d.slot}">Detail ↓</button>`;
+    } else {
+      const s = document.createElement('span');
+      s.title = d.slot; s.textContent = d.slot;
+      lbl.appendChild(s);
+    }
+    xAxis.appendChild(lbl);
+  });
+
+  if (isWeekly) {
+    xAxis.querySelectorAll('.wot-drill-btn').forEach(b => {
+      b.addEventListener('click', e => { e.stopPropagation(); switchView('daily'); selectDay(b.dataset.day); });
+    });
+  }
+}
+
+function openBandModal(d, isWeekly) {
+  const dayName  = isWeekly ? d.slot : selectedDay;
+  const timeSlot = isWeekly ? WEEKLY_SUMMARY_SLOT : d.slot;
+  const saved    = OBS_DATA[d.key] || {};
+  activeCellEl = null; activeBandKey = d.key;
+  currentObs = {
+    day_name: dayName, time_slot: timeSlot,
+    state: saved.state || 'GREY', intensity: saved.intensity || null,
+    observed_behaviours: saved.observed_behaviours || [],
+    possible_triggers:   saved.possible_triggers   || [],
+    adult_responses:     saved.adult_responses     || [],
+    response_helpfulness: saved.response_helpfulness || '',
+    notes: saved.notes || '',
+  };
+  document.getElementById('modalTitle').textContent = isWeekly
+    ? `${dayName} – Weekly overview` : `${dayName} – ${timeSlot}`;
+  renderModal(); showModal();
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+renderSummary(INITIAL_SUMMARY);
+renderBandChart();
+switchView('weekly');
 document.querySelectorAll(".wot-support-textarea").forEach(ta => {
-  const key = ta.dataset.planKey;
-  if (INITIAL_PLAN[key]) ta.value = INITIAL_PLAN[key];
+  if (INITIAL_PLAN[ta.dataset.planKey]) ta.value = INITIAL_PLAN[ta.dataset.planKey];
 });
 </script>
 {% endblock %}

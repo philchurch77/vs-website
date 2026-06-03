@@ -10,10 +10,10 @@
                 <div class="menu-dropdown" id="menu-{{ session.session_id }}">
                     <form method="post" action="{% url 'flashcards:delete_chat_session' session.session_id %}" onsubmit="return confirm('Delete this chat?')">
                         {% csrf_token %}
-                        <button type="submit">Delete</button>
+                        <button type="submit" class="new-chat-btn">Delete</button>
                     </form>
-                    <button type="button" onclick="renameSession('{{ session.session_id }}')">Rename</button>
-                    <button type="button" onclick="exportSession('{{ session.session_id }}')">Export</button>
+                    <button type="button" class="new-chat-btn" onclick="renameSession('{{ session.session_id }}')">Rename</button>
+                    <button type="button" class="new-chat-btn" onclick="exportSession('{{ session.session_id }}')">Export</button>
                 </div>
             </div>
         </li>

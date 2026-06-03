@@ -1,7 +1,7 @@
 import json
 import asyncio
 import re
-from django.http import StreamingHttpResponse, HttpResponseRedirect, HttpResponse
+from django.http import StreamingHttpResponse, HttpResponse
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.crypto import get_random_string
@@ -9,7 +9,6 @@ from django.template.loader import render_to_string
 from django.http import JsonResponse
 from django.db.models import Max
 from django.contrib.auth.decorators import login_required
-from django.urls import reverse
 
 from agents import Runner
 from .agents import build_toolkit_agent
@@ -29,12 +28,10 @@ def stream_flashcards(request):
                 session_id = get_random_string(32)
                 request.session["chat_session_id"] = session_id
 
-            chat_history = list(ChatTurn.objects.filter(session_id=session_id).order_by("timestamp").values("role", "content"))
+            chat_history = list(ChatTurn.objects.filter(session_id=session_id).exclude(role="title").order_by("timestamp").values("role", "content"))
             chat_history.append({"role": "user", "content": message})
 
             toolkit_agent = build_toolkit_agent()
-
-            selected_ids = []  # ✅ move ID collection outside the generator
 
             def sync_stream():
                 full_response = ""
@@ -61,26 +58,10 @@ def stream_flashcards(request):
                     ChatTurn.objects.create(user=request.user, session_id=session_id, role="user", content=message)
                     ChatTurn.objects.create(user=request.user, session_id=session_id, role="assistant", content=full_response)
 
-                    # ✅ Parse flashcard IDs and store in external variable
-                    match = re.search(r"\[SELECTED_FLASHCARD_IDS:\s*(.*?)\]", full_response)
-                    if match:
-                        value = match.group(1).strip()
-                        if value.lower() != "none":
-                            selected_ids.extend(sorted([
-                                int(m.group(1))  # use inner match object `m`
-                                for x in value.split(",")
-                                if (m := re.search(r"#?(\d+)#?", x.strip()))  # use a new name
-                            ]))
                 finally:
                     loop.close()
 
-            response = StreamingHttpResponse(sync_stream(), content_type="text/plain")
-
-            # ✅ Store the session AFTER the response generator is returned
-            request.session["selected_flashcard_ids"] = selected_ids
-            request.session.modified = True
-
-            return response
+            return StreamingHttpResponse(sync_stream(), content_type="text/plain")
 
         except Exception as e:
             return StreamingHttpResponse(f"⚠️ Error: {str(e)}", content_type="text/plain", status=500)
@@ -104,7 +85,7 @@ def flashcards_page(request):
     selected_ids = []
 
     if session_id:
-        chat_turns = ChatTurn.objects.filter(session_id=session_id, user=request.user).order_by("timestamp")
+        chat_turns = ChatTurn.objects.filter(session_id=session_id, user=request.user).exclude(role="title").order_by("timestamp")
         messages = list(chat_turns.values("role", "content"))
 
         # 🧠 Try to extract the last assistant response containing flashcard IDs
@@ -135,8 +116,12 @@ def flashcards_page(request):
     )
 
     for session in chat_sessions:
-        first = ChatTurn.objects.filter(session_id=session["session_id"], user=request.user).order_by("timestamp").first()
-        session["title"] = (first.content[:47] + "...") if first and len (first.content) > 50 else first.content if first else "Untitled"
+        title_turn = ChatTurn.objects.filter(session_id=session["session_id"], user=request.user, role="title").first()
+        if title_turn:
+            session["title"] = title_turn.content
+        else:
+            first = ChatTurn.objects.filter(session_id=session["session_id"], user=request.user).exclude(role="title").order_by("timestamp").first()
+            session["title"] = (first.content[:47] + "...") if first and len(first.content) > 50 else first.content if first else "Untitled"
 
     return render(request, "flashcards/flashcards.html", {
         "messages": messages,
@@ -144,12 +129,14 @@ def flashcards_page(request):
         "chat_sessions": chat_sessions
     })
 
+@login_required
 def filtered_flashcards(request):
     selected_ids = request.session.get("selected_flashcard_ids", [])
     flashcards = Flashcard.objects.filter(flashcard_id__in=selected_ids).order_by("sort_order") if selected_ids else Flashcard.objects.none()
     html = render_to_string("flashcards/partials/flashcard_list.html", {"flashcards": flashcards})
     return JsonResponse({"html": html})
 
+@login_required
 def save_flashcard_ids(request):
     try:
         data = json.loads(request.body)
@@ -173,19 +160,16 @@ def delete_chat_session(request, session_id):
     # If current session was deleted clear it
     if request.session.get("chat_session_id") == session_id:
         request.session["chat_session_id"] = None
-        request.session["selected_flaschard_ids"] = []
-    return HttpResponseRedirect(reverse("flashcards:flashcards_page"))
+        request.session["selected_flashcard_ids"] = []
+    return redirect("flashcards:flashcards_page")
 
 @login_required
 def rename_chat_session(request, session_id):
     data = json.loads(request.body)
     new_title = data.get("title", "").strip()
     if new_title:
-        # Save the new title in a system message (or wherever you want)
-        first_turn = ChatTurn.objects.filter(session_id=session_id, user=request.user).order_by("timestamp").first()
-        if first_turn:
-            first_turn.content = new_title
-            first_turn.save()
+        ChatTurn.objects.filter(user=request.user, session_id=session_id, role="title").delete()
+        ChatTurn.objects.create(user=request.user, session_id=session_id, role="title", content=new_title)
         return JsonResponse({"status": "ok"})
     return JsonResponse({"error": "Invalid title"}, status=400)
 
@@ -208,16 +192,23 @@ def chat_history_partial(request):
     )
 
     for session in chat_sessions:
-        first_turn = (
-            ChatTurn.objects
-            .filter(session_id=session["session_id"], user=request.user)
-            .order_by("timestamp")
-            .first()
-        )
-        session["title"] = (
-            (first_turn.content[:47] + "...") if first_turn and len(first_turn.content) > 50
-            else first_turn.content if first_turn else "Untitled"
-        )
+        title_turn = ChatTurn.objects.filter(
+            session_id=session["session_id"], user=request.user, role="title"
+        ).first()
+        if title_turn:
+            session["title"] = title_turn.content
+        else:
+            first_turn = (
+                ChatTurn.objects
+                .filter(session_id=session["session_id"], user=request.user)
+                .exclude(role="title")
+                .order_by("timestamp")
+                .first()
+            )
+            session["title"] = (
+                (first_turn.content[:47] + "...") if first_turn and len(first_turn.content) > 50
+                else first_turn.content if first_turn else "Untitled"
+            )
 
     html = render_to_string("flashcards/partials/chat_history_list.html", {"chat_sessions": chat_sessions}, request=request)
     return JsonResponse({"html": html})
