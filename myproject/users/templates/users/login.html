@@ -1,4 +1,5 @@
 {% extends 'layout.html' %}
+{% load socialaccount %}
 
 {% block title %}
     Login
@@ -6,12 +7,29 @@
 
 {% block content %}
     <h1 style="text-align: center;">Login</h1>
-    <div style="display: flex; justify-content: center;">
+    <div class="login-container">
+
+        <a href="{% provider_login_url 'microsoft' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}" class="microsoft-login-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23 23" width="20" height="20" aria-hidden="true">
+                <rect x="1" y="1" width="10" height="10" fill="#f25022"/>
+                <rect x="12" y="1" width="10" height="10" fill="#7fba00"/>
+                <rect x="1" y="12" width="10" height="10" fill="#00a4ef"/>
+                <rect x="12" y="12" width="10" height="10" fill="#ffb900"/>
+            </svg>
+            Sign in with Microsoft
+        </a>
+
+        <div class="login-divider">
+            <span>or sign in with username</span>
+        </div>
+
         <form class="form-with-validation" action="{% url 'users:login' %}" method="post">
             {% csrf_token %}
+            {% if request.GET.next %}
+                <input type="hidden" name="next" value="{{ request.GET.next }}">
+            {% endif %}
             {{ form }}
             <button class="form-submit">Submit</button>
         </form>
     </div>
-    
 {% endblock %}

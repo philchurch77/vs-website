@@ -43,6 +43,11 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.microsoft",
     "taggit",
     "myproject.users",
     "myproject.posts",
@@ -61,6 +66,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -126,6 +132,29 @@ CSRF_COOKIE_SECURE = not DEBUG     # allow http locally
 
 # --- Auth ---
 LOGIN_URL = "/users/login/"
+LOGIN_REDIRECT_URL = "/posts/"
+
+SITE_ID = 1
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+
+SOCIALACCOUNT_PROVIDERS = {
+    "microsoft": {
+        "TENANT": "organizations",
+        "APP": {
+            "client_id": os.getenv("MICROSOFT_CLIENT_ID", ""),
+            "secret": os.getenv("MICROSOFT_CLIENT_SECRET", ""),
+        },
+        "SCOPE": ["User.Read"],
+    }
+}
+
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_EMAIL_VERIFICATION = "none"
 
 # --- Logging ---
 LOGGING = {

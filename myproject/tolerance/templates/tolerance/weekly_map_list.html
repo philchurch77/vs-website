@@ -11,7 +11,6 @@
       <h1 class="wot-list-title">Window of Tolerance</h1>
       <p class="wot-list-subtitle">Track where a pupil sits across the school week. Identify patterns, triggers, and helpful adult responses.</p>
     </div>
-    <a href="{% url 'tolerance:checkin_dashboard' %}" class="btn btn-secondary btn-sm">Staff self check-in</a>
   </div>
 
   <div class="wot-list-body">
@@ -24,29 +23,27 @@
       </div>
       <form method="post" class="wot-create-form">
         {% csrf_token %}
-        <div class="wot-form-group">
+        <div class="wot-form-group wot-form-group--pupil">
           <label for="pupil_name">Pupil name</label>
           <input type="text" id="pupil_name" name="pupil_name" required placeholder="e.g. Alex Smith">
         </div>
-        <div class="wot-form-row">
-          <div class="wot-form-group">
-            <label for="week_commencing">Week commencing</label>
-            <input type="date" id="week_commencing" name="week_commencing" required value="{{ default_wc }}">
-          </div>
-          <div class="wot-form-group">
-            <label for="class_or_year_group">Year group</label>
-            <input type="text" id="class_or_year_group" name="class_or_year_group" placeholder="e.g. Year 4">
-          </div>
+        <div class="wot-form-group">
+          <label for="week_commencing">Week commencing</label>
+          <input type="date" id="week_commencing" name="week_commencing" required value="{{ default_wc }}">
         </div>
         <div class="wot-form-group">
-          <label for="key_adults">Key adults involved</label>
+          <label for="class_or_year_group">Year group</label>
+          <input type="text" id="class_or_year_group" name="class_or_year_group" placeholder="e.g. Year 4">
+        </div>
+        <div class="wot-form-group wot-form-group--adults">
+          <label for="key_adults">Key adults</label>
           <input type="text" id="key_adults" name="key_adults" placeholder="e.g. Mrs Jones, Mr Smith">
         </div>
         <div class="wot-form-group">
           <label for="review_date">Review date <span class="wot-optional">(optional)</span></label>
           <input type="date" id="review_date" name="review_date">
         </div>
-        <button type="submit" class="btn btn-primary wot-submit-btn">Create weekly map →</button>
+        <button type="submit" class="btn btn-primary wot-submit-btn">Create map →</button>
       </form>
     </div>
 
@@ -56,15 +53,21 @@
         <h2 class="wot-maps-heading">Recent maps</h2>
         <div class="wot-maps-list">
           {% for m in maps %}
-          <a href="{% url 'tolerance:weekly_map_detail' m.pk %}" class="wot-map-card">
-            <div class="wot-map-card__pupil">{{ m.pupil_name }}</div>
-            <div class="wot-map-card__week">w/c {{ m.week_commencing }}</div>
-            <div class="wot-map-card__meta">
-              {% if m.class_or_year_group %}{{ m.class_or_year_group }} · {% endif %}
-              {{ m.recorded_by.get_full_name|default:m.recorded_by.username }}
-              {% if m.review_date %} · Review {{ m.review_date }}{% endif %}
-            </div>
-          </a>
+          <div class="wot-map-card-wrap">
+            <a href="{% url 'tolerance:weekly_map_detail' m.pk %}" class="wot-map-card">
+              <div class="wot-map-card__pupil">{{ m.pupil_name }}</div>
+              <div class="wot-map-card__week">w/c {{ m.week_commencing }}</div>
+              <div class="wot-map-card__meta">
+                {% if m.class_or_year_group %}{{ m.class_or_year_group }} · {% endif %}
+                {% if m.recorded_by %}{{ m.recorded_by.get_full_name|default:m.recorded_by.username }}{% endif %}
+                {% if m.review_date %} · Review {{ m.review_date }}{% endif %}
+              </div>
+            </a>
+            <form method="post" action="{% url 'tolerance:delete_weekly_map' m.pk %}" class="wot-map-delete-form" onsubmit="return confirm('Delete map for {{ m.pupil_name }}?')">
+              {% csrf_token %}
+              <button type="submit" class="wot-map-delete-btn" aria-label="Delete map for {{ m.pupil_name }}">✕</button>
+            </form>
+          </div>
           {% endfor %}
         </div>
       {% else %}

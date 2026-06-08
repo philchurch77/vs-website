@@ -8,15 +8,17 @@
 
   <!-- ── Header ──────────────────────────────────────────────────────────── -->
   <div class="wot-header">
-    <a href="{% url 'tolerance:dashboard' %}" class="wot-back-link">← All maps</a>
-    <h1 class="wot-pupil-name">{{ wmap.pupil_name }}</h1>
-    <p class="wot-pupil-meta">
-      Week commencing {{ wmap.week_commencing }}
-      {% if wmap.class_or_year_group %} · {{ wmap.class_or_year_group }}{% endif %}
-      · Recorded by {{ wmap.recorded_by.get_full_name|default:wmap.recorded_by.username }}
-      {% if wmap.key_adults %} · Key adults: {{ wmap.key_adults }}{% endif %}
-      {% if wmap.review_date %} · Review: {{ wmap.review_date }}{% endif %}
-    </p>
+    <div class="wot-header__info">
+      <a href="{% url 'tolerance:dashboard' %}" class="wot-back-link">← All maps</a>
+      <h1 class="wot-pupil-name">{{ wmap.pupil_name }}</h1>
+      <p class="wot-pupil-meta">
+        Week commencing {{ wmap.week_commencing }}
+        {% if wmap.class_or_year_group %} · {{ wmap.class_or_year_group }}{% endif %}
+        {% if wmap.recorded_by %}· Recorded by {{ wmap.recorded_by.get_full_name|default:wmap.recorded_by.username }}{% endif %}
+        {% if wmap.key_adults %} · Key adults: {{ wmap.key_adults }}{% endif %}
+        {% if wmap.review_date %} · Review: {{ wmap.review_date }}{% endif %}
+      </p>
+    </div>
   </div>
 
   <!-- ── Two-column content ──────────────────────────────────────────────── -->
@@ -25,15 +27,12 @@
     <!-- Main column -->
     <div class="wot-main">
 
-      <!-- View toggle -->
+      <!-- View / day selector -->
       <div class="wot-view-controls">
-        <div class="wot-view-toggle">
-          <button class="wot-view-toggle__btn active" id="btnWeekly">Weekly overview</button>
-          <button class="wot-view-toggle__btn"        id="btnDaily">Daily detail</button>
-        </div>
-        <div class="wot-day-selector" id="daySelectorRow" hidden>
+        <div class="wot-day-selector" id="daySelectorRow">
+          <button class="wot-day-tab wot-day-tab--overview active" id="btnOverview">Overview</button>
           {% for day in days %}
-          <button class="wot-day-tab {% if forloop.first %}active{% endif %}" data-day="{{ day }}">{{ day }}</button>
+          <button class="wot-day-tab" data-day="{{ day }}">{{ day }}</button>
           {% endfor %}
         </div>
       </div>
@@ -62,64 +61,16 @@
         </div>
       </div>
 
-      <!-- Detailed grid (daily mode only) -->
-      <div id="gridSection" hidden>
-        <div class="wot-grid-wrapper">
-          <table class="wot-grid" id="wotGrid">
-            <thead>
-              <tr>
-                <th class="wot-grid__slot-header">Time slot</th>
-                {% for day in days %}<th>{{ day }}</th>{% endfor %}
-              </tr>
-            </thead>
-            <tbody>
-              {% for row in grid %}
-              <tr>
-                <td class="wot-grid__slot-label">{{ row.slot }}</td>
-                {% for cell in row.cells %}
-                <td
-                  class="wot-grid__cell wot-cell-{{ cell.state|lower }}"
-                  data-day="{{ cell.day }}"
-                  data-slot="{{ cell.slot }}"
-                  tabindex="0"
-                  role="button"
-                  aria-label="Edit {{ cell.day }} {{ cell.slot }}"
-                >
-                  <div class="wot-cell-inner">
-                    {% if cell.state != "GREY" %}
-                      <span class="wot-cell-dot"></span>
-                      {% if cell.obs.intensity %}<span class="wot-cell-intensity">{{ cell.obs.intensity }}</span>{% endif %}
-                    {% else %}
-                      <span class="wot-cell-empty">+</span>
-                    {% endif %}
-                  </div>
-                </td>
-                {% endfor %}
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <p id="overviewCaption" class="wot-overview-caption">Numbers show how many of the 4 daily time slots were in that zone · hover a day to see the breakdown</p>
 
     </div><!-- /wot-main -->
 
     <!-- Sidebar -->
     <aside class="wot-sidebar">
 
-      <div class="wot-sidebar-card">
-        <h3 class="wot-sidebar-heading">Key</h3>
-        <div class="wot-legend">
-          <span class="wot-legend-item wot-state-green">🟢 Within window</span>
-          <span class="wot-legend-item wot-state-red">🔴 Hyper-arousal</span>
-          <span class="wot-legend-item wot-state-blue">🔵 Hypo-arousal</span>
-          <span class="wot-legend-item wot-state-grey">⬜ Not recorded</span>
-        </div>
-        <p class="wot-legend-hint">Click any slot in the chart to record an observation.</p>
-      </div>
-
       <div class="wot-sidebar-card" id="summaryPanel">
         <h3 class="wot-sidebar-heading">Pattern summary</h3>
+        <p class="wot-sidebar-subheading">Based on this week's entries</p>
         <div id="summaryContent" class="wot-summary-list"></div>
       </div>
 
@@ -128,46 +79,68 @@
   </div><!-- /wot-content -->
 
   <!-- ── Support plan ────────────────────────────────────────────────────── -->
-  <section class="wot-support-plan">
-    <div class="wot-support-plan__header">
-      <div>
-        <h2>Support Plan</h2>
-        <p class="wot-support-intro">Use the pattern summary to inform this plan. Saves automatically.</p>
-      </div>
-      <div class="wot-support-save-row">
-        <button type="button" id="savePlanBtn" class="btn btn-primary btn-sm">Save plan</button>
-        <span id="planSaveMsg" class="wot-save-msg" hidden>Saved ✓</span>
+  <section class="wot-support-plan" id="supportPlanSection">
+
+    <button type="button" class="wot-support-toggle" id="supportToggle" aria-expanded="false">
+      <span class="wot-support-toggle__left">
+        <svg class="wot-support-toggle__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+        <span>
+          <span class="wot-support-toggle__label">Support Plan</span>
+          <span class="wot-support-toggle__hint">Record strategies, triggers and adult responses · Last updated {{ wmap.updated_at|date:"j M Y" }}</span>
+        </span>
+      </span>
+      <span class="wot-support-toggle__right">
+        <span class="wot-support-toggle__cta">Expand</span>
+        <svg class="wot-support-toggle__chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+      </span>
+    </button>
+
+    <div class="wot-support-body" id="supportBody">
+      <div class="wot-support-body-inner">
+
+        <div class="wot-support-subheader">
+          <p class="wot-support-intro">Use the pattern summary to inform this plan. Saves automatically.</p>
+          <div class="wot-support-save-row">
+            <button type="button" id="savePlanBtn" class="btn btn-primary btn-sm">Save plan</button>
+            <span id="planSaveMsg" class="wot-save-msg" hidden>Saved ✓</span>
+          </div>
+        </div>
+
+        <div class="wot-support-columns">
+          <div class="wot-support-col">
+            <h3 class="wot-support-col__heading">Understanding the pupil</h3>
+            {% for key, prompt in support_prompts %}
+              {% if forloop.counter <= 6 %}
+              <div class="wot-support-field">
+                <label for="sp_{{ key }}">{{ prompt }}</label>
+                <textarea id="sp_{{ key }}" rows="2" class="wot-support-textarea" data-plan-key="{{ key }}" placeholder="Add notes here…"></textarea>
+              </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+          <div class="wot-support-col">
+            <h3 class="wot-support-col__heading">Adult actions &amp; plan</h3>
+            {% for key, prompt in support_prompts %}
+              {% if forloop.counter > 6 %}
+              <div class="wot-support-field">
+                <label for="sp_{{ key }}">{{ prompt }}</label>
+                <textarea id="sp_{{ key }}" rows="2" class="wot-support-textarea" data-plan-key="{{ key }}" placeholder="Add notes here…"></textarea>
+              </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+
       </div>
     </div>
-    <div class="wot-support-columns">
-      <div class="wot-support-col">
-        <h3 class="wot-support-col__heading">Understanding the pupil</h3>
-        {% for key, prompt in support_prompts %}
-          {% if forloop.counter <= 6 %}
-          <div class="wot-support-field">
-            <label for="sp_{{ key }}">{{ prompt }}</label>
-            <textarea id="sp_{{ key }}" rows="2" class="wot-support-textarea" data-plan-key="{{ key }}" placeholder="Add notes here…"></textarea>
-          </div>
-          {% endif %}
-        {% endfor %}
-      </div>
-      <div class="wot-support-col">
-        <h3 class="wot-support-col__heading">Adult actions &amp; plan</h3>
-        {% for key, prompt in support_prompts %}
-          {% if forloop.counter > 6 %}
-          <div class="wot-support-field">
-            <label for="sp_{{ key }}">{{ prompt }}</label>
-            <textarea id="sp_{{ key }}" rows="2" class="wot-support-textarea" data-plan-key="{{ key }}" placeholder="Add notes here…"></textarea>
-          </div>
-          {% endif %}
-        {% endfor %}
-      </div>
-    </div>
+
   </section>
 
 </main>
 
 <!-- ── Observation modal ───────────────────────────────────────────────── -->
+<div id="wotToast" class="wot-toast" aria-live="polite"></div>
+
 <div id="obsModal" class="wot-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" hidden>
   <div class="wot-modal__backdrop"></div>
   <div class="wot-modal__panel">
@@ -220,8 +193,8 @@
       </div>
     </div>
     <div class="wot-modal__footer">
+      <button type="button" id="modalCancel" class="btn btn-ghost">Cancel</button>
       <button type="button" id="modalSave" class="btn btn-primary">Save observation</button>
-      <button type="button" id="modalCancel" class="btn btn-secondary">Cancel</button>
     </div>
   </div>
 </div>
@@ -251,30 +224,6 @@ let currentObs = {
   adult_responses: [], response_helpfulness: "", notes: "",
 };
 
-// ── Grid cell click ───────────────────────────────────────────────────────
-document.getElementById("wotGrid").addEventListener("click", openCellModal);
-document.getElementById("wotGrid").addEventListener("keydown", (e) => {
-  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openCellModal(e); }
-});
-
-function openCellModal(e) {
-  const cell = e.target.closest(".wot-grid__cell");
-  if (!cell) return;
-  activeCellEl = cell; activeBandKey = null;
-  const day = cell.dataset.day, slot = cell.dataset.slot;
-  const saved = OBS_DATA[`${day}:${slot}`] || {};
-  currentObs = {
-    day_name: day, time_slot: slot,
-    state: saved.state || "GREY", intensity: saved.intensity || null,
-    observed_behaviours: saved.observed_behaviours || [],
-    possible_triggers: saved.possible_triggers || [],
-    adult_responses: saved.adult_responses || [],
-    response_helpfulness: saved.response_helpfulness || "",
-    notes: saved.notes || "",
-  };
-  document.getElementById("modalTitle").textContent = `${day} – ${slot}`;
-  renderModal(); showModal();
-}
 
 // ── Modal ─────────────────────────────────────────────────────────────────
 function renderModal() {
@@ -310,6 +259,15 @@ function renderChips(id, options, selected) {
 const modal = document.getElementById("obsModal");
 const showModal = () => { modal.hidden = false; document.body.classList.add("wot-modal-open"); };
 const hideModal = () => { modal.hidden = true;  document.body.classList.remove("wot-modal-open"); };
+
+let _toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('wotToast');
+  t.textContent = msg;
+  t.classList.add('wot-toast--visible');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove('wot-toast--visible'), 2800);
+}
 
 document.getElementById("modalClose").addEventListener("click", hideModal);
 document.getElementById("modalCancel").addEventListener("click", hideModal);
@@ -367,6 +325,7 @@ document.getElementById("modalSave").addEventListener("click", async () => {
   renderSummary(data.summary);
   activeCellEl = null; activeBandKey = null;
   hideModal();
+  showToast('Observation saved ✓');
 });
 
 function updateCell(cellEl, obs) {
@@ -403,6 +362,12 @@ document.querySelectorAll(".wot-support-textarea").forEach(ta => {
   ta.addEventListener("input", () => { clearTimeout(planTimer); planTimer = setTimeout(savePlan, 2000); });
 });
 document.getElementById("savePlanBtn").addEventListener("click", () => { clearTimeout(planTimer); savePlan(); });
+
+const _supportSection = document.getElementById('supportPlanSection');
+document.getElementById('supportToggle').addEventListener('click', () => {
+  const open = _supportSection.classList.toggle('is-open');
+  document.getElementById('supportToggle').setAttribute('aria-expanded', String(open));
+});
 async function savePlan() {
   const payload = {};
   document.querySelectorAll(".wot-support-textarea").forEach(ta => { payload[ta.dataset.planKey] = ta.value; });
@@ -423,23 +388,28 @@ function getCsrf() {
 }
 
 // ── View toggle ───────────────────────────────────────────────────────────
-document.getElementById('btnWeekly').addEventListener('click', () => switchView('weekly'));
-document.getElementById('btnDaily').addEventListener('click',  () => switchView('daily'));
-document.querySelectorAll('.wot-day-tab').forEach(b => b.addEventListener('click', () => selectDay(b.dataset.day)));
+document.getElementById('btnOverview').addEventListener('click', () => switchView('weekly'));
+document.querySelectorAll('.wot-day-tab[data-day]').forEach(b => b.addEventListener('click', () => selectDay(b.dataset.day)));
 
 function switchView(mode) {
   viewMode = mode;
-  document.getElementById('btnWeekly').classList.toggle('active', mode === 'weekly');
-  document.getElementById('btnDaily').classList.toggle('active',  mode === 'daily');
-  document.getElementById('daySelectorRow').hidden = mode === 'weekly';
-  document.getElementById('gridSection').hidden    = mode === 'weekly';
   document.getElementById('bandChart').classList.toggle('wot-band-chart--daily', mode === 'daily');
+  document.getElementById('btnOverview').classList.toggle('active', mode === 'weekly');
+  document.getElementById('overviewCaption').hidden = mode !== 'weekly';
+  if (mode === 'weekly') {
+    document.querySelectorAll('.wot-day-tab[data-day]').forEach(b => b.classList.remove('active'));
+  }
   renderBandChart();
 }
 
 function selectDay(day) {
   selectedDay = day;
-  document.querySelectorAll('.wot-day-tab').forEach(b => b.classList.toggle('active', b.dataset.day === day));
+  document.getElementById('btnOverview').classList.remove('active');
+  document.querySelectorAll('.wot-day-tab[data-day]').forEach(b => b.classList.toggle('active', b.dataset.day === day));
+  if (viewMode !== 'daily') {
+    viewMode = 'daily';
+    document.getElementById('bandChart').classList.add('wot-band-chart--daily');
+  }
   renderBandChart();
 }
 
@@ -452,23 +422,53 @@ function renderBandChart() {
     return { slot, key, ...(OBS_DATA[key] || { state: 'GREY' }) };
   });
 
+  // Weekly mode: count actual time-slot observations per day per zone
+  const dayCounts = {};
+  if (isWeekly) {
+    DAYS_LIST.forEach(day => {
+      dayCounts[day] = { GREEN: 0, RED: 0, BLUE: 0 };
+      TIME_SLOT_NAMES.forEach(slot => {
+        const obs = OBS_DATA[`${day}:${slot}`];
+        if (obs && obs.state && obs.state !== 'GREY') dayCounts[day][obs.state]++;
+      });
+    });
+  }
+
   [['RED','Red'],['GREEN','Green'],['BLUE','Blue']].forEach(([zone, cap]) => {
     const el = document.getElementById(`band${cap}Slots`);
     el.style.gridTemplateColumns = `repeat(${slots.length}, 1fr)`;
     el.innerHTML = '';
     slotData.forEach(d => {
       const cell = document.createElement('div');
-      cell.className = 'wot-band__slot';
-      cell.addEventListener('click', () => openBandModal(d, isWeekly));
-      if (d.state === zone) {
-        const dot = document.createElement('div');
-        dot.className = `wot-band__marker wot-band__marker--${zone.toLowerCase()}`;
-        if (d.intensity) dot.textContent = d.intensity;
-        cell.appendChild(dot);
+      if (isWeekly) {
+        cell.className = 'wot-band__slot wot-band__slot--readonly';
+        const count = dayCounts[d.slot][zone];
+        if (count > 0) {
+          const badge = document.createElement('div');
+          badge.className = `wot-band__marker wot-band__marker--${zone.toLowerCase()}`;
+          badge.textContent = count;
+          cell.appendChild(badge);
+        }
+      } else {
+        cell.className = 'wot-band__slot';
+        cell.addEventListener('click', () => openBandModal(d, isWeekly, zone));
+        if (d.state === zone) {
+          const dot = document.createElement('div');
+          dot.className = `wot-band__marker wot-band__marker--${zone.toLowerCase()}`;
+          cell.appendChild(dot);
+        } else if (d.state === 'GREY' && zone === 'GREEN') {
+          const hint = document.createElement('span');
+          hint.className = 'wot-band__empty-hint';
+          hint.textContent = '+';
+          cell.appendChild(hint);
+        }
       }
       el.appendChild(cell);
     });
   });
+
+  const SLOT_SHORT  = { 'Arrival': 'Arrival', 'Morning lessons': 'Morning', 'Lunch': 'Lunch', 'Afternoon lessons': 'Afternoon' };
+  const STATE_ABBR  = { GREEN: 'In window', RED: 'Hyper-arousal', BLUE: 'Hypo-arousal', GREY: '—' };
 
   const xAxis = document.getElementById('bandXAxis');
   xAxis.style.gridTemplateColumns = `repeat(${slots.length}, 1fr)`;
@@ -477,8 +477,22 @@ function renderBandChart() {
     const lbl = document.createElement('div');
     lbl.className = 'wot-band__xlabel';
     if (isWeekly) {
+      lbl.classList.add('wot-has-tooltip');
+      lbl.addEventListener('click', () => selectDay(d.slot));
+      const tooltipRows = TIME_SLOT_NAMES.map(slot => {
+        const obs = OBS_DATA[`${d.slot}:${slot}`];
+        const state = (obs && obs.state) || 'GREY';
+        return `<div class="wot-tt__row wot-tt__row--${state.toLowerCase()}">
+          <span class="wot-tt__dot"></span>
+          <span class="wot-tt__slot">${SLOT_SHORT[slot] || slot}</span>
+          <span class="wot-tt__state">${STATE_ABBR[state]}</span>
+        </div>`;
+      }).join('');
       lbl.innerHTML = `<span>${d.slot.substring(0,3)}</span>
-        <button class="wot-drill-btn" data-day="${d.slot}">Detail ↓</button>`;
+        <div class="wot-day-tooltip">
+          <div class="wot-day-tooltip__title">${d.slot}</div>
+          ${tooltipRows}
+        </div>`;
     } else {
       const s = document.createElement('span');
       s.title = d.slot; s.textContent = d.slot;
@@ -486,22 +500,16 @@ function renderBandChart() {
     }
     xAxis.appendChild(lbl);
   });
-
-  if (isWeekly) {
-    xAxis.querySelectorAll('.wot-drill-btn').forEach(b => {
-      b.addEventListener('click', e => { e.stopPropagation(); switchView('daily'); selectDay(b.dataset.day); });
-    });
-  }
 }
 
-function openBandModal(d, isWeekly) {
+function openBandModal(d, isWeekly, clickedZone) {
   const dayName  = isWeekly ? d.slot : selectedDay;
   const timeSlot = isWeekly ? WEEKLY_SUMMARY_SLOT : d.slot;
   const saved    = OBS_DATA[d.key] || {};
   activeCellEl = null; activeBandKey = d.key;
   currentObs = {
     day_name: dayName, time_slot: timeSlot,
-    state: saved.state || 'GREY', intensity: saved.intensity || null,
+    state: clickedZone || saved.state || 'GREY', intensity: saved.intensity || null,
     observed_behaviours: saved.observed_behaviours || [],
     possible_triggers:   saved.possible_triggers   || [],
     adult_responses:     saved.adult_responses     || [],
@@ -515,7 +523,6 @@ function openBandModal(d, isWeekly) {
 
 // ── Init ──────────────────────────────────────────────────────────────────
 renderSummary(INITIAL_SUMMARY);
-renderBandChart();
 switchView('weekly');
 document.querySelectorAll(".wot-support-textarea").forEach(ta => {
   if (INITIAL_PLAN[ta.dataset.planKey]) ta.value = INITIAL_PLAN[ta.dataset.planKey];

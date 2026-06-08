@@ -2300,7 +2300,7 @@ input[type="text"] {
     border-bottom-left-radius: 5px;
 }
 
-button:not(.chip):not(.save):not(.menu-toggle):not(.new-chat-btn):not(.nav-collapse-btn):not(.nav-toggle):not(.nav-button-link):not(.wot-view-toggle__btn):not(.wot-day-tab) {
+button:not(.chip):not(.save):not(.menu-toggle):not(.new-chat-btn):not(.nav-collapse-btn):not(.nav-toggle):not(.nav-button-link):not(.wot-view-toggle__btn):not(.wot-day-tab):not(.wot-modal__close):not(.wot-state-btn):not(.wot-intensity-btn):not(.wot-chip):not(.wot-help-btn):not(.wot-map-delete-btn):not(.wot-band__slot):not(.btn):not(.wot-support-toggle) {
     padding: 12px 28px;
     font-size: 16px;
     background: linear-gradient(135deg, var(--primary), var(--accent));
@@ -2321,7 +2321,7 @@ button:not(.chip):not(.save):not(.menu-toggle):not(.new-chat-btn):not(.nav-colla
     margin: 0;
   }
 
-button:not(.chip):not(.save):not(.menu-toggle):not(.new-chat-btn):not(.nav-collapse-btn):not(.nav-toggle):not(.nav-button-link):not(.wot-view-toggle__btn):not(.wot-day-tab):hover {
+button:not(.chip):not(.save):not(.menu-toggle):not(.new-chat-btn):not(.nav-collapse-btn):not(.nav-toggle):not(.nav-button-link):not(.wot-view-toggle__btn):not(.wot-day-tab):not(.wot-modal__close):not(.wot-state-btn):not(.wot-intensity-btn):not(.wot-chip):not(.wot-help-btn):not(.wot-map-delete-btn):not(.wot-band__slot):not(.btn):not(.wot-support-toggle):hover {
     background: linear-gradient(135deg, var(--accent), var(--primary));
 }
 
@@ -3226,12 +3226,8 @@ main a:hover, section a:hover {
 }
 
 .wot-list-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
+  text-align: center;
   margin-bottom: 2rem;
-  flex-wrap: wrap;
 }
 
 .wot-list-title {
@@ -3243,7 +3239,7 @@ main a:hover, section a:hover {
   color: transparent;
   -webkit-text-fill-color: transparent;
   margin: 0 0 0.3rem;
-  text-align: left;
+  text-align: center;
 }
 
 .wot-list-subtitle {
@@ -3251,27 +3247,24 @@ main a:hover, section a:hover {
   color: #64748b;
   max-width: 560px;
   line-height: 1.55;
-  margin: 0;
+  margin: 0 auto;
+  text-align: center;
 }
 
 .wot-list-body {
-  display: grid;
-  grid-template-columns: 380px 1fr;
-  gap: 2rem;
-  align-items: start;
-}
-
-@media (max-width: 860px) {
-  .wot-list-body { grid-template-columns: 1fr; }
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
 }
 
 /* Create form card */
 .wot-create-card {
   background: #fff;
   border: 1px solid #e2e8f0;
+  border-top: 3px solid var(--primary);
   border-radius: 14px;
   padding: 1.6rem;
-  box-shadow: 0 2px 12px rgba(2,48,71,0.06);
+  box-shadow: 0 4px 20px rgba(2,48,71,0.07);
 }
 
 .wot-create-card__head { margin-bottom: 1.25rem; }
@@ -3280,6 +3273,7 @@ main a:hover, section a:hover {
   font-weight: 700;
   color: var(--ink);
   margin: 0 0 0.25rem;
+  text-align: left;
 }
 .wot-create-card__head p {
   font-size: 0.82rem;
@@ -3287,15 +3281,30 @@ main a:hover, section a:hover {
   margin: 0;
 }
 
-.wot-create-form { display: flex; flex-direction: column; gap: 0.85rem; }
-
-.wot-form-row { display: flex; gap: 0.85rem; flex-wrap: wrap; }
+.wot-create-form {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
 
 .wot-form-group {
   display: flex;
   flex-direction: column;
-  flex: 1 1 160px;
+  flex: 1 1 140px;
   gap: 0.3rem;
+  min-width: 0;
+}
+
+.wot-form-group--pupil  { flex: 2 1 200px; }
+.wot-form-group--adults { flex: 2 1 200px; }
+
+@media (max-width: 700px) {
+  .wot-create-form { flex-direction: column; align-items: stretch; }
+  .wot-form-group,
+  .wot-form-group--pupil,
+  .wot-form-group--adults { flex: 1 1 auto; }
 }
 
 .wot-form-group label {
@@ -3326,7 +3335,7 @@ main a:hover, section a:hover {
   background: #fff;
 }
 
-.wot-submit-btn { margin-top: 0.3rem; align-self: flex-start; }
+.wot-submit-btn { flex-shrink: 0; white-space: nowrap; align-self: flex-end; }
 
 /* Maps column */
 .wot-maps-col { min-width: 0; }
@@ -3337,13 +3346,19 @@ main a:hover, section a:hover {
   letter-spacing: 0.06em;
   color: #94a3b8;
   margin: 0 0 0.75rem;
+  text-align: left;
 }
 
-.wot-maps-list { display: flex; flex-direction: column; gap: 0.5rem; }
+.wot-maps-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.75rem;
+}
 
 .wot-map-card {
   display: block;
-  padding: 0.9rem 1.1rem 0.9rem 1.25rem;
+  flex: 1;
+  padding: 0.9rem 2rem 0.9rem 1.25rem;
   background: #fff;
   border: 1px solid #e2e8f0;
   border-left: 4px solid var(--primary);
@@ -3378,14 +3393,51 @@ main a:hover, section a:hover {
   margin-top: 0.2rem;
 }
 
+.wot-map-card-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.wot-map-delete-form {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.45rem;
+  margin: 0;
+}
+
+.wot-map-delete-btn {
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: #cbd5e1;
+  cursor: pointer;
+  font-size: 0.7rem;
+  line-height: 1;
+  padding: 0.2rem 0.35rem;
+  transition: color 0.15s, background 0.15s;
+}
+
+.wot-map-card-wrap:hover .wot-map-delete-btn {
+  color: #94a3b8;
+}
+
+.wot-map-delete-btn:hover {
+  color: #ef4444 !important;
+  background: #fef2f2;
+}
+
 .wot-maps-empty {
-  padding: 2rem;
+  padding: 3rem 2rem;
   text-align: center;
   color: #94a3b8;
   font-size: 0.9rem;
-  border: 1.5px dashed #e2e8f0;
-  border-radius: 12px;
+  border: 2px dashed #e2e8f0;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #fafbfc, #f8fafc);
+  line-height: 1.65;
 }
+.wot-maps-empty p { margin: 0; color: #94a3b8; text-align: center; }
 
 /* ── Detail page layout ─────────────────────────────────────────── */
 .wot-detail-layout {
@@ -3397,6 +3449,29 @@ main a:hover, section a:hover {
 /* Header */
 .wot-header {
   margin-bottom: 1.75rem;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, rgba(255,255,255,0.97), rgba(248,250,252,0.98));
+  border: 1px solid rgba(226,232,240,0.8);
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(2,48,71,0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.wot-header__info { flex: 1 1 0; min-width: 0; }
+
+.wot-header__key {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+}
+@media (max-width: 700px) {
+  .wot-header__key { align-items: flex-start; }
 }
 
 .wot-back-link {
@@ -3428,6 +3503,7 @@ main a:hover, section a:hover {
   color: #64748b;
   margin: 0;
   line-height: 1.6;
+  text-align: left;
 }
 
 /* Two-column content */
@@ -3452,18 +3528,23 @@ main a:hover, section a:hover {
   gap: 0.75rem;
   margin-bottom: 1rem;
   flex-wrap: wrap;
+  background: #f8fafc;
+  border: 1px solid #e8edf3;
+  border-radius: 14px;
+  padding: 0.6rem 0.85rem;
 }
 
 .wot-view-toggle {
   display: flex;
-  background: #f1f5f9;
+  background: #e4eaf1;
   border-radius: 10px;
-  padding: 0.2rem;
+  padding: 0.22rem;
   gap: 0.1rem;
+  box-shadow: inset 0 1px 3px rgba(2,48,71,0.1);
 }
 
 .wot-view-toggle__btn {
-  padding: 0.38em 1.1em;
+  padding: 0.42em 1.15em;
   font-size: 0.82rem;
   font-weight: 600;
   background: transparent;
@@ -3471,35 +3552,60 @@ main a:hover, section a:hover {
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+  letter-spacing: 0.01em;
 }
 
+.wot-view-toggle__btn:hover:not(.active) { color: var(--ink); }
+
 .wot-view-toggle__btn.active {
-  background: #fff;
-  color: var(--ink);
-  box-shadow: 0 1px 4px rgba(2,48,71,0.12);
+  background: linear-gradient(135deg, #219ebc, #0a7fa0);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(33,158,188,0.35);
 }
 
 .wot-day-selector {
   display: flex;
-  gap: 0.3rem;
+  gap: 0.35rem;
   flex-wrap: wrap;
 }
 
 .wot-day-tab {
-  padding: 0.3em 0.8em;
+  padding: 0.35em 1.0em;
   border-radius: var(--border-radius-full);
-  font-size: 0.78rem;
+  font-size: 0.79rem;
   font-weight: 600;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid #d1dae6;
   background: #fff;
   color: #475569;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition: all 0.15s;
+  box-shadow: 0 1px 3px rgba(2,48,71,0.06);
+  letter-spacing: 0.01em;
 }
 
-.wot-day-tab:hover { border-color: var(--primary); color: var(--primary); }
-.wot-day-tab.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.wot-day-tab:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(33,158,188,0.05);
+  box-shadow: 0 2px 6px rgba(33,158,188,0.14);
+}
+
+.wot-day-tab.active {
+  background: linear-gradient(135deg, #219ebc, #0a7fa0);
+  border-color: #219ebc;
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(33,158,188,0.32);
+}
+
+.wot-day-tab--overview {
+  border-style: dashed;
+  font-style: italic;
+}
+.wot-day-tab--overview.active {
+  border-style: solid;
+  font-style: normal;
+}
 
 /* Band chart */
 .wot-band-chart {
@@ -3507,7 +3613,7 @@ main a:hover, section a:hover {
   border-radius: 14px;
   overflow: hidden;
   background: #fff;
-  box-shadow: 0 2px 14px rgba(2,48,71,0.07);
+  box-shadow: 0 4px 20px rgba(2,48,71,0.09);
   margin-bottom: 1.25rem;
 }
 
@@ -3517,9 +3623,9 @@ main a:hover, section a:hover {
   min-height: 80px;
 }
 
-.wot-band--red   { background: linear-gradient(180deg, #fecaca 0%, #fee2e2 100%); border-bottom: 1px solid #fca5a5; }
-.wot-band--green { background: linear-gradient(180deg, #bbf7d0 0%, #dcfce7 100%); border-top: 2.5px solid #22c55e; border-bottom: 2.5px solid #22c55e; }
-.wot-band--blue  { background: linear-gradient(180deg, #dbeafe 0%, #bfdbfe 100%); }
+.wot-band--red   { background: linear-gradient(180deg, #fed7aa 0%, #ffedd5 100%); border-bottom: 1px solid #fdba74; }
+.wot-band--green { background: linear-gradient(180deg, #a7f3d0 0%, #d1fae5 100%); border-top: 2.5px solid #059669; border-bottom: 2.5px solid #059669; }
+.wot-band--blue  { background: linear-gradient(180deg, #e0e7ff 0%, #ede9fe 100%); }
 
 .wot-band__label {
   width: 112px;
@@ -3536,9 +3642,9 @@ main a:hover, section a:hover {
   line-height: 1.3;
 }
 
-.wot-band--red   .wot-band__label { color: #b91c1c; background: rgba(254,202,202,0.45); }
-.wot-band--green .wot-band__label { color: #15803d; background: rgba(187,247,208,0.45); }
-.wot-band--blue  .wot-band__label { color: #1d4ed8; background: rgba(191,219,254,0.45); }
+.wot-band--red   .wot-band__label { color: #92400e; background: rgba(253,186,116,0.35); }
+.wot-band--green .wot-band__label { color: #065f46; background: rgba(167,243,208,0.35); }
+.wot-band--blue  .wot-band__label { color: #3730a3; background: rgba(199,210,254,0.35); }
 
 .wot-band__slots {
   flex: 1;
@@ -3559,9 +3665,74 @@ main a:hover, section a:hover {
 }
 
 .wot-band__slot:last-child { border-right: none; }
-.wot-band--red   .wot-band__slot:hover { background: rgba(220,38,38,0.08); }
-.wot-band--green .wot-band__slot:hover { background: rgba(22,163,74,0.08); }
-.wot-band--blue  .wot-band__slot:hover { background: rgba(37,99,235,0.08); }
+.wot-band--red   .wot-band__slot:hover { background: rgba(234,88,12,0.10); }
+.wot-band--green .wot-band__slot:hover { background: rgba(5,150,105,0.10); }
+.wot-band--blue  .wot-band__slot:hover { background: rgba(99,102,241,0.10); }
+
+.wot-band__slot--readonly { cursor: default; }
+.wot-band--red   .wot-band__slot--readonly:hover,
+.wot-band--green .wot-band__slot--readonly:hover,
+.wot-band--blue  .wot-band__slot--readonly:hover { background: transparent; }
+
+/* Empty-slot hint (daily mode, green band) */
+.wot-band__empty-hint {
+  font-size: 1.4rem;
+  font-weight: 300;
+  color: rgba(5,150,105,0.22);
+  line-height: 1;
+  pointer-events: none;
+  transition: color 0.12s;
+}
+.wot-band--green .wot-band__slot:hover .wot-band__empty-hint { color: rgba(5,150,105,0.5); }
+
+/* Overview caption */
+.wot-overview-caption {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  font-style: italic;
+  text-align: center;
+  margin: 0.5rem 0 0;
+  line-height: 1.5;
+}
+
+/* Day label hover affordance */
+.wot-has-tooltip { cursor: help; }
+.wot-has-tooltip > span:first-child {
+  text-decoration: underline dotted rgba(2,48,71,0.25);
+  text-underline-offset: 3px;
+}
+
+/* Sidebar subheading */
+.wot-sidebar-subheading {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin: -0.4rem 0 0.75rem;
+  font-style: italic;
+}
+
+/* Toast notification */
+.wot-toast {
+  position: fixed;
+  bottom: 1.75rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: #1e293b;
+  color: #f0fdf4;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.6rem 1.25rem;
+  border-radius: 999px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.22);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 9999;
+  white-space: nowrap;
+}
+.wot-toast--visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
 
 .wot-band__marker {
   width: 36px;
@@ -3578,9 +3749,9 @@ main a:hover, section a:hover {
 }
 
 .wot-band__slot:hover .wot-band__marker { transform: scale(1.1); }
-.wot-band__marker--red   { background: #dc2626; }
-.wot-band__marker--green { background: #16a34a; }
-.wot-band__marker--blue  { background: #2563eb; }
+.wot-band__marker--red   { background: linear-gradient(135deg, #ea580c, #f97316); }
+.wot-band__marker--green { background: linear-gradient(135deg, #059669, #10b981); }
+.wot-band__marker--blue  { background: linear-gradient(135deg, #6366f1, #818cf8); }
 
 .wot-band-chart__xaxis-row {
   display: flex;
@@ -3611,6 +3782,7 @@ main a:hover, section a:hover {
   text-align: center;
   line-height: 1.2;
   min-height: 46px;
+  position: relative;
 }
 
 .wot-band__xlabel:last-child { border-right: none; }
@@ -3619,31 +3791,74 @@ main a:hover, section a:hover {
 .wot-band-chart--daily .wot-band__xlabel span {
   writing-mode: vertical-rl;
   transform: rotate(180deg);
-  max-height: 72px;
-  white-space: normal;
-  overflow: hidden;
+  white-space: nowrap;
 }
 
 .wot-band-chart--daily .wot-band__xlabel {
-  min-height: 82px;
+  min-height: 130px;
   padding: 0.5em 0.1em;
   justify-content: flex-end;
+  align-items: center;
 }
 
-.wot-drill-btn {
-  font-size: 0.6rem;
-  padding: 0.16em 0.4em;
-  border: 1px solid var(--primary);
-  background: transparent;
-  color: var(--primary);
-  border-radius: var(--border-radius-full);
-  cursor: pointer;
-  font-weight: 600;
-  white-space: nowrap;
-  transition: background 0.15s, color 0.15s;
-  box-shadow: none;
+/* Clickable day label (switches to daily view) */
+.wot-has-tooltip:hover > span:first-child { color: var(--primary); }
+
+/* Day breakdown tooltip */
+.wot-day-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+  background: rgba(15,23,42,0.94);
+  color: #f1f5f9;
+  border-radius: 10px;
+  padding: 0.6rem 0.85rem;
+  min-width: 190px;
+  z-index: 30;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+  white-space: normal;
 }
-.wot-drill-btn:hover { background: var(--primary); color: #fff; }
+.wot-day-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: rgba(15,23,42,0.94);
+}
+.wot-has-tooltip:hover .wot-day-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+.wot-day-tooltip__title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-bottom: 0.45rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid rgba(255,255,255,0.12);
+}
+.wot-tt__row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.18rem 0;
+  font-size: 0.71rem;
+}
+.wot-tt__dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.wot-tt__slot  { flex: 1; opacity: 0.8; }
+.wot-tt__state { font-weight: 500; font-size: 0.68rem; opacity: 0.9; }
+.wot-tt__row--green .wot-tt__dot { background: #10b981; }
+.wot-tt__row--red   .wot-tt__dot { background: #f97316; }
+.wot-tt__row--blue  .wot-tt__dot { background: #818cf8; }
+.wot-tt__row--grey  .wot-tt__dot { background: #64748b; }
+.wot-tt__row--grey .wot-tt__slot,
+.wot-tt__row--grey .wot-tt__state { opacity: 0.4; }
 
 /* Grid (daily detail) */
 .wot-grid-wrapper {
@@ -3688,16 +3903,16 @@ main a:hover, section a:hover {
 .wot-grid__cell:hover  { filter: brightness(0.93); }
 .wot-grid__cell:focus  { outline: 2px solid var(--primary); outline-offset: -2px; }
 
-.wot-cell-green { background: #dcfce7; }
-.wot-cell-red   { background: #fee2e2; }
-.wot-cell-blue  { background: #dbeafe; }
+.wot-cell-green { background: #d1fae5; }
+.wot-cell-red   { background: #ffedd5; }
+.wot-cell-blue  { background: #ede9fe; }
 .wot-cell-grey  { background: #f8fafc; }
 
 .wot-cell-inner { display: flex; align-items: center; justify-content: center; height: 100%; gap: 4px; }
 .wot-cell-dot   { width: 11px; height: 11px; border-radius: 50%; opacity: 0.7; }
-.wot-cell-green .wot-cell-dot { background: #16a34a; }
-.wot-cell-red   .wot-cell-dot { background: #dc2626; }
-.wot-cell-blue  .wot-cell-dot { background: #2563eb; }
+.wot-cell-green .wot-cell-dot { background: #059669; }
+.wot-cell-red   .wot-cell-dot { background: #ea580c; }
+.wot-cell-blue  .wot-cell-dot { background: #6366f1; }
 .wot-cell-intensity { font-size: 0.68rem; font-weight: 700; color: rgba(0,0,0,.45); }
 .wot-cell-empty { color: #cbd5e1; font-size: 1.05rem; line-height: 1; }
 
@@ -3715,7 +3930,7 @@ main a:hover, section a:hover {
   border: 1px solid #e2e8f0;
   border-radius: 14px;
   padding: 1.1rem 1.2rem;
-  box-shadow: 0 1px 8px rgba(2,48,71,0.05);
+  box-shadow: 0 2px 14px rgba(2,48,71,0.07);
 }
 
 .wot-sidebar-heading {
@@ -3725,6 +3940,7 @@ main a:hover, section a:hover {
   letter-spacing: 0.07em;
   color: #94a3b8;
   margin: 0 0 0.75rem;
+  text-align: left;
 }
 
 /* Legend */
@@ -3733,6 +3949,12 @@ main a:hover, section a:hover {
   flex-direction: column;
   gap: 0.35rem;
   margin-bottom: 0.5rem;
+}
+.wot-legend--inline {
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+  margin-bottom: 0.2rem;
 }
 
 .wot-legend-item {
@@ -3746,9 +3968,9 @@ main a:hover, section a:hover {
   border: 1px solid rgba(0,0,0,.08);
 }
 
-.wot-state-green { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
-.wot-state-red   { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
-.wot-state-blue  { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
+.wot-state-green { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
+.wot-state-red   { background: #fff7ed; color: #7c2d12; border-color: #fed7aa; }
+.wot-state-blue  { background: #eef2ff; color: #312e81; border-color: #c7d2fe; }
 .wot-state-grey  { background: #f8fafc; color: #475569; border-color: #e2e8f0; }
 
 .wot-legend-hint {
@@ -3777,9 +3999,9 @@ main a:hover, section a:hover {
   color: #94a3b8;
   margin-bottom: 0.25rem;
 }
-.wot-summary-green { border-left-color: #16a34a; background: #f0fdf4; }
-.wot-summary-red   { border-left-color: #dc2626; background: #fff5f5; }
-.wot-summary-blue  { border-left-color: #2563eb; background: #eff6ff; }
+.wot-summary-green { border-left-color: #059669; background: #ecfdf5; }
+.wot-summary-red   { border-left-color: #ea580c; background: #fff7ed; }
+.wot-summary-blue  { border-left-color: #6366f1; background: #eef2ff; }
 
 .wot-summary-tag {
   display: inline-block;
@@ -3793,31 +4015,84 @@ main a:hover, section a:hover {
 
 .wot-summary-counts { display: flex; flex-wrap: wrap; gap: 0.3rem; padding-top: 0.35rem; }
 .wot-count { font-size: 0.7rem; font-weight: 600; padding: 0.18rem 0.5rem; border-radius: var(--border-radius-full); }
-.wot-count--green { background: #dcfce7; color: #166534; }
-.wot-count--red   { background: #fee2e2; color: #991b1b; }
-.wot-count--blue  { background: #dbeafe; color: #1e40af; }
+.wot-count--green { background: #d1fae5; color: #065f46; }
+.wot-count--red   { background: #ffedd5; color: #7c2d12; }
+.wot-count--blue  { background: #ede9fe; color: #312e81; }
 .wot-count--grey  { background: #f1f5f9; color: #475569; }
 
 /* Support plan */
 .wot-support-plan {
   background: #fff;
   border: 1px solid #e2e8f0;
+  border-top: 3px solid #059669;
   border-radius: 14px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 8px rgba(2,48,71,0.05);
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(2,48,71,0.07);
   margin-bottom: 2rem;
 }
 
-.wot-support-plan__header {
+/* Toggle button */
+.wot-support-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+.wot-support-toggle:hover { background: rgba(5,150,105,0.03); }
+
+.wot-support-toggle__left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.wot-support-toggle__icon { color: #059669; flex-shrink: 0; }
+.wot-support-toggle__label { display: block; font-size: 1rem; font-weight: 700; color: var(--ink); }
+.wot-support-toggle__hint  { display: block; font-size: 0.76rem; color: #64748b; margin-top: 0.1rem; }
+
+.wot-support-toggle__right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+.wot-support-toggle__cta { font-size: 0.75rem; color: #059669; font-weight: 600; }
+.wot-support-plan.is-open .wot-support-toggle__cta { display: none; }
+
+.wot-support-toggle__chevron {
+  color: #059669;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+.wot-support-plan.is-open .wot-support-toggle__chevron { transform: rotate(180deg); }
+
+/* Collapsible body */
+.wot-support-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease;
+}
+.wot-support-plan.is-open .wot-support-body { max-height: 3000px; }
+
+.wot-support-body-inner { padding: 0 1.5rem 1.5rem; }
+
+/* Subheader (intro + save row) */
+.wot-support-subheader {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 1rem;
   margin-bottom: 1.25rem;
   flex-wrap: wrap;
+  padding-top: 0.25rem;
 }
 
-.wot-support-plan h2 { margin: 0 0 0.2rem; font-size: 1.05rem; font-weight: 700; }
 .wot-support-intro { font-size: 0.8rem; color: #64748b; margin: 0; }
 
 .wot-support-columns {
@@ -3899,7 +4174,8 @@ main a:hover, section a:hover {
 .wot-modal__footer {
   padding: 0.8rem 1.25rem 1rem;
   display: flex;
-  gap: 0.7rem;
+  justify-content: flex-end;
+  gap: 0.5rem;
   border-top: 1px solid #e2e8f0;
 }
 .wot-modal__label { display: block; font-size: 0.8rem; font-weight: 700; color: #64748b; margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: .03em; }
@@ -3918,9 +4194,9 @@ body.wot-modal-open { overflow: hidden; }
   background: #f1f5f9;
   transition: all 0.1s;
 }
-.wot-state-btn--green.active { background: #dcfce7; border-color: #16a34a; color: #166534; }
-.wot-state-btn--red.active   { background: #fee2e2; border-color: #dc2626; color: #991b1b; }
-.wot-state-btn--blue.active  { background: #dbeafe; border-color: #2563eb; color: #1e40af; }
+.wot-state-btn--green.active { background: #d1fae5; border-color: #059669; color: #065f46; }
+.wot-state-btn--red.active   { background: #ffedd5; border-color: #ea580c; color: #7c2d12; }
+.wot-state-btn--blue.active  { background: #ede9fe; border-color: #6366f1; color: #312e81; }
 .wot-state-btn--grey.active  { background: #e2e8f0; border-color: #64748b; color: #334155; }
 .wot-state-btn:hover { filter: brightness(0.96); }
 
@@ -3978,7 +4254,96 @@ body.wot-modal-open { overflow: hidden; }
 }
 
 /* Utility */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  text-decoration: none;
+  line-height: 1.3;
+}
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.btn-primary:hover { background: #1a84a0; border-color: #1a84a0; }
+.btn-secondary {
+  background: none;
+  color: var(--ink);
+  border-color: #cbd5e1;
+}
+.btn-secondary:hover { background: #f1f5f9; border-color: #94a3b8; }
+.btn-ghost {
+  background: none;
+  color: #64748b;
+  border-color: transparent;
+}
+.btn-ghost:hover { color: var(--ink); background: #f1f5f9; }
 .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.82rem; }
+
+/* Login page */
+.login-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    max-width: 440px;
+    margin: 0 auto;
+}
+
+.microsoft-login-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 1.5rem;
+    background: #fff;
+    color: #1a1a1a;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: inherit;
+    text-decoration: none;
+    width: 100%;
+    justify-content: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.microsoft-login-btn:hover {
+    background: #f5f5f5;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    text-decoration: none;
+    color: #1a1a1a;
+}
+
+.login-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    color: #888;
+    font-size: 0.875rem;
+}
+
+.login-divider::before,
+.login-divider::after {
+    content: '';
+    flex: 1;
+    border-top: 1px solid #d0d0d0;
+}
+
+.login-container .form-with-validation {
+    width: 100%;
+    min-width: 0;
+}
 
 
 

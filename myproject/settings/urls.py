@@ -17,6 +17,7 @@ urlpatterns = [
     # App routes
     path('posts/',      include('myproject.posts.urls', namespace='posts')),
     path('users/',      include('myproject.users.urls', namespace='users')),
+    path('accounts/',   include('allauth.urls')),
     path('evaluation/', include('myproject.evaluation.urls', namespace='evaluation')),
     path('flashcards/', include('myproject.flashcards.urls', namespace='flashcards')),
     path('training/',   include('myproject.training.urls', namespace='training')),
