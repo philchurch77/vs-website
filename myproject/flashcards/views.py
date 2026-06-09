@@ -165,6 +165,8 @@ def delete_chat_session(request, session_id):
 
 @login_required
 def rename_chat_session(request, session_id):
+    if not ChatTurn.objects.filter(user=request.user, session_id=session_id).exists():
+        return JsonResponse({"error": "Session not found"}, status=404)
     data = json.loads(request.body)
     new_title = data.get("title", "").strip()
     if new_title:

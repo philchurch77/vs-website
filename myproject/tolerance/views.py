@@ -90,7 +90,7 @@ def dashboard(request):
             )
             return redirect("tolerance:weekly_map_detail", pk=wmap.pk)
 
-    maps = WeeklyMap.objects.select_related("recorded_by").all()
+    maps = WeeklyMap.objects.filter(recorded_by=request.user).select_related("recorded_by")
     today = date.today()
     # Default week_commencing to the most recent Monday
     days_since_monday = today.weekday()
@@ -114,7 +114,7 @@ def delete_weekly_map(request, pk):
 
 @login_required
 def weekly_map_detail(request, pk):
-    wmap = get_object_or_404(WeeklyMap, pk=pk)
+    wmap = get_object_or_404(WeeklyMap, pk=pk, recorded_by=request.user)
 
     # Build a lookup: {(day, slot): observation}
     obs_qs = wmap.observations.all()
@@ -176,7 +176,7 @@ def weekly_map_detail(request, pk):
 @login_required
 @require_POST
 def api_save_observation(request, pk):
-    wmap = get_object_or_404(WeeklyMap, pk=pk)
+    wmap = get_object_or_404(WeeklyMap, pk=pk, recorded_by=request.user)
 
     try:
         payload = json.loads(request.body)
@@ -218,7 +218,7 @@ def api_save_observation(request, pk):
 @login_required
 @require_POST
 def api_save_support_plan(request, pk):
-    wmap = get_object_or_404(WeeklyMap, pk=pk)
+    wmap = get_object_or_404(WeeklyMap, pk=pk, recorded_by=request.user)
 
     try:
         payload = json.loads(request.body)

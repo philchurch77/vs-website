@@ -192,10 +192,21 @@ This project has a team of specialist Claude agents in `.claude/agents/`:
 
 | Agent | When to use |
 |---|---|
-| `ada` | Before building a new app or feature — review model design, app structure, query patterns, and separation of concerns |
+| `ada` | **Before building** — design phase only. Review proposed model design, new app structure, or architectural decisions before any code is written. Ada designs what hasn't been built yet; Les simplifies what already exists. |
 | `vera` | After completing a feature or fix — end-to-end QA from a real user's perspective before handing work back |
-| `les` | When a view, form, or model is getting long or hard to follow — spot duplication, oversized logic, and simplification opportunities |
+| `les` | When **existing code** is getting messy — oversized views, duplicated logic, hard-to-follow models. Les simplifies what's already written; Ada designs what hasn't been built yet. |
 | `theo` | When starting something non-trivial — plan the approach, think through requirements, flag risks before writing code |
+| `tess` | When `tests.py` is empty or a new view/model needs tests — writes Django TestCase tests focused on permissions, ownership, and cross-user data isolation |
 | `stella` | When templates or CSS need review — visual hierarchy, spacing, usability, and teacher-friendly layout |
 | `victor` | Before any change that touches permissions, authentication, data access, or sensitive fields — security and GDPR audit |
 | `juno` | When you want a review of the agent/command setup itself — coverage gaps, overlaps, and workflow recommendations |
+
+### Workflow commands
+
+Three slash commands chain agents together for common end-to-end workflows:
+
+| Command | When to use |
+|---|---|
+| `/build` | New feature from scratch — runs Theo (plan) → Ada if needed → implement → Les (tidy) → Vera (QA) |
+| `/gauntlet` | **Mandatory** before shipping any change to `tolerance`, `sdq`, `flashcards`, or `evaluation` — runs Victor (GDPR audit) → Vera (QA) |
+| `/wheels-up` | Pre-deploy check — runs Les (final tidy) → deployment checklist → commit message draft |
