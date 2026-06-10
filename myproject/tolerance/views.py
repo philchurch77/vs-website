@@ -16,10 +16,17 @@ DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 WEEKLY_SUMMARY_SLOT = "Weekly summary"
 
 TIME_SLOTS = [
-    "Arrival",
-    "Morning lessons",
+    "Journey to school",
+    "Registration/start of day",
+    "Lesson 1",
+    "Lesson 2",
+    "Morning break",
+    "Lesson 3",
+    "Lesson 4",
     "Lunch",
-    "Afternoon lessons",
+    "Lesson 5",
+    "Lesson 6",
+    "End of day",
 ]
 
 BEHAVIOURS = {
@@ -36,7 +43,7 @@ TRIGGERS = [
     "Demand too high", "Written task", "Testing / assessment", "Sensory overload",
     "Noise", "Hunger", "Tiredness", "Unfamiliar adult", "Feeling unsafe",
     "Being asked to explain what happened", "Unstructured time",
-    "Separation from trusted adult", "Unknown", "Other",
+    "Separation from trusted adult", "Learning issues", "Unknown", "Other",
 ]
 
 RESPONSES = {
@@ -144,30 +151,66 @@ def weekly_map_detail(request, pk):
         key = f"{o.day_name}:{o.time_slot}"
         obs_data[key] = {
             "state": o.state,
-            "intensity": o.intensity,
             "observed_behaviours": o.observed_behaviours,
             "possible_triggers": o.possible_triggers,
             "adult_responses": o.adult_responses,
             "response_helpfulness": o.response_helpfulness,
             "notes": o.notes,
+            "place": o.place,
+            "people_present": o.people_present,
+            "incident_time": o.incident_time,
+            "abc_before": o.abc_before,
+            "abc_during": o.abc_during,
+            "abc_after": o.abc_after,
         }
+
+    active_slots = wmap.visible_slots if wmap.visible_slots else TIME_SLOTS
+
+    # Trend data — all weeks for this pupil (same user, same name), oldest first
+    peer_weeks = (
+        WeeklyMap.objects
+        .filter(pupil_name=wmap.pupil_name, recorded_by=wmap.recorded_by)
+        .order_by("week_commencing")
+        .prefetch_related("observations")
+    )
+    trend_data = []
+    for w in peer_weeks:
+        obs_all = list(w.observations.all())
+        for i, day in enumerate(DAYS):
+            day_date = w.week_commencing + timedelta(days=i)
+            obs = [o for o in obs_all if o.day_name == day and o.time_slot in TIME_SLOTS]
+            green = sum(1 for o in obs if o.state == "GREEN")
+            red   = sum(1 for o in obs if o.state == "RED")
+            blue  = sum(1 for o in obs if o.state == "BLUE")
+            total = green + red + blue
+            if total > 0:
+                trend_data.append({
+                    "date": str(day_date),
+                    "day": day[:3],
+                    "week": str(w.week_commencing),
+                    "pk": w.pk,
+                    "is_current": w.pk == wmap.pk,
+                    "green": green,
+                    "red": red,
+                    "blue": blue,
+                    "total": total,
+                })
 
     return render(request, "tolerance/weekly_map_detail.html", {
         "wmap": wmap,
         "grid": grid,
         "days": DAYS,
         "time_slots": TIME_SLOTS,
-        "behaviours_json": json.dumps(BEHAVIOURS),
-        "triggers_json": json.dumps(TRIGGERS),
-        "responses_json": json.dumps(RESPONSES),
+        "behaviours": BEHAVIOURS,
+        "triggers": TRIGGERS,
+        "responses": RESPONSES,
         "support_prompts": SUPPORT_PLAN_PROMPTS,
         "summary": summary,
-        "summary_json": json.dumps(summary),
-        "support_plan_json": json.dumps(wmap.support_plan or {}),
-        "obs_data_json": json.dumps(obs_data),
-        "time_slots_json": json.dumps(TIME_SLOTS),
-        "days_json": json.dumps(DAYS),
+        "support_plan": wmap.support_plan or {},
+        "obs_data": obs_data,
+        "active_slots": active_slots,
         "weekly_summary_slot": WEEKLY_SUMMARY_SLOT,
+        "trend_data": trend_data,
     })
 
 
@@ -197,13 +240,17 @@ def api_save_observation(request, pk):
     )
 
     obs.state = payload.get("state", "GREY")
-    intensity = payload.get("intensity")
-    obs.intensity = int(intensity) if intensity in (1, 2, 3, "1", "2", "3") else None
     obs.observed_behaviours = payload.get("observed_behaviours", [])
     obs.possible_triggers = payload.get("possible_triggers", [])
     obs.adult_responses = payload.get("adult_responses", [])
     obs.response_helpfulness = payload.get("response_helpfulness", "")
     obs.notes = payload.get("notes", "")
+    obs.place          = payload.get("place", "")
+    obs.people_present = payload.get("people_present", "")
+    obs.incident_time  = payload.get("incident_time", "")
+    obs.abc_before     = payload.get("abc_before", "")
+    obs.abc_during     = payload.get("abc_during", "")
+    obs.abc_after      = payload.get("abc_after", "")
     obs.save()
 
     # Return updated summary
@@ -230,22 +277,47 @@ def api_save_support_plan(request, pk):
     return JsonResponse({"ok": True})
 
 
+# ── API: save visible slot selection ─────────────────────────────────────────
+
+@login_required
+@require_POST
+def api_save_visible_slots(request, pk):
+    wmap = get_object_or_404(WeeklyMap, pk=pk, recorded_by=request.user)
+
+    try:
+        payload = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"ok": False, "error": "invalid JSON"}, status=400)
+
+    slots = payload.get("visible_slots", [])
+    if not isinstance(slots, list):
+        return JsonResponse({"ok": False, "error": "visible_slots must be a list"}, status=400)
+
+    # Store empty list to mean "all slots" — filter to known slots only
+    wmap.visible_slots = [s for s in slots if s in TIME_SLOTS]
+    wmap.save(update_fields=["visible_slots", "updated_at"])
+    return JsonResponse({"ok": True})
+
+
 # ── Helper: build summary from observations ───────────────────────────────────
 
 def _build_summary(observations):
-    green = [o for o in observations if o.state == "GREEN"]
-    red   = [o for o in observations if o.state == "RED"]
-    blue  = [o for o in observations if o.state == "BLUE"]
-    grey  = [o for o in observations if o.state == "GREY"]
+    # Exclude the weekly-overview placeholder — only real time-slot rows count
+    obs = [o for o in observations if o.time_slot != WEEKLY_SUMMARY_SLOT]
+
+    green = [o for o in obs if o.state == "GREEN"]
+    red   = [o for o in obs if o.state == "RED"]
+    blue  = [o for o in obs if o.state == "BLUE"]
+    grey  = [o for o in obs if o.state == "GREY"]
 
     def top_slots(obs_list, n=3):
-        counts = Counter((o.day_name + " " + o.time_slot) for o in obs_list)
+        counts = Counter(f"{o.day_name} {o.time_slot}" for o in obs_list)
         return [label for label, _ in counts.most_common(n)]
 
     all_triggers = []
     all_responses = []
     helpful_responses = []
-    for o in observations:
+    for o in obs:
         all_triggers.extend(o.possible_triggers)
         all_responses.extend(o.adult_responses)
         if o.response_helpfulness == "YES":

@@ -12,6 +12,6 @@ class WeeklyMapAdmin(admin.ModelAdmin):
 
 @admin.register(Observation)
 class ObservationAdmin(admin.ModelAdmin):
-    list_display = ("weekly_map", "day_name", "time_slot", "state", "intensity", "created_by")
+    list_display = ("weekly_map", "day_name", "time_slot", "state", "created_by")
     list_filter = ("state", "day_name")
     search_fields = ("weekly_map__pupil_name",)

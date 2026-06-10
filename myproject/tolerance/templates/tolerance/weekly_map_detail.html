@@ -34,6 +34,25 @@
           {% for day in days %}
           <button class="wot-day-tab" data-day="{{ day }}">{{ day }}</button>
           {% endfor %}
+          <button class="wot-day-tab wot-day-tab--trend" id="btnTrend">Trend</button>
+        </div>
+        <!-- Sessions filter — right-aligned in the tab bar -->
+        <div class="wot-sessions-ctrl" id="sessionsCtrl">
+          <button type="button" class="wot-sessions-btn" id="sessionsTrigger" aria-expanded="false" aria-controls="sessionsDropdown">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+            <span id="sessionsCount"></span>
+          </button>
+          <div class="wot-sessions-dropdown" id="sessionsDropdown" hidden>
+            <label class="wot-sessions-item wot-sessions-item--all">
+              <input type="checkbox" id="selectAllSlots"> <span>Select all</span>
+            </label>
+            <div class="wot-sessions-divider"></div>
+            <div id="slotFilterChips"></div>
+            <div class="wot-sessions-footer">
+              <button type="button" id="saveSlots" class="wot-sessions-save">Save layout</button>
+              <span id="slotSavedMsg" class="wot-sessions-saved" hidden>Saved ✓</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -61,7 +80,13 @@
         </div>
       </div>
 
-      <p id="overviewCaption" class="wot-overview-caption">Numbers show how many of the 4 daily time slots were in that zone · hover a day to see the breakdown</p>
+      <p id="overviewCaption" class="wot-overview-caption">Numbers show how many daily sessions were in that zone · hover a day to see the breakdown</p>
+
+      <!-- Trend chart (shown when Trend tab active) -->
+      <div id="trendChartWrap" class="wot-trend-wrap" hidden>
+        <div id="trendChart" class="wot-trend-chart"></div>
+        <p id="trendCaption" class="wot-overview-caption"></p>
+      </div>
 
     </div><!-- /wot-main -->
 
@@ -73,6 +98,7 @@
         <p class="wot-sidebar-subheading">Based on this week's entries</p>
         <div id="summaryContent" class="wot-summary-list"></div>
       </div>
+
 
     </aside>
 
@@ -158,14 +184,6 @@
           <button type="button" class="wot-state-btn wot-state-btn--grey"  data-state="GREY">⬜ Not observed</button>
         </div>
       </div>
-      <div class="wot-modal__field" id="intensityField">
-        <label class="wot-modal__label">Intensity</label>
-        <div class="wot-intensity-btns" id="intensityBtns">
-          <button type="button" class="wot-intensity-btn" data-intensity="1">1 – Mild</button>
-          <button type="button" class="wot-intensity-btn" data-intensity="2">2 – Moderate</button>
-          <button type="button" class="wot-intensity-btn" data-intensity="3">3 – Significant</button>
-        </div>
-      </div>
       <div class="wot-modal__field">
         <label class="wot-modal__label">Observed behaviours</label>
         <div class="wot-chip-group" id="behaviourChips"></div>
@@ -173,6 +191,29 @@
       <div class="wot-modal__field">
         <label class="wot-modal__label">Possible triggers</label>
         <div class="wot-chip-group" id="triggerChips"></div>
+        <div class="wot-context-row">
+          <div class="wot-context-item">
+            <label class="wot-context-label" for="obsPlace">
+              Place
+              <span class="wot-info-tip" data-tip="Record where it occurred">ⓘ</span>
+            </label>
+            <input type="text" id="obsPlace" class="wot-context-input" placeholder="Where it occurred…">
+          </div>
+          <div class="wot-context-item">
+            <label class="wot-context-label" for="obsPeople">
+              People
+              <span class="wot-info-tip" data-tip="Record who was present">ⓘ</span>
+            </label>
+            <input type="text" id="obsPeople" class="wot-context-input" placeholder="Who was present…">
+          </div>
+          <div class="wot-context-item">
+            <label class="wot-context-label" for="obsIncidentTime">
+              Time
+              <span class="wot-info-tip" data-tip="Record the time it occurred">ⓘ</span>
+            </label>
+            <input type="text" id="obsIncidentTime" class="wot-context-input" placeholder="e.g. 10:30am…">
+          </div>
+        </div>
       </div>
       <div class="wot-modal__field">
         <label class="wot-modal__label">Adult response used</label>
@@ -191,6 +232,30 @@
         <label class="wot-modal__label" for="obsNotes">Notes</label>
         <textarea id="obsNotes" rows="3" class="wot-notes-input" placeholder="Any other observations…"></textarea>
       </div>
+      <!-- ABC deconstruction -->
+      <div class="wot-abc-wrap">
+        <button type="button" class="wot-abc-toggle" id="abcToggle" aria-expanded="false" aria-controls="abcBody">
+          <span class="wot-abc-toggle__label">A · B · C &nbsp; Deconstruct this event</span>
+          <svg class="wot-abc-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="wot-abc-body" id="abcBody" hidden>
+          <p class="wot-abc-hint">Break down the event using Before, During and After.</p>
+          <div class="wot-abc-fields">
+            <div class="wot-abc-field">
+              <label class="wot-abc-label" for="obsAbcBefore"><span class="wot-abc-letter">A</span> Before</label>
+              <textarea id="obsAbcBefore" rows="2" class="wot-abc-textarea" placeholder="What was happening before…"></textarea>
+            </div>
+            <div class="wot-abc-field">
+              <label class="wot-abc-label" for="obsAbcDuring"><span class="wot-abc-letter">B</span> During</label>
+              <textarea id="obsAbcDuring" rows="2" class="wot-abc-textarea" placeholder="What happened during…"></textarea>
+            </div>
+            <div class="wot-abc-field">
+              <label class="wot-abc-label" for="obsAbcAfter"><span class="wot-abc-letter">C</span> After</label>
+              <textarea id="obsAbcAfter" rows="2" class="wot-abc-textarea" placeholder="What happened after…"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="wot-modal__footer">
       <button type="button" id="modalCancel" class="btn btn-ghost">Cancel</button>
@@ -199,19 +264,105 @@
   </div>
 </div>
 
+{{ behaviours|json_script:"wot-behaviours" }}
+{{ triggers|json_script:"wot-triggers" }}
+{{ responses|json_script:"wot-responses" }}
+{{ summary|json_script:"wot-summary" }}
+{{ support_plan|json_script:"wot-plan" }}
+{{ obs_data|json_script:"wot-obs-data" }}
+{{ time_slots|json_script:"wot-time-slots" }}
+{{ active_slots|json_script:"wot-active-slots" }}
+{{ days|json_script:"wot-days" }}
+{{ weekly_summary_slot|json_script:"wot-weekly-slot" }}
+{{ trend_data|json_script:"wot-trend-data" }}
+
 <script>
 // ── Data ──────────────────────────────────────────────────────────────────
-const BEHAVIOURS          = {{ behaviours_json|safe }};
-const ALL_TRIGGERS        = {{ triggers_json|safe }};
-const RESPONSES           = {{ responses_json|safe }};
+const BEHAVIOURS          = JSON.parse(document.getElementById('wot-behaviours').textContent);
+const ALL_TRIGGERS        = JSON.parse(document.getElementById('wot-triggers').textContent);
+const RESPONSES           = JSON.parse(document.getElementById('wot-responses').textContent);
 const SAVE_OBS_URL        = "{% url 'tolerance:api_save_observation' wmap.pk %}";
 const SAVE_PLAN_URL       = "{% url 'tolerance:api_save_support_plan' wmap.pk %}";
-const INITIAL_SUMMARY     = {{ summary_json|safe }};
-const INITIAL_PLAN        = {{ support_plan_json|safe }};
-const OBS_DATA            = {{ obs_data_json|safe }};
-const DAYS_LIST           = {{ days_json|safe }};
-const TIME_SLOT_NAMES     = {{ time_slots_json|safe }};
-const WEEKLY_SUMMARY_SLOT = "{{ weekly_summary_slot }}";
+const SAVE_SLOTS_URL      = "{% url 'tolerance:api_save_visible_slots' wmap.pk %}";
+const INITIAL_SUMMARY     = JSON.parse(document.getElementById('wot-summary').textContent);
+const INITIAL_PLAN        = JSON.parse(document.getElementById('wot-plan').textContent);
+const OBS_DATA            = JSON.parse(document.getElementById('wot-obs-data').textContent);
+const DAYS_LIST           = JSON.parse(document.getElementById('wot-days').textContent);
+const ALL_SLOT_NAMES      = JSON.parse(document.getElementById('wot-time-slots').textContent);
+const WEEKLY_SUMMARY_SLOT = JSON.parse(document.getElementById('wot-weekly-slot').textContent);
+const TREND_DATA          = JSON.parse(document.getElementById('wot-trend-data').textContent);
+const TREND_URL_BASE      = "{% url 'tolerance:weekly_map_detail' pk=0 %}".replace('/0/', '/');
+
+// Active slots: the ones currently shown (initially from server)
+let activeSlots = JSON.parse(document.getElementById('wot-active-slots').textContent);
+
+// ── Sessions sidebar dropdown ──────────────────────────────────────────────
+function updateSessionsCount() {
+  const total = ALL_SLOT_NAMES.length;
+  const shown = activeSlots.length;
+  document.getElementById('sessionsCount').textContent =
+    shown === total ? 'All' : shown + ' of ' + total;
+}
+
+function syncSelectAll() {
+  document.getElementById('selectAllSlots').checked =
+    activeSlots.length === ALL_SLOT_NAMES.length;
+}
+
+function buildSlotFilter() {
+  const container = document.getElementById('slotFilterChips');
+  container.innerHTML = '';
+  ALL_SLOT_NAMES.forEach(slot => {
+    const label = document.createElement('label');
+    label.className = 'wot-sessions-item';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = activeSlots.includes(slot);
+    cb.addEventListener('change', () => {
+      if (cb.checked) { if (!activeSlots.includes(slot)) activeSlots.push(slot); }
+      else { activeSlots = activeSlots.filter(s => s !== slot); }
+      syncSelectAll();
+      updateSessionsCount();
+      renderBandChart();
+    });
+    const span = document.createElement('span');
+    span.textContent = slot;
+    label.appendChild(cb);
+    label.appendChild(span);
+    container.appendChild(label);
+  });
+  updateSessionsCount();
+  syncSelectAll();
+}
+
+document.getElementById('sessionsTrigger').addEventListener('click', () => {
+  const dropdown = document.getElementById('sessionsDropdown');
+  const open = dropdown.hidden;
+  dropdown.hidden = !open;
+  document.getElementById('sessionsTrigger').setAttribute('aria-expanded', String(open));
+});
+
+document.getElementById('selectAllSlots').addEventListener('change', (e) => {
+  activeSlots = e.target.checked ? [...ALL_SLOT_NAMES] : [];
+  document.querySelectorAll('#slotFilterChips input[type=checkbox]').forEach(cb => {
+    cb.checked = e.target.checked;
+  });
+  updateSessionsCount();
+  renderBandChart();
+});
+
+document.getElementById('saveSlots').addEventListener('click', async () => {
+  const payload = { visible_slots: activeSlots };
+  const data = await (await fetch(SAVE_SLOTS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+    body: JSON.stringify(payload),
+  })).json();
+  if (data.ok) {
+    const m = document.getElementById('slotSavedMsg');
+    m.hidden = false; setTimeout(() => { m.hidden = true; }, 2500);
+  }
+});
 
 // ── State ─────────────────────────────────────────────────────────────────
 let viewMode    = 'weekly';
@@ -219,9 +370,11 @@ let selectedDay = DAYS_LIST[0];
 let activeCellEl  = null;
 let activeBandKey = null;
 let currentObs = {
-  day_name: "", time_slot: "", state: "GREY", intensity: null,
+  day_name: "", time_slot: "", state: "GREY",
   observed_behaviours: [], possible_triggers: [],
   adult_responses: [], response_helpfulness: "", notes: "",
+  place: "", people_present: "", incident_time: "",
+  abc_before: "", abc_during: "", abc_after: "",
 };
 
 
@@ -229,9 +382,6 @@ let currentObs = {
 function renderModal() {
   document.querySelectorAll(".wot-state-btn").forEach(b =>
     b.classList.toggle("active", b.dataset.state === currentObs.state));
-  document.getElementById("intensityField").hidden = currentObs.state === "GREY";
-  document.querySelectorAll(".wot-intensity-btn").forEach(b =>
-    b.classList.toggle("active", parseInt(b.dataset.intensity) === currentObs.intensity));
   renderChips("behaviourChips",
     currentObs.state === "GREY" ? [] : (BEHAVIOURS[currentObs.state] || []),
     currentObs.observed_behaviours);
@@ -242,6 +392,20 @@ function renderModal() {
   document.querySelectorAll(".wot-help-btn").forEach(b =>
     b.classList.toggle("active", b.dataset.help === currentObs.response_helpfulness));
   document.getElementById("obsNotes").value = currentObs.notes;
+  // Context inputs
+  document.getElementById("obsPlace").value        = currentObs.place         || "";
+  document.getElementById("obsPeople").value       = currentObs.people_present || "";
+  document.getElementById("obsIncidentTime").value = currentObs.incident_time  || "";
+  // ABC fields — populate and auto-open if any data exists
+  document.getElementById("obsAbcBefore").value = currentObs.abc_before || "";
+  document.getElementById("obsAbcDuring").value = currentObs.abc_during || "";
+  document.getElementById("obsAbcAfter").value  = currentObs.abc_after  || "";
+  const hasAbc = currentObs.abc_before || currentObs.abc_during || currentObs.abc_after;
+  const abcBody   = document.getElementById("abcBody");
+  const abcToggle = document.getElementById("abcToggle");
+  abcBody.hidden = !hasAbc;
+  abcToggle.setAttribute("aria-expanded", String(!!hasAbc));
+  abcToggle.classList.toggle("is-open", !!hasAbc);
 }
 
 function renderChips(id, options, selected) {
@@ -280,14 +444,6 @@ document.getElementById("stateBtns").addEventListener("click", (e) => {
   renderModal();
 });
 
-document.getElementById("intensityBtns").addEventListener("click", (e) => {
-  const b = e.target.closest(".wot-intensity-btn"); if (!b) return;
-  const v = parseInt(b.dataset.intensity);
-  currentObs.intensity = currentObs.intensity === v ? null : v;
-  document.querySelectorAll(".wot-intensity-btn").forEach(x =>
-    x.classList.toggle("active", parseInt(x.dataset.intensity) === currentObs.intensity));
-});
-
 ["behaviourChips","triggerChips","responseChips"].forEach(id => {
   document.getElementById(id).addEventListener("click", (e) => {
     const b = e.target.closest(".wot-chip"); if (!b) return;
@@ -310,22 +466,45 @@ document.getElementById("helpBtns").addEventListener("click", (e) => {
 
 document.getElementById("obsNotes").addEventListener("input", e => { currentObs.notes = e.target.value; });
 
-document.getElementById("modalSave").addEventListener("click", async () => {
+// Context inputs
+document.getElementById("obsPlace").addEventListener("input",        e => { currentObs.place          = e.target.value; });
+document.getElementById("obsPeople").addEventListener("input",       e => { currentObs.people_present  = e.target.value; });
+document.getElementById("obsIncidentTime").addEventListener("input", e => { currentObs.incident_time   = e.target.value; });
+
+// ABC inputs
+document.getElementById("obsAbcBefore").addEventListener("input", e => { currentObs.abc_before = e.target.value; });
+document.getElementById("obsAbcDuring").addEventListener("input", e => { currentObs.abc_during = e.target.value; });
+document.getElementById("obsAbcAfter").addEventListener("input",  e => { currentObs.abc_after  = e.target.value; });
+
+// ABC toggle
+document.getElementById("abcToggle").addEventListener("click", () => {
+  const body   = document.getElementById("abcBody");
+  const toggle = document.getElementById("abcToggle");
+  const open   = body.hidden;
+  body.hidden  = !open;
+  toggle.setAttribute("aria-expanded", String(open));
+  toggle.classList.toggle("is-open", open);
+});
+
+async function saveObservation() {
   const resp = await fetch(SAVE_OBS_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-CSRFToken": getCsrf() },
     body: JSON.stringify(currentObs),
   });
   const data = await resp.json();
-  if (!data.ok) { alert("Could not save — please try again."); return; }
+  if (!data.ok) { showToast('Could not save — please try again.'); return false; }
   const key = `${currentObs.day_name}:${currentObs.time_slot}`;
   OBS_DATA[key] = { ...currentObs };
   if (activeCellEl) updateCell(activeCellEl, currentObs);
   renderBandChart();
   renderSummary(data.summary);
   activeCellEl = null; activeBandKey = null;
-  hideModal();
-  showToast('Observation saved ✓');
+  return true;
+}
+
+document.getElementById("modalSave").addEventListener("click", async () => {
+  if (await saveObservation()) { hideModal(); showToast('Observation saved ✓'); }
 });
 
 function updateCell(cellEl, obs) {
@@ -334,7 +513,7 @@ function updateCell(cellEl, obs) {
   const inner = cellEl.querySelector(".wot-cell-inner");
   inner.innerHTML = obs.state === "GREY"
     ? '<span class="wot-cell-empty">+</span>'
-    : '<span class="wot-cell-dot"></span>' + (obs.intensity ? `<span class="wot-cell-intensity">${obs.intensity}</span>` : "");
+    : '<span class="wot-cell-dot"></span>';
 }
 
 // ── Summary ───────────────────────────────────────────────────────────────
@@ -389,25 +568,40 @@ function getCsrf() {
 
 // ── View toggle ───────────────────────────────────────────────────────────
 document.getElementById('btnOverview').addEventListener('click', () => switchView('weekly'));
+document.getElementById('btnTrend').addEventListener('click', () => switchView('trend'));
 document.querySelectorAll('.wot-day-tab[data-day]').forEach(b => b.addEventListener('click', () => selectDay(b.dataset.day)));
 
 function switchView(mode) {
+  const isTrend = mode === 'trend';
   viewMode = mode;
+  document.getElementById('bandChart').hidden = isTrend;
+  document.getElementById('trendChartWrap').hidden = !isTrend;
+  document.getElementById('sessionsCtrl').hidden = isTrend;
   document.getElementById('bandChart').classList.toggle('wot-band-chart--daily', mode === 'daily');
   document.getElementById('btnOverview').classList.toggle('active', mode === 'weekly');
+  document.getElementById('btnTrend').classList.toggle('active', isTrend);
   document.getElementById('overviewCaption').hidden = mode !== 'weekly';
   if (mode === 'weekly') {
     document.querySelectorAll('.wot-day-tab[data-day]').forEach(b => b.classList.remove('active'));
   }
-  renderBandChart();
+  if (isTrend) {
+    document.querySelectorAll('.wot-day-tab[data-day]').forEach(b => b.classList.remove('active'));
+    renderTrendChart();
+  } else {
+    renderBandChart();
+  }
 }
 
 function selectDay(day) {
   selectedDay = day;
   document.getElementById('btnOverview').classList.remove('active');
+  document.getElementById('btnTrend').classList.remove('active');
   document.querySelectorAll('.wot-day-tab[data-day]').forEach(b => b.classList.toggle('active', b.dataset.day === day));
   if (viewMode !== 'daily') {
     viewMode = 'daily';
+    document.getElementById('bandChart').hidden = false;
+    document.getElementById('trendChartWrap').hidden = true;
+    document.getElementById('sessionsCtrl').hidden = false;
     document.getElementById('bandChart').classList.add('wot-band-chart--daily');
   }
   renderBandChart();
@@ -416,18 +610,19 @@ function selectDay(day) {
 // ── Band chart ────────────────────────────────────────────────────────────
 function renderBandChart() {
   const isWeekly = viewMode === 'weekly';
-  const slots = isWeekly ? DAYS_LIST : TIME_SLOT_NAMES;
+  // In daily mode filter time slots to activeSlots; in weekly mode show all days
+  const slots = isWeekly ? DAYS_LIST : ALL_SLOT_NAMES.filter(s => activeSlots.includes(s));
   const slotData = slots.map(slot => {
     const key = isWeekly ? `${slot}:${WEEKLY_SUMMARY_SLOT}` : `${selectedDay}:${slot}`;
     return { slot, key, ...(OBS_DATA[key] || { state: 'GREY' }) };
   });
 
-  // Weekly mode: count actual time-slot observations per day per zone
+  // Weekly mode: count actual time-slot observations per day per zone (only active slots)
   const dayCounts = {};
   if (isWeekly) {
     DAYS_LIST.forEach(day => {
       dayCounts[day] = { GREEN: 0, RED: 0, BLUE: 0 };
-      TIME_SLOT_NAMES.forEach(slot => {
+      activeSlots.forEach(slot => {
         const obs = OBS_DATA[`${day}:${slot}`];
         if (obs && obs.state && obs.state !== 'GREY') dayCounts[day][obs.state]++;
       });
@@ -467,8 +662,7 @@ function renderBandChart() {
     });
   });
 
-  const SLOT_SHORT  = { 'Arrival': 'Arrival', 'Morning lessons': 'Morning', 'Lunch': 'Lunch', 'Afternoon lessons': 'Afternoon' };
-  const STATE_ABBR  = { GREEN: 'In window', RED: 'Hyper-arousal', BLUE: 'Hypo-arousal', GREY: '—' };
+  const STATE_ABBR = { GREEN: 'In window', RED: 'Hyper-arousal', BLUE: 'Hypo-arousal', GREY: '—' };
 
   const xAxis = document.getElementById('bandXAxis');
   xAxis.style.gridTemplateColumns = `repeat(${slots.length}, 1fr)`;
@@ -479,12 +673,12 @@ function renderBandChart() {
     if (isWeekly) {
       lbl.classList.add('wot-has-tooltip');
       lbl.addEventListener('click', () => selectDay(d.slot));
-      const tooltipRows = TIME_SLOT_NAMES.map(slot => {
+      const tooltipRows = activeSlots.map(slot => {
         const obs = OBS_DATA[`${d.slot}:${slot}`];
         const state = (obs && obs.state) || 'GREY';
         return `<div class="wot-tt__row wot-tt__row--${state.toLowerCase()}">
           <span class="wot-tt__dot"></span>
-          <span class="wot-tt__slot">${SLOT_SHORT[slot] || slot}</span>
+          <span class="wot-tt__slot">${slot}</span>
           <span class="wot-tt__state">${STATE_ABBR[state]}</span>
         </div>`;
       }).join('');
@@ -509,19 +703,230 @@ function openBandModal(d, isWeekly, clickedZone) {
   activeCellEl = null; activeBandKey = d.key;
   currentObs = {
     day_name: dayName, time_slot: timeSlot,
-    state: clickedZone || saved.state || 'GREY', intensity: saved.intensity || null,
-    observed_behaviours: saved.observed_behaviours || [],
-    possible_triggers:   saved.possible_triggers   || [],
-    adult_responses:     saved.adult_responses     || [],
+    state: clickedZone || saved.state || 'GREY',
+    observed_behaviours:  saved.observed_behaviours  || [],
+    possible_triggers:    saved.possible_triggers    || [],
+    adult_responses:      saved.adult_responses      || [],
     response_helpfulness: saved.response_helpfulness || '',
-    notes: saved.notes || '',
+    notes:          saved.notes          || '',
+    place:          saved.place          || '',
+    people_present: saved.people_present || '',
+    incident_time:  saved.incident_time  || '',
+    abc_before:     saved.abc_before     || '',
+    abc_during:     saved.abc_during     || '',
+    abc_after:      saved.abc_after      || '',
   };
   document.getElementById('modalTitle').textContent = isWeekly
     ? `${dayName} – Weekly overview` : `${dayName} – ${timeSlot}`;
   renderModal(); showModal();
 }
 
+// ── Trend chart ───────────────────────────────────────────────────────────
+function renderTrendChart() {
+  const container = document.getElementById('trendChart');
+  const caption   = document.getElementById('trendCaption');
+  container.innerHTML = '';
+
+  if (TREND_DATA.length === 0) {
+    container.innerHTML = '<p class="wot-trend-empty">No observation data yet.</p>';
+    return;
+  }
+
+  const NS  = 'http://www.w3.org/2000/svg';
+  const PAD = { top: 16, right: 24, bottom: 50, left: 16 };
+  const H   = 210;
+  const W   = container.clientWidth || 560;
+  const cW  = W - PAD.left - PAD.right;
+  const cH  = H - PAD.top  - PAD.bottom;
+
+  // Zone layout (fractions of cH, top to bottom = RED → GREEN → BLUE)
+  const BAND = { RED: [0, 0.33], GREEN: [0.33, 0.66], BLUE: [0.66, 1.0] };
+  const ZONE_MID = {
+    RED:   (BAND.RED[0]   + BAND.RED[1])   / 2,
+    GREEN: (BAND.GREEN[0] + BAND.GREEN[1]) / 2,
+    BLUE:  (BAND.BLUE[0]  + BAND.BLUE[1])  / 2,
+  };
+  const ZONE_FILL   = { RED: '#fee2e2', GREEN: '#d1fae5', BLUE: '#dbeafe' };
+  const ZONE_STROKE = { RED: '#ef4444', GREEN: '#10b981', BLUE: '#3b82f6' };
+  const ZONE_LABEL  = { RED: 'Hyper-arousal', GREEN: 'In window', BLUE: 'Hypo-arousal' };
+  const ZONE_TEXT   = { RED: '#b91c1c', GREEN: '#065f46', BLUE: '#1d4ed8' };
+
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('width',   W);
+  svg.setAttribute('height',  H);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('role', 'img');
+  svg.setAttribute('aria-label', 'Trend over time chart');
+
+  const g = document.createElementNS(NS, 'g');
+  g.setAttribute('transform', `translate(${PAD.left},${PAD.top})`);
+  svg.appendChild(g);
+
+  // Background bands
+  Object.entries(BAND).forEach(([zone, [t, b]]) => {
+    const rect = document.createElementNS(NS, 'rect');
+    rect.setAttribute('x', 0);
+    rect.setAttribute('y', t * cH);
+    rect.setAttribute('width', cW);
+    rect.setAttribute('height', (b - t) * cH);
+    rect.setAttribute('fill', ZONE_FILL[zone]);
+    g.appendChild(rect);
+  });
+
+  // Band divider lines
+  [BAND.GREEN[0], BAND.BLUE[0]].forEach(frac => {
+    const line = document.createElementNS(NS, 'line');
+    line.setAttribute('x1', 0); line.setAttribute('x2', cW);
+    line.setAttribute('y1', frac * cH); line.setAttribute('y2', frac * cH);
+    line.setAttribute('stroke', '#cbd5e1');
+    line.setAttribute('stroke-width', '1');
+    line.setAttribute('stroke-dasharray', '4 3');
+    g.appendChild(line);
+  });
+
+  // Zone labels
+  Object.entries(ZONE_MID).forEach(([zone, mid]) => {
+    const text = document.createElementNS(NS, 'text');
+    text.setAttribute('x', cW - 6);
+    text.setAttribute('y', mid * cH + 4);
+    text.setAttribute('text-anchor', 'end');
+    text.setAttribute('font-size', '10.5');
+    text.setAttribute('font-weight', '700');
+    text.setAttribute('fill', ZONE_TEXT[zone]);
+    text.setAttribute('opacity', '0.7');
+    text.textContent = ZONE_LABEL[zone];
+    g.appendChild(text);
+  });
+
+  // Compute x/y for each data point
+  const n = TREND_DATA.length;
+  const points = TREND_DATA.map((week, i) => {
+    const xFrac = n === 1 ? 0.5 : i / (n - 1);
+    const x = xFrac * cW;
+    const total = week.total || 0;
+    const yFrac = total === 0
+      ? ZONE_MID.GREEN
+      : (week.red * ZONE_MID.RED + week.green * ZONE_MID.GREEN + week.blue * ZONE_MID.BLUE) / total;
+    const y = yFrac * cH;
+    const dominant = total === 0 ? 'GREEN'
+      : (week.red >= week.green && week.red >= week.blue) ? 'RED'
+      : (week.blue > week.red   && week.blue > week.green) ? 'BLUE'
+      : 'GREEN';
+    return { x, y, week, dominant };
+  });
+
+  // Week separator lines (drawn before lines/dots so they sit behind)
+  let prevWeekKey = null;
+  points.forEach((p, i) => {
+    if (prevWeekKey !== null && p.week.week !== prevWeekKey) {
+      const xSep = (points[i - 1].x + p.x) / 2;
+      const sep = document.createElementNS(NS, 'line');
+      sep.setAttribute('x1', xSep); sep.setAttribute('x2', xSep);
+      sep.setAttribute('y1', 0);    sep.setAttribute('y2', cH);
+      sep.setAttribute('stroke', '#94a3b8');
+      sep.setAttribute('stroke-width', '1');
+      sep.setAttribute('stroke-dasharray', '3 3');
+      sep.setAttribute('opacity', '0.35');
+      g.appendChild(sep);
+    }
+    prevWeekKey = p.week.week;
+  });
+
+  // Connecting lines
+  for (let i = 1; i < points.length; i++) {
+    const p1 = points[i - 1], p2 = points[i];
+    const line = document.createElementNS(NS, 'line');
+    line.setAttribute('x1', p1.x); line.setAttribute('y1', p1.y);
+    line.setAttribute('x2', p2.x); line.setAttribute('y2', p2.y);
+    line.setAttribute('stroke', ZONE_STROKE[p2.dominant]);
+    line.setAttribute('stroke-width', '2.5');
+    line.setAttribute('stroke-linecap', 'round');
+    line.setAttribute('opacity', '0.7');
+    g.appendChild(line);
+  }
+
+  // Dots
+  points.forEach(p => {
+    const isCurrent = p.week.is_current;
+    const circle = document.createElementNS(NS, 'circle');
+    circle.setAttribute('cx', p.x);
+    circle.setAttribute('cy', p.y);
+    circle.setAttribute('r',  isCurrent ? 7 : 5);
+    circle.setAttribute('fill',         isCurrent ? '#fff' : ZONE_STROKE[p.dominant]);
+    circle.setAttribute('stroke',       ZONE_STROKE[p.dominant]);
+    circle.setAttribute('stroke-width', isCurrent ? '3' : '1.5');
+    if (!isCurrent) {
+      circle.style.cursor = 'pointer';
+      circle.addEventListener('click', () => {
+        window.location.href = TREND_URL_BASE + p.week.pk + '/';
+      });
+    }
+    const titleEl = document.createElementNS(NS, 'title');
+    const d = new Date(p.week.date + 'T00:00:00');
+    const dateStr = `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+    titleEl.textContent = [
+      `${p.week.day} ${dateStr}`,
+      `Green: ${p.week.green}  Red: ${p.week.red}  Blue: ${p.week.blue}`,
+    ].join('\n');
+    circle.appendChild(titleEl);
+    g.appendChild(circle);
+  });
+
+  // "This week" label above the last current-week dot
+  const currentPts = points.filter(p => p.week.is_current);
+  if (currentPts.length > 0) {
+    const last = currentPts[currentPts.length - 1];
+    const lbl = document.createElementNS(NS, 'text');
+    const lblX = Math.max(Math.min(last.x, cW - 30), 30);
+    lbl.setAttribute('x', lblX);
+    lbl.setAttribute('y', last.y - 14);
+    lbl.setAttribute('text-anchor', 'middle');
+    lbl.setAttribute('font-size', '10');
+    lbl.setAttribute('font-weight', '600');
+    lbl.setAttribute('fill', '#4f46e5');
+    lbl.textContent = 'This week';
+    g.appendChild(lbl);
+  }
+
+  // X-axis: show week-commencing date at the first point of each week
+  let lastWeekLabel = null;
+  points.forEach(p => {
+    if (p.week.week !== lastWeekLabel) {
+      lastWeekLabel = p.week.week;
+      const d = new Date(p.week.week + 'T00:00:00');
+      const wkLabel = document.createElementNS(NS, 'text');
+      wkLabel.setAttribute('x', p.x);
+      wkLabel.setAttribute('y', cH + 22);
+      wkLabel.setAttribute('text-anchor', 'middle');
+      wkLabel.setAttribute('font-size', '9.5');
+      wkLabel.setAttribute('fill', p.week.is_current ? '#0a7fa0' : '#6b7280');
+      wkLabel.setAttribute('font-weight', p.week.is_current ? '700' : '400');
+      wkLabel.textContent = `w/c ${d.getDate()}/${d.getMonth() + 1}`;
+      g.appendChild(wkLabel);
+    }
+  });
+
+  // Axis footnote
+  const axisTitle = document.createElementNS(NS, 'text');
+  axisTitle.setAttribute('x', cW / 2);
+  axisTitle.setAttribute('y', cH + 44);
+  axisTitle.setAttribute('text-anchor', 'middle');
+  axisTitle.setAttribute('font-size', '9.5');
+  axisTitle.setAttribute('fill', '#9ca3af');
+  axisTitle.textContent = 'Each dot = one school day · dot height = average regulation position · hover for detail';
+  g.appendChild(axisTitle);
+
+  container.appendChild(svg);
+
+  const totalDays  = TREND_DATA.length;
+  const totalWeeks = new Set(TREND_DATA.map(d => d.week)).size;
+  caption.textContent = totalWeeks === 1
+    ? `${totalDays} day${totalDays !== 1 ? 's' : ''} recorded this week. Open circles = this week. Select a previous week's dot to view it.`
+    : `${totalDays} days across ${totalWeeks} weeks. Open circles = this week. Dashed lines separate weeks.`;
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────
+buildSlotFilter();
 renderSummary(INITIAL_SUMMARY);
 switchView('weekly');
 document.querySelectorAll(".wot-support-textarea").forEach(ta => {

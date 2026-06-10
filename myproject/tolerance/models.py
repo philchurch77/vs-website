@@ -17,6 +17,7 @@ class WeeklyMap(models.Model):
     key_adults = models.TextField(blank=True)
     review_date = models.DateField(null=True, blank=True)
     support_plan = models.JSONField(default=dict, blank=True)
+    visible_slots = models.JSONField(default=list, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -46,7 +47,6 @@ class Observation(models.Model):
     day_name = models.CharField(max_length=20)   # Monday … Friday
     time_slot = models.CharField(max_length=60)  # Arrival, Registration, …
     state = models.CharField(max_length=10, choices=State.choices, default=State.GREY)
-    intensity = models.PositiveSmallIntegerField(null=True, blank=True)  # 1–3
     observed_behaviours = models.JSONField(default=list, blank=True)
     possible_triggers = models.JSONField(default=list, blank=True)
     adult_responses = models.JSONField(default=list, blank=True)
@@ -54,6 +54,14 @@ class Observation(models.Model):
         max_length=10, choices=Helpfulness.choices, blank=True
     )
     notes = models.TextField(blank=True)
+    # Context fields
+    place          = models.CharField(max_length=200, blank=True)
+    people_present = models.CharField(max_length=200, blank=True)
+    incident_time  = models.CharField(max_length=100, blank=True)
+    # ABC deconstruction
+    abc_before = models.TextField(blank=True)
+    abc_during = models.TextField(blank=True)
+    abc_after  = models.TextField(blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
