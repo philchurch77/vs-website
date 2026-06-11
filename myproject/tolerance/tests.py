@@ -73,7 +73,7 @@ class ToleranceOwnershipTests(TestCase):
     def test_intruder_cannot_write_observation(self):
         # another user must not be able to save observations into a WeeklyMap they don't own
         self.client.login(username="intruder", password="pass")
-        payload = {"day_name": "Monday", "time_slot": "Arrival", "state": "GREEN"}
+        payload = {"day_name": "Monday", "time_slot": "Lesson 1", "state": "GREEN"}
         response = self.client.post(
             reverse("tolerance:api_save_observation", args=[self.wmap.pk]),
             data=json.dumps(payload),
@@ -124,7 +124,7 @@ class ToleranceOwnerCanAccessOwnData(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_owner_can_save_observation(self):
-        payload = {"day_name": "Monday", "time_slot": "Arrival", "state": "GREEN"}
+        payload = {"day_name": "Monday", "time_slot": "Lesson 1", "state": "GREEN"}
         response = self.client.post(
             reverse("tolerance:api_save_observation", args=[self.wmap.pk]),
             data=json.dumps(payload),
@@ -150,3 +150,54 @@ class ToleranceOwnerCanAccessOwnData(TestCase):
         self.assertEqual(response.status_code, 200)
         pks = [m.pk for m in response.context["maps"]]
         self.assertIn(self.wmap.pk, pks)
+
+    def test_api_endpoints_reject_get(self):
+        for name in ("api_save_observation", "api_save_support_plan", "api_save_visible_slots"):
+            response = self.client.get(reverse(f"tolerance:{name}", args=[self.wmap.pk]))
+            self.assertEqual(response.status_code, 405, name)
+
+    def test_observation_round_trip_persists_fields(self):
+        payload = {
+            "day_name": "Tuesday",
+            "time_slot": "Lesson 1",
+            "state": "RED",
+            "observed_behaviours": ["Shouting"],
+            "possible_triggers": ["Transition"],
+            "adult_responses": ["Use calm tone"],
+            "response_helpfulness": "YES",
+            "notes": "Settled after five minutes",
+        }
+        response = self.client.post(
+            reverse("tolerance:api_save_observation", args=[self.wmap.pk]),
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        obs = Observation.objects.get(weekly_map=self.wmap, day_name="Tuesday", time_slot="Lesson 1")
+        self.assertEqual(obs.state, "RED")
+        self.assertEqual(obs.observed_behaviours, ["Shouting"])
+        self.assertEqual(obs.adult_responses, ["Use calm tone"])
+        # Saved observation feeds the returned summary
+        self.assertEqual(response.json()["summary"]["counts"]["red"], 1)
+
+    def test_invalid_slot_rejected(self):
+        payload = {"day_name": "Tuesday", "time_slot": "Not a real slot", "state": "RED"}
+        response = self.client.post(
+            reverse("tolerance:api_save_observation", args=[self.wmap.pk]),
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_create_map_redirects_to_detail(self):
+        response = self.client.post(reverse("tolerance:dashboard"), {
+            "pupil_name": "New Pupil",
+            "week_commencing": "2026-06-08",
+        })
+        wmap = WeeklyMap.objects.get(pupil_name="New Pupil")
+        self.assertRedirects(response, reverse("tolerance:weekly_map_detail", args=[wmap.pk]))
+
+    def test_owner_can_delete_own_map(self):
+        response = self.client.post(reverse("tolerance:delete_weekly_map", args=[self.wmap.pk]))
+        self.assertRedirects(response, reverse("tolerance:dashboard"))
+        self.assertFalse(WeeklyMap.objects.filter(pk=self.wmap.pk).exists())

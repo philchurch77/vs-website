@@ -6,8 +6,10 @@ from django.contrib.auth import login, logout
 def register_view(request):
     if request.method == "POST": 
         form = UserCreationForm(request.POST) 
-        if form.is_valid(): 
-            login(request, form.save())
+        if form.is_valid():
+            # With multiple auth backends configured (model + allauth), login()
+            # must be told which backend authenticated the new user.
+            login(request, form.save(), backend="django.contrib.auth.backends.ModelBackend")
             return redirect("posts:list")
     else:
         form = UserCreationForm()
