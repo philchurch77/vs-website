@@ -1,7 +1,9 @@
-{# Shared chat-history drawer shell. The list inside stays app-specific:
-   either server-included (drawer_content) or HTMX-loaded (drawer_hx_url).
-   Vars: drawer_id, drawer_title, drawer_class (optional extra classes),
-         drawer_content (template path) OR drawer_hx_url #}
+{% comment %}
+Shared chat-history drawer shell. The list inside stays app-specific:
+either server-included (drawer_content) or HTMX-loaded (drawer_hx_url).
+Vars: drawer_id, drawer_title, drawer_class (optional extra classes),
+      drawer_content (template path) OR drawer_hx_url
+{% endcomment %}
 <aside class="chat-history-sidebar {{ drawer_class|default:'' }}" id="{{ drawer_id }}" tabindex="-1">
     <div class="chat-history-header">
         <h3 class="chat-history-heading">{{ drawer_title }}</h3>

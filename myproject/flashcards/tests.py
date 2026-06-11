@@ -198,6 +198,14 @@ class FlashcardsTitleRowTests(TestCase):
         roles = [m["role"] for m in response.context["messages"]]
         self.assertNotIn("title", roles)
 
+    def test_page_renders_without_template_syntax_leakage(self):
+        # Multi-line {# #} comments are not supported by Django and get
+        # rendered as literal text — guard against that regressing
+        response = self.client.get(reverse("flashcards:flashcards_page"))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "{#")
+        self.assertNotContains(response, "{%")
+
     def test_title_used_in_history_partial(self):
         ChatTurn.objects.create(
             tool=FLASHCARDS, user=self.user, session_id=self.session_id,

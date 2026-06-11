@@ -91,6 +91,14 @@ class EvaluationSessionIsolationTests(TestCase):
         pks = [s.pk for s in response.context["summaries"]]
         self.assertTrue(any(pks))
 
+    def test_page_renders_without_template_syntax_leakage(self):
+        # Guard against multi-line {# #} comments rendering as literal text
+        self.client.login(username="owner", password="pass")
+        response = self.client.get(reverse("evaluation:chat_page"))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "{#")
+        self.assertNotContains(response, "{%")
+
     def test_history_partial_only_shows_own_summaries(self):
         self.client.login(username="intruder", password="pass")
         response = self.client.get(reverse("evaluation:chat_history_partial"))
