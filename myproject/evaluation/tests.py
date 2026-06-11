@@ -106,7 +106,7 @@ class EvaluationStreamTests(TestCase):
         self.client.login(username="alice", password="pass")
 
     def _stream(self, message, deltas):
-        with patch("myproject.evaluation.views.Runner", make_fake_runner(deltas)):
+        with patch("myproject.core.streaming.Runner", make_fake_runner(deltas)):
             response = self.client.post(
                 reverse("evaluation:stream_chat"),
                 data=json.dumps({"message": message}),

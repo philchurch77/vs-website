@@ -134,7 +134,7 @@ class FlashcardsStreamTests(TestCase):
 
     def test_stream_saves_user_and_assistant_turns(self):
         with patch(
-            "myproject.flashcards.views.Runner", make_fake_runner(["Hello ", "teacher"])
+            "myproject.core.streaming.Runner", make_fake_runner(["Hello ", "teacher"])
         ):
             response = self.client.post(
                 reverse("flashcards:stream_flashcards"),

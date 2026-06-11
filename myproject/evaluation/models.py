@@ -14,7 +14,7 @@ class TrainingSummary(models.Model):
     def save(self, *args, **kwargs):
         if not self.title:
             current_date = timezone.now().strftime("%Y-%m-%d")
-            self.title = f"{current_date - self.school_or_trust}"
+            self.title = f"{current_date} – {self.school_or_trust}"
         super().save(*args, **kwargs)
 
     def __str__(self):

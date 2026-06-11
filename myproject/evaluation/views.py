@@ -1,5 +1,4 @@
 import json
-import asyncio
 import re
 
 from django.http import StreamingHttpResponse, HttpResponse, JsonResponse
@@ -10,121 +9,85 @@ from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.template.loader import render_to_string
 
-from agents import Runner
 from myproject.core.models import ChatTurn
+from myproject.core.sessions import get_or_create_session_id
+from myproject.core.streaming import stream_agent_deltas
 from .agents import evaluation_agent
 from .models import TrainingSummary
 
 TOOL = ChatTurn.TOOL_EVALUATION
+SESSION_KEY = "evaluation_chat_session_id"
 
 
 @csrf_exempt
 def reset_chat_session(request):
     request.session["chat_history"] = []
-    request.session.pop("evaluation_chat_session_id", None)
+    request.session.pop(SESSION_KEY, None)
     return JsonResponse({"status": "ok"})
 
 
 @login_required
 def stream_chatgpt_api(request):
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            message = data.get("message", "").strip()
-            user = request.user
+    if request.method != "POST":
+        return StreamingHttpResponse("Method Not Allowed", status=405)
 
-            # STEP 1: Get or create session ID
-            session_id = request.session.get("evaluation_chat_session_id")
-            if not session_id:
-                session_id = get_random_string(32)
-                request.session["evaluation_chat_session_id"] = session_id
+    try:
+        data = json.loads(request.body)
+        message = data.get("message", "").strip()
+        user = request.user
 
-            # STEP 2: Load or reset session-based chat history
-            chat_history = request.session.get("chat_history", [])
+        session_id = get_or_create_session_id(request, SESSION_KEY)
 
-            if re.search(r"(?i)i am\b", message) or "start again" in message.lower():
-                chat_history = []
-                request.session["chat_history"] = chat_history
-
-            # STEP 3: Save user message to DB and session
-            ChatTurn.objects.create(
-                tool=TOOL,
-                session_id=session_id,
-                role="user",
-                content=message,
-                user=user
-            )
-            chat_history.append({"role": "user", "content": message})
+        # Session-based chat history, reset when the user starts over
+        chat_history = request.session.get("chat_history", [])
+        if re.search(r"(?i)i am\b", message) or "start again" in message.lower():
+            chat_history = []
             request.session["chat_history"] = chat_history
 
-            def stream_response():
-                full_response_holder = {"content": ""}
+        # Save user message to DB and session
+        ChatTurn.objects.create(
+            tool=TOOL, session_id=session_id, role="user", content=message, user=user
+        )
+        chat_history.append({"role": "user", "content": message})
+        request.session["chat_history"] = chat_history
 
-                async def generate():
-                    result = Runner.run_streamed(evaluation_agent, input=[
-                        {"role": "system", "content": evaluation_agent.instructions},
-                        *chat_history
-                    ])
-                    async for event in result.stream_events():
-                        if event.type == "raw_response_event" and hasattr(event.data, "delta"):
-                            delta = event.data.delta
-                            full_response_holder["content"] += delta
-                            yield delta
+        def on_complete(full_response):
+            ChatTurn.objects.create(
+                tool=TOOL, session_id=session_id, role="assistant",
+                content=full_response, user=user,
+            )
+            chat_history.append({"role": "assistant", "content": full_response})
+            request.session["chat_history"] = chat_history
 
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                agen = generate()
+            if "END OF SUMMARY:" in full_response:
+                school_match = re.search(r"(?i)school\s*or\s*trust\s*:\s*(.+)", full_response)
+                school_or_trust_clean = school_match.group(1).strip() if school_match else "Unknown"
+                title = f"{timezone.now().date().isoformat()} – {school_or_trust_clean}"
 
-                def generator():
-                    try:
-                        while True:
-                            chunk = loop.run_until_complete(agen.__anext__())
-                            yield chunk
-                    except StopAsyncIteration:
-                        full_response = full_response_holder["content"]
+                TrainingSummary.objects.create(
+                    title=title,
+                    school_or_trust=school_or_trust_clean,
+                    summary_text=full_response,
+                    session_id=session_id,
+                    user=user,
+                )
 
-                        # STEP 4: Save assistant reply
-                        ChatTurn.objects.create(
-                            tool=TOOL,
-                            session_id=session_id,
-                            role="assistant",
-                            content=full_response,
-                            user=user
-                        )
-                        chat_history.append({"role": "assistant", "content": full_response})
-                        request.session["chat_history"] = chat_history
+                request.session["chat_history"] = []
 
-                        # STEP 5: Save summary if present
-                        if "END OF SUMMARY:" in full_response:
-                            school_match = re.search(r"(?i)school\s*or\s*trust\s*:\s*(.+)", full_response)
-                            school_or_trust_clean = school_match.group(1).strip() if school_match else "Unknown"
-                            title = f"{timezone.now().date().isoformat()} – {school_or_trust_clean}"
+                # Signal to frontend
+                return ["\n[SUMMARY_SAVED]"]
 
-                            TrainingSummary.objects.create(
-                                title=title,
-                                school_or_trust=school_or_trust_clean,
-                                summary_text=full_response,
-                                session_id=session_id,
-                                user=user
-                            )
+        return StreamingHttpResponse(
+            stream_agent_deltas(
+                evaluation_agent,
+                [{"role": "system", "content": evaluation_agent.instructions}, *chat_history],
+                on_complete=on_complete,
+            ),
+            content_type="text/plain",
+        )
 
-                            # Optional: reset history
-                            request.session["chat_history"] = []
-
-                            # Signal to frontend
-                            yield "\n[SUMMARY_SAVED]"
-
-                    finally:
-                        loop.close()
-
-                return generator()
-
-            return StreamingHttpResponse(stream_response(), content_type="text/plain")
-
-        except Exception as e:
-            return StreamingHttpResponse(f"⚠️ Error: {str(e)}", content_type="text/plain", status=500)
-
-    return StreamingHttpResponse("Method Not Allowed", status=405)
+    except Exception as e:
+        return StreamingHttpResponse(f"⚠️ Error: {str(e)}", content_type="text/plain", status=500)
 
 
 @login_required
@@ -133,7 +96,7 @@ def chat_page(request):
 
     # Reset to clean chat session
     chat_turns = []
-    request.session["evaluation_chat_session_id"] = None
+    request.session[SESSION_KEY] = None
     request.session["chat_history"] = []
 
     summaries = TrainingSummary.objects.filter(user=user, session_id__isnull=False).order_by("-created_at")
@@ -150,7 +113,7 @@ def chat_session(request, session_id):
     chat_turns = ChatTurn.objects.filter(tool=TOOL, session_id=session_id, user=user).order_by("timestamp")
 
     # Restore session state
-    request.session["evaluation_chat_session_id"] = session_id
+    request.session[SESSION_KEY] = session_id
     request.session["chat_history"] = [
         {"role": turn.role, "content": turn.content} for turn in chat_turns
     ]
@@ -165,7 +128,7 @@ def chat_session(request, session_id):
 
 @login_required
 def new_chat_session(request):
-    request.session["evaluation_chat_session_id"] = get_random_string(32)
+    request.session[SESSION_KEY] = get_random_string(32)
     request.session["chat_history"] = []
     return redirect("evaluation:chat_page")
 
