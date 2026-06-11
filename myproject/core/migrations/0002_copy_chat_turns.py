@@ -15,6 +15,15 @@ def copy_chat_turns(apps, schema_editor):
     ]
     with schema_editor.connection.cursor() as cursor:
         for tool, table in sources:
+            # Safety net: snapshot the legacy table into an unmanaged
+            # backup table first. The 0009 DeleteModel migrations drop the
+            # originals; these snapshots survive, so the copy is fully
+            # recoverable without a file-level DB backup. Drop the
+            # *_predrop_backup tables manually once the deploy is verified.
+            cursor.execute(
+                f"CREATE TABLE IF NOT EXISTS {table}_predrop_backup "
+                f"AS SELECT * FROM {table}"
+            )
             cursor.execute(
                 f"INSERT INTO {core_table} "
                 f"(tool, session_id, role, content, timestamp, user_id) "
