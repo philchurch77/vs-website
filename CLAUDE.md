@@ -20,6 +20,7 @@ The intended users are **teachers and school staff** — not children directly.
 | `sdq` | Strengths & Difficulties Questionnaire — a scored assessment tool |
 | `training` | Training request submission form |
 | `users` | User registration, login, logout |
+| `core` | Shared infrastructure: the `ChatTurn` model (used by both AI chat tools, discriminated by a `tool` field), the agent streaming helper, session-id helper, and slug utility |
 
 ### Planned future apps
 
@@ -90,7 +91,7 @@ Until tests exist, the minimum bar for handing back a change is: the dev server 
 - `Observation` (tolerance app) — pupil name, emotional/arousal state, observed behaviours, adult responses. This is **special category data** under UK GDPR Article 9 (data concerning health and wellbeing).
 - `WeeklyMap` — pupil name, class/year group, key adults, support plan.
 - `SDQResponse` — scored assessment data linked to a session (currently not persisted to DB, but treat any change to that carefully).
-- `ChatTurn` (evaluation/flashcards) — staff reflection and training notes; may contain indirect references to named pupils.
+- `ChatTurn` (`core` app, shared by evaluation/flashcards via a `tool` field) — staff reflection and training notes; may contain indirect references to named pupils.
 
 ### Rules
 
@@ -148,7 +149,7 @@ Keep each app focused on one domain. If an app's `views.py` or `models.py` start
 
 ## Key patterns
 
-**Streaming AI responses** — both `evaluation` and `flashcards` use `Runner.run_streamed()` with `StreamingHttpResponse` (Server-Sent Events). Do not change these to synchronous responses.
+**Streaming AI responses** — both `evaluation` and `flashcards` stream via the shared `core/streaming.py` helper (`stream_agent_deltas`), which wraps `Runner.run_streamed()` for `StreamingHttpResponse`. Do not change these to synchronous responses.
 
 **Dynamic agent instructions** — the flashcards agent builds its system prompt at runtime by injecting all `Flashcard` and `Scenario` content from the database. This is intentional.
 
@@ -156,7 +157,7 @@ Keep each app focused on one domain. If an app's `views.py` or `models.py` start
 
 **AJAX observation grid** — the tolerance app uses POST endpoints at `/api/observation/` and `/api/support-plan/` for interactive cell saving. No full page reloads.
 
-**Slug auto-generation** — `Post` and `TrainingRequest` models generate slugs automatically; `TrainingRequest` handles duplicates with a counter suffix.
+**Slug auto-generation** — `Post`, `Topic` (resources), and `TrainingRequest` generate slugs via the shared `core/slugs.py` utility, which handles duplicates with a counter suffix.
 
 **Azure detection** — `settings.py` checks for `WEBSITE_HOSTNAME` to switch to production paths (media at `/home/site/wwwroot/media`, SQLite at `/home/site/data/db.sqlite3`).
 

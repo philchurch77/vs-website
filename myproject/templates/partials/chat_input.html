@@ -1,0 +1,5 @@
+{# Shared chat input area. Vars: send_class (optional extra button classes) #}
+<div class="input-area">
+    <input type="text" id="messageInput" placeholder="Type here..." />
+    <button id="sendBtn" type="button" class="{{ send_class|default:'' }}" onclick="sendMessage()">Send</button>
+</div>

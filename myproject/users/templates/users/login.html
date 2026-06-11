@@ -28,7 +28,16 @@
             {% if request.GET.next %}
                 <input type="hidden" name="next" value="{{ request.GET.next }}">
             {% endif %}
-            {{ form }}
+            {% if form.non_field_errors %}
+                <div class="form-errors" role="alert">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% for field in form %}
+                {% include "partials/form_field.html" %}
+            {% endfor %}
             <button class="form-submit">Submit</button>
         </form>
     </div>

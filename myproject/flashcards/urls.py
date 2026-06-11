@@ -9,7 +9,6 @@ urlpatterns = [
     path('stream/', views.stream_flashcards, name='stream_flashcards'),
     path('filtered/', views.filtered_flashcards, name="filtered_flashcards"),
     path('save_ids/', views.save_flashcard_ids, name='save_flashcard_ids'),
-    path('session/<str:session_id>/', views.chat_session, name='chat_session'),
     path("delete/<str:session_id>/", views.delete_chat_session, name="delete_chat_session"),
     path("rename/<str:session_id>/", views.rename_chat_session, name="rename_chat_session"),
     path("export/<str:session_id>/", views.export_chat_session, name="export_chat_session"),

@@ -1,0 +1,16 @@
+{# One labelled form field with help text and errors. Var: field #}
+<div class="form-field{% if field.errors %} has-error{% endif %}">
+    <label for="{{ field.id_for_label }}">
+        {{ field.label }}
+        {% if field.field.required %}
+            <span class="required-star" aria-hidden="true">*</span>
+        {% endif %}
+    </label>
+    {{ field }}
+    {% if field.help_text %}
+        <p class="form-help">{{ field.help_text|safe }}</p>
+    {% endif %}
+    {% for error in field.errors %}
+        <p class="field-error">{{ error }}</p>
+    {% endfor %}
+</div>

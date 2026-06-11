@@ -1,45 +1,18 @@
 {% extends 'layout.html' %}
+{% load static %}
 
 {% block title %}
-    ChatGPT Assistant
+    Training Evaluation
 {% endblock %}
 
 {% block content %}
 <div class="main-layout two-column">
-    <!-- Sidebar for training summary history -->
-    <aside class="sidebar chat-history-sidebar" id="evaluation-chat-history" tabindex="-1">
-        <div class="chat-history-header">
-            <h3 class="chat-history-heading">Training Summary History</h3>
-            <button type="button" class="chat-history-close" aria-label="Close chat history">Close</button>
-        </div>
-           <div id="chat-history"
-               hx-get="{% url 'evaluation:chat_history_partial' %}"
-               hx-trigger="load, revealed"
-               hx-swap="innerHTML">
-           </div>
-    </aside>
+    {% url 'evaluation:chat_history_partial' as history_partial_url %}
+    {% include "partials/chat_history_drawer.html" with drawer_id="evaluation-chat-history" drawer_title="Training Summary History" drawer_class="sidebar" drawer_hx_url=history_partial_url %}
 
     <!-- Main chat column -->
     <section class="toolkit-column">
-        <header class="panel-header">
-            <div class="panel-heading">
-                <h1>Training Evaluation</h1>
-                <p class="panel-subtitle">
-                    Please complete your training impact evaluation with our friendly assistant.
-                    Select a training summary to review past evaluations or begin a new chat.
-                </p>
-            </div>
-            <button type="button"
-                    class="chat-history-hamburger"
-                    aria-controls="evaluation-chat-history"
-                    aria-expanded="false">
-                <span class="visually-hidden">Open chat history</span>
-                <span class="chat-history-hamburger-icon" aria-hidden="true">
-                    <span class="chat-history-hamburger-line"></span>
-                    <span class="chat-history-hamburger-line"></span>
-                </span>
-            </button>
-        </header>
+        {% include "partials/chat_panel_header.html" with heading="Training Evaluation" subtitle="Please complete your training impact evaluation with our friendly assistant. Select a training summary to review past evaluations or begin a new chat." drawer_id="evaluation-chat-history" %}
 
         <div class="toolkit-body evaluation-toolkit-body">
             <section class="chat-panel evaluation-chat-panel">
@@ -50,13 +23,11 @@
                             👋 Hi! I can help you reflect on your training, share feedback, or summarize your experience.
                         </div>
                     {% endif %}
-                    {% if chat_turns %}
-                        {% for turn in chat_turns %}
-                            <div class="message {{ turn.role }}">
-                                {{ turn.content|linebreaks }}
-                            </div>
-                        {% endfor %}
-                    {% endif %}
+                    {% for turn in chat_turns %}
+                        <div class="message {{ turn.role }}">
+                            {{ turn.content|linebreaks }}
+                        </div>
+                    {% endfor %}
                 </div>
 
                 <div class="panel-actions">
@@ -69,11 +40,7 @@
                     </form>
                 </div>
 
-                <!-- Input area -->
-                <div class="input-area">
-                    <input type="text" id="messageInput" placeholder="Type here..."/>
-                    <button id="sendBtn" type="button" class="new-chat-btn" onclick="sendMessage()">Send</button>
-                </div>
+                {% include "partials/chat_input.html" with send_class="new-chat-btn" %}
             </section>
         </div>
     </section>
@@ -82,92 +49,31 @@
 <div class="chat-history-overlay" data-chat-history-overlay aria-hidden="true"></div>
 
 <script>
-    async function sendMessage() {
-        const input = document.getElementById("messageInput");
-        const text = input.value.trim();
-        if (!text) return;
-
-        if (!sessionStorage.getItem("session_active")) {
-            alert("Please start a new chat or select a previous one.");
-            return;
-        }
-
-        appendMessage("user", text);
-        input.value = "";
-
-        try {
-            const response = await fetch("/evaluation/stream/", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": getCookie("csrftoken")
-                },
-                body: JSON.stringify({ message: text })
-            });
-
-            if (!response.ok || !response.body) {
-                appendMessage("assistant", "⚠️ Error: Failed to stream response.");
-                return;
-            }
-
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder("utf-8");
-            let fullText = "";
-            appendMessage("assistant", ""); // Placeholder
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-
-                const chunk = decoder.decode(value, { stream: true });
-                fullText += chunk;
-
-            if (chunk.includes("[SUMMARY_SAVED]")) {
-                const historyEl = document.querySelector("#chat-history");
-                if (historyEl) {
-                    htmx.ajax('GET', historyEl.getAttribute("hx-get"), {
-                        target: historyEl,
-                        swap: historyEl.getAttribute("hx-swap") || "innerHTML"
-                    });
+    document.addEventListener("DOMContentLoaded", () => {
+        initChat({
+            streamUrl: "{% url 'evaluation:stream_chat' %}",
+            markdown: false,
+            thinking: false,
+            canSend: () => {
+                if (!sessionStorage.getItem("session_active")) {
+                    alert("Please start a new chat or select a previous one.");
+                    return false;
                 }
-            }
-
-                const lastMessage = document.querySelector(".message.assistant:last-child");
-                if (lastMessage) {
-                    const paragraphs = fullText.split(/\n+/).map(p => `<p>${p}</p>`).join("");
-                    lastMessage.innerHTML = paragraphs;
+                return true;
+            },
+            onChunk: (chunk) => {
+                if (chunk.includes("[SUMMARY_SAVED]")) {
+                    const historyEl = document.querySelector("#chat-history");
+                    if (historyEl) {
+                        htmx.ajax('GET', historyEl.getAttribute("hx-get"), {
+                            target: historyEl,
+                            swap: historyEl.getAttribute("hx-swap") || "innerHTML"
+                        });
+                    }
                 }
-            }
-
-        } catch (err) {
-            appendMessage("assistant", "⚠️ Network error. See console.");
-            console.error("Network error:", err);
-        }
-    }
-
-    function appendMessage(sender, text) {
-        const messagesDiv = document.getElementById("messages");
-        const div = document.createElement("div");
-        div.classList.add("message", sender);
-        div.innerHTML = `<p>${text}</p>`;
-        messagesDiv.appendChild(div);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
-
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== "") {
-            const cookies = document.cookie.split(";");
-            for (let cookie of cookies) {
-                cookie = cookie.trim();
-                if (cookie.startsWith(name + "=")) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
+            },
+        });
+    });
 
     // Enable input if session is active
     window.onload = () => {
@@ -202,12 +108,13 @@
             document.getElementById("sendBtn").disabled = false;
         }
     });
-</script>
 
-<script>
     window.addEventListener("beforeunload", function () {
-        navigator.sendBeacon("/evaluation/reset-chat-session/");
+        navigator.sendBeacon("{% url 'evaluation:reset_chat_session' %}");
     });
 </script>
 {% endblock %}
 
+{% block scripts %}
+<script src="{% static 'js/chat.js' %}"></script>
+{% endblock %}

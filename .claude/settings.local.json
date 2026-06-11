@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "PowerShell($file = \"c:\\\\Users\\\\philc\\\\OneDrive\\\\Desktop\\\\VS Code\\\\vs_website\\\\myproject\\\\static\\\\css\\\\style.css\"; $lines = \\(Get-Content $file\\).Count; Write-Output \"Total lines: $lines\")"
+      "PowerShell(Get-Content *)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell($file = *)"
+    ],
+    "deny": [
+      "PowerShell(Remove-Item *)",
+      "PowerShell(*Format-Volume*)"
     ]
   }
 }

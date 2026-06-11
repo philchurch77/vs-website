@@ -1,12 +1,17 @@
 import json
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import ChatTurn, TrainingSummary
+from myproject.core.models import ChatTurn
+from myproject.testing import make_fake_runner
+from .models import TrainingSummary
 
 User = get_user_model()
+
+EVALUATION = ChatTurn.TOOL_EVALUATION
 
 
 class EvaluationAuthTests(TestCase):
@@ -54,8 +59,8 @@ class EvaluationSessionIsolationTests(TestCase):
         self.owner = User.objects.create_user(username="owner", password="pass")
         self.intruder = User.objects.create_user(username="intruder", password="pass")
         self.session_id = "owner-eval-session-xyz789"
-        ChatTurn.objects.create(user=self.owner, session_id=self.session_id, role="user", content="Private reflection")
-        ChatTurn.objects.create(user=self.owner, session_id=self.session_id, role="assistant", content="Private response")
+        ChatTurn.objects.create(tool=EVALUATION, user=self.owner, session_id=self.session_id, role="user", content="Private reflection")
+        ChatTurn.objects.create(tool=EVALUATION, user=self.owner, session_id=self.session_id, role="assistant", content="Private response")
         TrainingSummary.objects.create(
             user=self.owner,
             title="Owner summary",
@@ -85,3 +90,64 @@ class EvaluationSessionIsolationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         pks = [s.pk for s in response.context["summaries"]]
         self.assertTrue(any(pks))
+
+    def test_page_renders_without_template_syntax_leakage(self):
+        # Guard against multi-line {# #} comments rendering as literal text
+        self.client.login(username="owner", password="pass")
+        response = self.client.get(reverse("evaluation:chat_page"))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "{#")
+        self.assertNotContains(response, "{%")
+
+    def test_history_partial_only_shows_own_summaries(self):
+        self.client.login(username="intruder", password="pass")
+        response = self.client.get(reverse("evaluation:chat_history_partial"))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn(b"Owner summary", response.content)
+
+
+class EvaluationStreamTests(TestCase):
+    """The streaming endpoint must stream agent output and persist both turns."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(username="alice", password="pass")
+        self.client.login(username="alice", password="pass")
+
+    def _stream(self, message, deltas):
+        with patch("myproject.core.streaming.Runner", make_fake_runner(deltas)):
+            response = self.client.post(
+                reverse("evaluation:stream_chat"),
+                data=json.dumps({"message": message}),
+                content_type="application/json",
+            )
+            return b"".join(response.streaming_content).decode()
+
+    def test_stream_saves_user_and_assistant_turns(self):
+        body = self._stream("My training was great", ["Thanks ", "for sharing"])
+        self.assertEqual(body, "Thanks for sharing")
+        turns = ChatTurn.objects.filter(user=self.user).order_by("timestamp")
+        self.assertEqual(turns.count(), 2)
+        self.assertEqual(turns[0].role, "user")
+        self.assertEqual(turns[0].content, "My training was great")
+        self.assertEqual(turns[1].role, "assistant")
+        self.assertEqual(turns[1].content, "Thanks for sharing")
+
+    def test_summary_response_creates_training_summary(self):
+        body = self._stream(
+            "Please summarise",
+            ["Lovely work this term!\nEND OF SUMMARY:\nSchool or Trust: Test Academy"],
+        )
+        self.assertIn("[SUMMARY_SAVED]", body)
+        summary = TrainingSummary.objects.get()
+        self.assertEqual(summary.user, self.user)
+        self.assertEqual(summary.school_or_trust, "Test Academy")
+        self.assertIn("Lovely work this term!", summary.summary_text)
+
+    def test_get_is_rejected(self):
+        response = self.client.get(reverse("evaluation:stream_chat"))
+        self.assertEqual(response.status_code, 405)
+
+    def test_reset_chat_session_responds_ok(self):
+        response = self.client.post(reverse("evaluation:reset_chat_session"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "ok")
