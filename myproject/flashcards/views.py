@@ -94,8 +94,10 @@ def stream_flashcards(request):
             content_type="text/plain",
         )
 
-    except Exception as e:
-        return StreamingHttpResponse(f"⚠️ Error: {str(e)}", content_type="text/plain", status=500)
+    except Exception:
+        # Never echo exception detail to the client — it can contain
+        # internal paths or fragments of the failed request.
+        return StreamingHttpResponse("⚠️ Error: something went wrong. Please try again.", content_type="text/plain", status=500)
 
 
 @login_required

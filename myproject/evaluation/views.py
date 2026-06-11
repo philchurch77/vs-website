@@ -21,8 +21,12 @@ SESSION_KEY = "evaluation_chat_session_id"
 
 @csrf_exempt
 def reset_chat_session(request):
-    request.session["chat_history"] = []
-    request.session.pop(SESSION_KEY, None)
+    # csrf_exempt because sendBeacon (page unload) cannot set headers.
+    # Only act for authenticated users so a forged cross-site request
+    # cannot disturb anyone's session state.
+    if request.user.is_authenticated:
+        request.session["chat_history"] = []
+        request.session.pop(SESSION_KEY, None)
     return JsonResponse({"status": "ok"})
 
 
@@ -86,8 +90,10 @@ def stream_chatgpt_api(request):
             content_type="text/plain",
         )
 
-    except Exception as e:
-        return StreamingHttpResponse(f"⚠️ Error: {str(e)}", content_type="text/plain", status=500)
+    except Exception:
+        # Never echo exception detail to the client — it can contain
+        # internal paths or fragments of the failed request.
+        return StreamingHttpResponse("⚠️ Error: something went wrong. Please try again.", content_type="text/plain", status=500)
 
 
 @login_required
