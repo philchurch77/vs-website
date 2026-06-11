@@ -5,10 +5,12 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
+from myproject.core.models import ChatTurn
 from myproject.testing import make_fake_runner
-from .models import ChatTurn
 
 User = get_user_model()
+
+FLASHCARDS = ChatTurn.TOOL_FLASHCARDS
 
 
 class FlashcardsAuthTests(TestCase):
@@ -54,8 +56,8 @@ class FlashcardsSessionIsolationTests(TestCase):
         self.owner = User.objects.create_user(username="owner", password="pass")
         self.intruder = User.objects.create_user(username="intruder", password="pass")
         self.session_id = "owner-secret-session-abc123"
-        ChatTurn.objects.create(user=self.owner, session_id=self.session_id, role="user", content="My private message")
-        ChatTurn.objects.create(user=self.owner, session_id=self.session_id, role="assistant", content="Private reply")
+        ChatTurn.objects.create(tool=FLASHCARDS, user=self.owner, session_id=self.session_id, role="user", content="My private message")
+        ChatTurn.objects.create(tool=FLASHCARDS, user=self.owner, session_id=self.session_id, role="assistant", content="Private reply")
 
     def test_intruder_cannot_delete_owner_session(self):
         # delete filters by user=request.user — owner's turns must survive
@@ -95,7 +97,7 @@ class FlashcardsSessionIsolationTests(TestCase):
 
     def test_history_partial_lists_only_own_sessions(self):
         ChatTurn.objects.create(
-            user=self.intruder, session_id="intruder-session", role="user", content="Mine"
+            tool=FLASHCARDS, user=self.intruder, session_id="intruder-session", role="user", content="Mine"
         )
         self.client.login(username="intruder", password="pass")
         response = self.client.get(reverse("flashcards:chat_history_partial"))
@@ -103,6 +105,17 @@ class FlashcardsSessionIsolationTests(TestCase):
         html = response.json()["html"]
         self.assertIn("intruder-session", html)
         self.assertNotIn(self.session_id, html)
+
+    def test_history_partial_excludes_other_tools_sessions(self):
+        # An evaluation chat by the same user must not surface in the
+        # flashcards history sidebar
+        ChatTurn.objects.create(
+            tool=ChatTurn.TOOL_EVALUATION, user=self.owner,
+            session_id="owner-eval-session", role="user", content="Eval chat",
+        )
+        self.client.login(username="owner", password="pass")
+        response = self.client.get(reverse("flashcards:chat_history_partial"))
+        self.assertNotIn("owner-eval-session", response.json()["html"])
 
 
 class FlashcardsStreamTests(TestCase):
@@ -137,8 +150,9 @@ class FlashcardsStreamTests(TestCase):
         self.assertEqual(turns[0].content, "How do I help a dysregulated pupil?")
         self.assertEqual(turns[1].role, "assistant")
         self.assertEqual(turns[1].content, "Hello teacher")
+        self.assertTrue(all(t.tool == FLASHCARDS for t in turns))
         # Both turns share the session id stored in the user's session
-        session_id = self.client.session["chat_session_id"]
+        session_id = self.client.session["flashcards_chat_session_id"]
         self.assertTrue(all(t.session_id == session_id for t in turns))
 
     def test_get_is_rejected(self):
@@ -154,7 +168,8 @@ class FlashcardsTitleRowTests(TestCase):
         self.client.login(username="alice", password="pass")
         self.session_id = "alice-session-1"
         ChatTurn.objects.create(
-            user=self.user, session_id=self.session_id, role="user", content="First question"
+            tool=FLASHCARDS, user=self.user, session_id=self.session_id,
+            role="user", content="First question",
         )
 
     def test_rename_creates_title_row(self):
@@ -166,14 +181,15 @@ class FlashcardsTitleRowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(
             ChatTurn.objects.filter(
-                user=self.user, session_id=self.session_id, role="title",
-                content="My renamed chat",
+                tool=FLASHCARDS, user=self.user, session_id=self.session_id,
+                role="title", content="My renamed chat",
             ).exists()
         )
 
     def test_title_rows_excluded_from_messages(self):
         ChatTurn.objects.create(
-            user=self.user, session_id=self.session_id, role="title", content="My title"
+            tool=FLASHCARDS, user=self.user, session_id=self.session_id,
+            role="title", content="My title",
         )
         response = self.client.get(
             reverse("flashcards:flashcards_page"), {"session_id": self.session_id}
@@ -184,7 +200,8 @@ class FlashcardsTitleRowTests(TestCase):
 
     def test_title_used_in_history_partial(self):
         ChatTurn.objects.create(
-            user=self.user, session_id=self.session_id, role="title", content="My title"
+            tool=FLASHCARDS, user=self.user, session_id=self.session_id,
+            role="title", content="My title",
         )
         response = self.client.get(reverse("flashcards:chat_history_partial"))
         self.assertIn("My title", response.json()["html"])

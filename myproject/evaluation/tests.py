@@ -5,10 +5,13 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
+from myproject.core.models import ChatTurn
 from myproject.testing import make_fake_runner
-from .models import ChatTurn, TrainingSummary
+from .models import TrainingSummary
 
 User = get_user_model()
+
+EVALUATION = ChatTurn.TOOL_EVALUATION
 
 
 class EvaluationAuthTests(TestCase):
@@ -56,8 +59,8 @@ class EvaluationSessionIsolationTests(TestCase):
         self.owner = User.objects.create_user(username="owner", password="pass")
         self.intruder = User.objects.create_user(username="intruder", password="pass")
         self.session_id = "owner-eval-session-xyz789"
-        ChatTurn.objects.create(user=self.owner, session_id=self.session_id, role="user", content="Private reflection")
-        ChatTurn.objects.create(user=self.owner, session_id=self.session_id, role="assistant", content="Private response")
+        ChatTurn.objects.create(tool=EVALUATION, user=self.owner, session_id=self.session_id, role="user", content="Private reflection")
+        ChatTurn.objects.create(tool=EVALUATION, user=self.owner, session_id=self.session_id, role="assistant", content="Private response")
         TrainingSummary.objects.create(
             user=self.owner,
             title="Owner summary",

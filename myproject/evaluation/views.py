@@ -11,14 +11,17 @@ from django.contrib.auth.decorators import login_required
 from django.template.loader import render_to_string
 
 from agents import Runner
+from myproject.core.models import ChatTurn
 from .agents import evaluation_agent
-from .models import TrainingSummary, ChatTurn
+from .models import TrainingSummary
+
+TOOL = ChatTurn.TOOL_EVALUATION
 
 
 @csrf_exempt
 def reset_chat_session(request):
     request.session["chat_history"] = []
-    request.session.pop("chat_session_id", None)
+    request.session.pop("evaluation_chat_session_id", None)
     return JsonResponse({"status": "ok"})
 
 
@@ -31,10 +34,10 @@ def stream_chatgpt_api(request):
             user = request.user
 
             # STEP 1: Get or create session ID
-            session_id = request.session.get("chat_session_id")
+            session_id = request.session.get("evaluation_chat_session_id")
             if not session_id:
                 session_id = get_random_string(32)
-                request.session["chat_session_id"] = session_id
+                request.session["evaluation_chat_session_id"] = session_id
 
             # STEP 2: Load or reset session-based chat history
             chat_history = request.session.get("chat_history", [])
@@ -45,6 +48,7 @@ def stream_chatgpt_api(request):
 
             # STEP 3: Save user message to DB and session
             ChatTurn.objects.create(
+                tool=TOOL,
                 session_id=session_id,
                 role="user",
                 content=message,
@@ -81,6 +85,7 @@ def stream_chatgpt_api(request):
 
                         # STEP 4: Save assistant reply
                         ChatTurn.objects.create(
+                            tool=TOOL,
                             session_id=session_id,
                             role="assistant",
                             content=full_response,
@@ -128,7 +133,7 @@ def chat_page(request):
 
     # Reset to clean chat session
     chat_turns = []
-    request.session["chat_session_id"] = None
+    request.session["evaluation_chat_session_id"] = None
     request.session["chat_history"] = []
 
     summaries = TrainingSummary.objects.filter(user=user, session_id__isnull=False).order_by("-created_at")
@@ -142,10 +147,10 @@ def chat_page(request):
 @login_required
 def chat_session(request, session_id):
     user = request.user
-    chat_turns = ChatTurn.objects.filter(session_id=session_id, user=user).order_by("timestamp")
+    chat_turns = ChatTurn.objects.filter(tool=TOOL, session_id=session_id, user=user).order_by("timestamp")
 
     # Restore session state
-    request.session["chat_session_id"] = session_id
+    request.session["evaluation_chat_session_id"] = session_id
     request.session["chat_history"] = [
         {"role": turn.role, "content": turn.content} for turn in chat_turns
     ]
@@ -160,7 +165,7 @@ def chat_session(request, session_id):
 
 @login_required
 def new_chat_session(request):
-    request.session["chat_session_id"] = get_random_string(32)
+    request.session["evaluation_chat_session_id"] = get_random_string(32)
     request.session["chat_history"] = []
     return redirect("evaluation:chat_page")
 

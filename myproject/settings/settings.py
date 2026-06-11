@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "allauth.socialaccount.providers.microsoft",
     "taggit",
+    "myproject.core",
     "myproject.users",
     "myproject.posts",
     "myproject.evaluation.apps.EvaluationConfig",

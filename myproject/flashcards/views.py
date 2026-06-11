@@ -11,8 +11,11 @@ from django.db.models import Max
 from django.contrib.auth.decorators import login_required
 
 from agents import Runner
+from myproject.core.models import ChatTurn
 from .agents import build_toolkit_agent
-from .models import ChatTurn, Flashcard
+from .models import Flashcard
+
+TOOL = ChatTurn.TOOL_FLASHCARDS
 
 
 @csrf_exempt
@@ -23,12 +26,12 @@ def stream_flashcards(request):
             data = json.loads(request.body)
             message = data.get("message", "").strip()
 
-            session_id = request.session.get("chat_session_id")
+            session_id = request.session.get("flashcards_chat_session_id")
             if not session_id:
                 session_id = get_random_string(32)
-                request.session["chat_session_id"] = session_id
+                request.session["flashcards_chat_session_id"] = session_id
 
-            chat_history = list(ChatTurn.objects.filter(session_id=session_id).exclude(role="title").order_by("timestamp").values("role", "content"))
+            chat_history = list(ChatTurn.objects.filter(tool=TOOL, user=request.user, session_id=session_id).exclude(role="title").order_by("timestamp").values("role", "content"))
             chat_history.append({"role": "user", "content": message})
 
             toolkit_agent = build_toolkit_agent()
@@ -55,8 +58,8 @@ def stream_flashcards(request):
                         full_response += chunk
                         yield chunk
                 except StopAsyncIteration:
-                    ChatTurn.objects.create(user=request.user, session_id=session_id, role="user", content=message)
-                    ChatTurn.objects.create(user=request.user, session_id=session_id, role="assistant", content=full_response)
+                    ChatTurn.objects.create(tool=TOOL, user=request.user, session_id=session_id, role="user", content=message)
+                    ChatTurn.objects.create(tool=TOOL, user=request.user, session_id=session_id, role="assistant", content=full_response)
 
                 finally:
                     loop.close()
@@ -73,19 +76,19 @@ def flashcards_page(request):
     # New chat: clear previous
     if request.GET.get("new") == "1":
         request.session["selected_flashcard_ids"] = []
-        request.session["chat_session_id"] = get_random_string(32)
+        request.session["flashcards_chat_session_id"] = get_random_string(32)
         request.session.modified = True
         return redirect("flashcards:flashcards_page")
 
     # Load existing chat
-    session_id = request.GET.get("session_id") or request.session.get("chat_session_id")
-    request.session["chat_session_id"] = session_id
+    session_id = request.GET.get("session_id") or request.session.get("flashcards_chat_session_id")
+    request.session["flashcards_chat_session_id"] = session_id
 
     messages = []
     selected_ids = []
 
     if session_id:
-        chat_turns = ChatTurn.objects.filter(session_id=session_id, user=request.user).exclude(role="title").order_by("timestamp")
+        chat_turns = ChatTurn.objects.filter(tool=TOOL, session_id=session_id, user=request.user).exclude(role="title").order_by("timestamp")
         messages = list(chat_turns.values("role", "content"))
 
         # 🧠 Try to extract the last assistant response containing flashcard IDs
@@ -109,18 +112,18 @@ def flashcards_page(request):
     # List of past sessions
     chat_sessions = (
         ChatTurn.objects
-        .filter(user=request.user)
+        .filter(tool=TOOL, user=request.user)
         .values("session_id")
         .annotate(last_message=Max("timestamp"))
         .order_by("-last_message")
     )
 
     for session in chat_sessions:
-        title_turn = ChatTurn.objects.filter(session_id=session["session_id"], user=request.user, role="title").first()
+        title_turn = ChatTurn.objects.filter(tool=TOOL, session_id=session["session_id"], user=request.user, role="title").first()
         if title_turn:
             session["title"] = title_turn.content
         else:
-            first = ChatTurn.objects.filter(session_id=session["session_id"], user=request.user).exclude(role="title").order_by("timestamp").first()
+            first = ChatTurn.objects.filter(tool=TOOL, session_id=session["session_id"], user=request.user).exclude(role="title").order_by("timestamp").first()
             session["title"] = (first.content[:47] + "...") if first and len(first.content) > 50 else first.content if first else "Untitled"
 
     return render(request, "flashcards/flashcards.html", {
@@ -151,33 +154,33 @@ def save_flashcard_ids(request):
 
 @login_required
 def chat_session(request, session_id):
-    chat_turns = ChatTurn.objects.filter(session_id=session_id, user=request.user).order_by("timestamp")
+    chat_turns = ChatTurn.objects.filter(tool=TOOL, session_id=session_id, user=request.user).order_by("timestamp")
     return render(request, "flashcards/chat_session.html", {"chat_turns": chat_turns})
 
 @login_required
 def delete_chat_session(request, session_id):
-    ChatTurn.objects.filter(user=request.user, session_id=session_id).delete()
+    ChatTurn.objects.filter(tool=TOOL, user=request.user, session_id=session_id).delete()
     # If current session was deleted clear it
-    if request.session.get("chat_session_id") == session_id:
-        request.session["chat_session_id"] = None
+    if request.session.get("flashcards_chat_session_id") == session_id:
+        request.session["flashcards_chat_session_id"] = None
         request.session["selected_flashcard_ids"] = []
     return redirect("flashcards:flashcards_page")
 
 @login_required
 def rename_chat_session(request, session_id):
-    if not ChatTurn.objects.filter(user=request.user, session_id=session_id).exists():
+    if not ChatTurn.objects.filter(tool=TOOL, user=request.user, session_id=session_id).exists():
         return JsonResponse({"error": "Session not found"}, status=404)
     data = json.loads(request.body)
     new_title = data.get("title", "").strip()
     if new_title:
-        ChatTurn.objects.filter(user=request.user, session_id=session_id, role="title").delete()
-        ChatTurn.objects.create(user=request.user, session_id=session_id, role="title", content=new_title)
+        ChatTurn.objects.filter(tool=TOOL, user=request.user, session_id=session_id, role="title").delete()
+        ChatTurn.objects.create(tool=TOOL, user=request.user, session_id=session_id, role="title", content=new_title)
         return JsonResponse({"status": "ok"})
     return JsonResponse({"error": "Invalid title"}, status=400)
 
 @login_required
 def export_chat_session(request, session_id):
-    turns = ChatTurn.objects.filter(session_id=session_id, user=request.user).order_by("timestamp")
+    turns = ChatTurn.objects.filter(tool=TOOL, session_id=session_id, user=request.user).order_by("timestamp")
     lines = [f"{turn.role.upper()}: {turn.content}" for turn in turns]
     response = HttpResponse("\n\n".join(lines), content_type="text/plain")
     response["Content-Disposition"] = f'attachment; filename="chat_{session_id}.txt"'
@@ -187,7 +190,7 @@ def export_chat_session(request, session_id):
 def chat_history_partial(request):
     chat_sessions = (
         ChatTurn.objects
-        .filter(user=request.user)
+        .filter(tool=TOOL, user=request.user)
         .values("session_id")
         .annotate(last_timestamp=Max("timestamp"))
         .order_by("-last_timestamp")[:20]
@@ -195,14 +198,14 @@ def chat_history_partial(request):
 
     for session in chat_sessions:
         title_turn = ChatTurn.objects.filter(
-            session_id=session["session_id"], user=request.user, role="title"
+            tool=TOOL, session_id=session["session_id"], user=request.user, role="title"
         ).first()
         if title_turn:
             session["title"] = title_turn.content
         else:
             first_turn = (
                 ChatTurn.objects
-                .filter(session_id=session["session_id"], user=request.user)
+                .filter(tool=TOOL, session_id=session["session_id"], user=request.user)
                 .exclude(role="title")
                 .order_by("timestamp")
                 .first()
