@@ -1,0 +1,6 @@
+{# One SDQ question row. Var: field #}
+<div class="sdq-question">
+  <div class="sdq-question-text">{{ field.label }}</div>
+  <div class="sdq-question-field">{{ field }}</div>
+  {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+</div>

@@ -1,68 +1,19 @@
 {% extends 'layout.html' %}
+{% load static %}
 
 {% block title %}
     Educational Toolkit
 {% endblock %}
 
 {% block content %}
-<style>
-.spinner {
-    display: inline-block;
-    width: 24px;
-    height: 24px;
-    border: 3px solid #ccc;
-    border-top: 3px solid #0078d7;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    vertical-align: middle;
-}
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-.thinking-bubble {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: #555;
-    font-style: italic;
-}
-</style>
-
 <div class="main-layout flashcards-layout">
 
     <!-- LEFT: Toolkit + Chat history -->
     <section class="toolkit-column">
-        <header class="panel-header">
-            <div class="panel-heading">
-                <h1>Educational Toolkit</h1>
-                <p class="panel-subtitle">Ask Echo a question to begin.</p>
-            </div>
-            <button type="button"
-                class="chat-history-hamburger"
-                aria-controls="flashcards-chat-history"
-                aria-expanded="false">
-                <span class="visually-hidden">Open chat history</span>
-                <span class="chat-history-hamburger-icon" aria-hidden="true">
-                    <span class="chat-history-hamburger-line"></span>
-                    <span class="chat-history-hamburger-line"></span>
-                </span>
-            </button>
-        </header>
+        {% include "partials/chat_panel_header.html" with heading="Educational Toolkit" subtitle="Ask Echo a question to begin." drawer_id="flashcards-chat-history" %}
 
         <div class="toolkit-body">
-            <!-- Chat history sidebar -->
-            <aside class="chat-history-sidebar" id="flashcards-chat-history" tabindex="-1">
-                <div class="chat-history-header">
-                    <h3 class="chat-history-heading">Chat History</h3>
-                    <button type="button" class="chat-history-close" aria-label="Close chat history">
-                        Close
-                    </button>
-                </div>
-                <div id="chat-history">
-                    {% include "flashcards/partials/chat_history_list.html" %}
-                </div>
-            </aside>
+            {% include "partials/chat_history_drawer.html" with drawer_id="flashcards-chat-history" drawer_title="Chat History" drawer_content="flashcards/partials/chat_history_list.html" %}
 
             <!-- Chat panel -->
             <section class="chat-panel">
@@ -77,10 +28,7 @@
                         Export Flashcards
                     </button>
                 </div>
-                <div class="input-area">
-                    <input type="text" id="messageInput" placeholder="Type here..." />
-                    <button id="sendBtn" type="button" onclick="sendMessage()">Send</button>
-                </div>
+                {% include "partials/chat_input.html" %}
             </section>
         </div>
     </section>
@@ -94,11 +42,22 @@
 
 <div class="chat-history-overlay" data-chat-history-overlay aria-hidden="true"></div>
 
+{{ messages|json_script:"chat-messages" }}
+
 <script>
     document.addEventListener("DOMContentLoaded", () => {
-        const messages = {{ messages|safe }};
+        const chat = initChat({
+            streamUrl: "{% url 'flashcards:stream_flashcards' %}",
+            markdown: true,
+            thinking: true,
+            stripPattern: /\[SELECTED_FLASHCARD_IDS:[^\]]*\]/g,
+            decorateAssistant: polishAssistantMessage,
+            onComplete: handleStreamComplete,
+        });
+
+        const messages = JSON.parse(document.getElementById("chat-messages").textContent);
         for (const msg of messages) {
-            appendMessage(msg.role, msg.content);
+            chat.appendMessage(msg.role, msg.content);
         }
 
         if (messages.length === 0) {
@@ -126,120 +85,6 @@
         });
     });
 
-    async function sendMessage() {
-        const input = document.getElementById("messageInput");
-        const text = input.value.trim();
-        if (!text) return;
-
-        appendMessage("user", text);
-        input.value = "";
-
-        // Add spinner as a temporary assistant message bubble
-        const messagesDiv = document.getElementById("messages");
-        const thinkingDiv = document.createElement("div");
-        thinkingDiv.className = "message assistant thinking-bubble";
-        thinkingDiv.id = "ai-thinking-bubble";
-        thinkingDiv.innerHTML = '<span class="spinner"></span> <span>Echo is thinking...</span>';
-        messagesDiv.appendChild(thinkingDiv);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
-        try {
-            const response = await fetch("/flashcards/stream/", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": getCookie("csrftoken")
-                },
-                body: JSON.stringify({ message: text })
-            });
-
-            if (!response.ok || !response.body) {
-                // Remove spinner bubble
-                const thinkingBubble = document.getElementById("ai-thinking-bubble");
-                if (thinkingBubble) thinkingBubble.remove();
-                appendMessage("assistant", "⚠️ Error: Failed to stream response.");
-                return;
-            }
-
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder("utf-8");
-            let fullText = "";
-
-            // Remove spinner bubble and add real assistant message bubble
-            const thinkingBubble = document.getElementById("ai-thinking-bubble");
-            if (thinkingBubble) thinkingBubble.remove();
-            appendMessage("assistant", "");
-            const assistantBubble = document.querySelector(".message.assistant:last-child");
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-
-                const chunk = decoder.decode(value, { stream: true });
-                fullText += chunk;
-
-                // Remove the [SELECTED_FLASHCARD_IDS: ...] marker from the text before displaying
-                let displayText = fullText.replace(/\[SELECTED_FLASHCARD_IDS:[^\]]*\]/g, "").trim();
-
-                if (assistantBubble) {
-                    assistantBubble.innerHTML = renderMarkdown(displayText);
-                    assistantBubble.scrollIntoView({ block: "end", behavior: "smooth" });
-                }
-            }
-
-            if (assistantBubble) polishAssistantMessage(assistantBubble);
-
-            const idMatch = fullText.match(/\[SELECTED_FLASHCARD_IDS:\s*(.*?)\]/);
-            if (idMatch) {
-                const rawIds = idMatch[1].trim();
-                const idArray = rawIds.toLowerCase() === "none" ? [] :
-                    rawIds.split(",").map(x => parseInt(x.trim())).filter(Number.isInteger);
-
-                console.log("✅ IDs to save:", idArray);
-
-                await fetch("/flashcards/save_ids/", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRFToken": getCookie("csrftoken")
-                    },
-                    body: JSON.stringify({ flashcard_ids: idArray })
-                });
-            }
-
-            await fetch("/flashcards/filtered/")
-                .then(res => res.json())
-                .then(data => {
-                    const flashcardsSidebar = document.getElementById("flashcards-sidebar");
-                    if (flashcardsSidebar) {
-                        flashcardsSidebar.innerHTML = "<h1>Flashcards</h1>" + data.html;
-                    }
-                });
-
-            // ✅ Refresh chat history after assistant reply
-            await fetch("/flashcards/chat_history_partial/")
-            .then(res => res.json())
-            .then(data => {
-                const historyContainer = document.getElementById("chat-history");
-                historyContainer.innerHTML = data.html;
-            });
-
-        } catch (err) {
-            // Remove spinner bubble
-            const thinkingBubble = document.getElementById("ai-thinking-bubble");
-            if (thinkingBubble) thinkingBubble.remove();
-            appendMessage("assistant", "⚠️ Network error. See console.");
-            console.error("Network error:", err);
-        }
-    }
-
-    function renderMarkdown(text) {
-        if (typeof marked === "undefined") {
-            return text.split(/\n+/).map(p => `<p>${p}</p>`).join("");
-        }
-        return marked.parse(text, { gfm: true });
-    }
-
     function polishAssistantMessage(el) {
         el.querySelectorAll("p").forEach(p => {
             if (p.textContent.trim().startsWith("Flashcard Title:")) {
@@ -248,25 +93,40 @@
         });
     }
 
-    function appendMessage(sender, text) {
-        const messagesDiv = document.getElementById("messages");
-        const div = document.createElement("div");
-        div.classList.add("message", sender);
+    async function handleStreamComplete(fullText) {
+        const idMatch = fullText.match(/\[SELECTED_FLASHCARD_IDS:\s*(.*?)\]/);
+        if (idMatch) {
+            const rawIds = idMatch[1].trim();
+            const idArray = rawIds.toLowerCase() === "none" ? [] :
+                rawIds.split(",").map(x => parseInt(x.trim())).filter(Number.isInteger);
 
-        if (sender === "assistant" && text) {
-            div.innerHTML = renderMarkdown(text);
-            polishAssistantMessage(div);
-        } else {
-            const paragraphs = text.split(/\n+/);
-            for (const paragraph of paragraphs) {
-                const p = document.createElement("p");
-                p.textContent = paragraph;
-                div.appendChild(p);
-            }
+            await fetch("{% url 'flashcards:save_flashcard_ids' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCookie("csrftoken")
+                },
+                body: JSON.stringify({ flashcard_ids: idArray })
+            });
         }
 
-        messagesDiv.appendChild(div);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        // Refresh the flashcard sidebar with the agent's selection
+        await fetch("{% url 'flashcards:filtered_flashcards' %}")
+            .then(res => res.json())
+            .then(data => {
+                const flashcardsSidebar = document.getElementById("flashcards-sidebar");
+                if (flashcardsSidebar) {
+                    flashcardsSidebar.innerHTML = "<h1>Flashcards</h1>" + data.html;
+                }
+            });
+
+        // Refresh chat history after assistant reply
+        await fetch("{% url 'flashcards:chat_history_partial' %}")
+            .then(res => res.json())
+            .then(data => {
+                const historyContainer = document.getElementById("chat-history");
+                historyContainer.innerHTML = data.html;
+            });
     }
 
     async function renameSession(sessionId) {
@@ -288,28 +148,14 @@
         // Trigger download of the selected chat session
         window.location.href = `/flashcards/export/${sessionId}/`;
     }
-
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== "") {
-            const cookies = document.cookie.split(";");
-            for (let cookie of cookies) {
-                cookie = cookie.trim();
-                if (cookie.startsWith(name + "=")) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
 </script>
 
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="{% static 'js/vendor/marked.min.js' %}"></script>
+<script src="{% static 'js/vendor/html2canvas.min.js' %}"></script>
+<script src="{% static 'js/chat.js' %}"></script>
 
 <script>
 function exportVisibleFlashcardsAsPNGs() {
