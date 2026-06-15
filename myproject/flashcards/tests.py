@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from myproject.core.models import ChatTurn
-from myproject.testing import make_fake_runner
+from myproject.testing import make_fake_anthropic_client
 
 User = get_user_model()
 
@@ -134,7 +134,8 @@ class FlashcardsStreamTests(TestCase):
 
     def test_stream_saves_user_and_assistant_turns(self):
         with patch(
-            "myproject.core.streaming.Runner", make_fake_runner(["Hello ", "teacher"])
+            "myproject.core.streaming._get_client",
+            return_value=make_fake_anthropic_client(["Hello ", "teacher"]),
         ):
             response = self.client.post(
                 reverse("flashcards:stream_flashcards"),

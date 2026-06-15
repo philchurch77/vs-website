@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from myproject.core.models import ChatTurn
-from myproject.testing import make_fake_runner
+from myproject.testing import make_fake_anthropic_client
 from .models import TrainingSummary
 
 User = get_user_model()
@@ -114,7 +114,7 @@ class EvaluationStreamTests(TestCase):
         self.client.login(username="alice", password="pass")
 
     def _stream(self, message, deltas):
-        with patch("myproject.core.streaming.Runner", make_fake_runner(deltas)):
+        with patch("myproject.core.streaming._get_client", return_value=make_fake_anthropic_client(deltas)):
             response = self.client.post(
                 reverse("evaluation:stream_chat"),
                 data=json.dumps({"message": message}),

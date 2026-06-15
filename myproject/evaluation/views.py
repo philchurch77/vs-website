@@ -84,7 +84,7 @@ def stream_chatgpt_api(request):
         return StreamingHttpResponse(
             stream_agent_deltas(
                 evaluation_agent,
-                [{"role": "system", "content": evaluation_agent.instructions}, *chat_history],
+                chat_history,
                 on_complete=on_complete,
             ),
             content_type="text/plain",

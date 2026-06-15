@@ -1,4 +1,4 @@
-from agents import Agent
+from myproject.core.streaming import AgentConfig
 from .models import Flashcard, Scenario
 
 def get_flashcard_texts():
@@ -28,9 +28,8 @@ def build_toolkit_agent():
     flashcards_text = "\n".join(get_flashcard_texts())
     scenario_text = "\n".join(get_scenario_texts())
 
-    return Agent(
-        name="Toolkit Agent",
-        instructions=f"""
+    return AgentConfig(
+        system=f"""
 {flashcards_text}
 
 Relevant scenarios that describe patterns, contexts, or example situations:
@@ -113,5 +112,5 @@ At the end of your response, include a line like this:
 
 [SELECTED_FLASHCARD_IDS: ]
         """,
-    model="gpt-4.1-mini"
+        model="claude-opus-4-8",
     )

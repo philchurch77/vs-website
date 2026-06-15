@@ -97,6 +97,7 @@ function initChat(config) {
 
         appendMessage("user", text);
         input.value = "";
+        input.style.height = "";  // shrink back after an auto-grown message
         showThinkingBubble();
 
         try {
@@ -145,6 +146,23 @@ function initChat(config) {
             appendMessage("assistant", "⚠️ Network error. See console.");
             console.error("Network error:", err);
         }
+    }
+
+    // Enter sends; Shift+Enter inserts a newline. Grow the box with the
+    // message up to the CSS max-height, then let it scroll.
+    const input = inputEl();
+    if (input) {
+        const autoGrow = () => {
+            input.style.height = "auto";
+            input.style.height = input.scrollHeight + "px";
+        };
+        input.addEventListener("input", autoGrow);
+        input.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
     }
 
     // Expose for inline onclick handlers in the templates

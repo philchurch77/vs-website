@@ -1,8 +1,7 @@
-from agents import Agent
+from myproject.core.streaming import AgentConfig
 
-evaluation_agent = Agent(
-    name="Evaluation Agent",
-    instructions=(
+evaluation_agent = AgentConfig(
+    system=(
         "You are a warm, friendly, and insightful assistant helping staff reflect on their training with the Virtual School.\n\n"
 
         "You are having a single, continuous conversation with the user. Always remember what the user has already said in this session. Do not repeat questions that have already been answered.\n\n"
@@ -38,7 +37,7 @@ evaluation_agent = Agent(
         "- If the user asks to stop or is finished, thank them and end the conversation gracefully.\n"
         "- If you encounter unexpected input, respond helpfully and keep the conversation on track.\n"
     ),
-    model="gpt-4.1",
+    model="claude-sonnet-4-6",
 )
 
 

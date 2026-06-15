@@ -26,7 +26,7 @@
   --hypo: #ffb703;
   --score: #ea580c;
   --nav-height: 70px;
-  --nav-width: 240px;
+  --nav-width: 260px;
   --nav-collapsed-width: 64px;
   --nav-gap: 20px;
   --border-radius-sm: 4px;
@@ -889,7 +889,7 @@ nav {
   position: fixed;
   top: 0;
   left: 0;
-  width: 260px;
+  width: var(--nav-width);
   height: 100vh;
   background: linear-gradient(180deg, rgba(255,255,255,0.93) 0%, rgba(240,250,255,0.92) 100%);
   backdrop-filter: blur(10px);
@@ -5287,13 +5287,13 @@ nav a:focus-visible {
   text-align: left;
 }
 
-/* chat input: pill with focus ring */
+/* chat input: rounded box with focus ring, grows with the message */
 .input-area {
-  padding: 0.35rem;
-  border-radius: var(--border-radius-full);
-  border: 1.5px solid var(--border-subtle);
+  padding: 0.5rem 0.5rem 0.5rem 0.75rem;
+  border-radius: var(--border-radius-lg);
+  border: 1.5px solid #e3e6ea;
   box-shadow: var(--shadow-sm);
-  align-items: center;
+  align-items: flex-end;
   transition: border-color var(--dur-fast) var(--ease-out),
               box-shadow var(--dur-fast) var(--ease-out);
 }
@@ -5301,16 +5301,25 @@ nav a:focus-visible {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--ring), var(--shadow-sm);
 }
-.input-area input {
+.input-area input,
+.input-area textarea {
   flex: 1;
   border: none;
   background: transparent;
   font-family: var(--font-body);
   font-size: 1.02rem;
-  padding: 0.55em 1em;
+  padding: 0.55em 0.5em;
   color: var(--dark-text);
 }
-.input-area input:focus {
+.input-area textarea {
+  resize: none;
+  line-height: 1.45;
+  min-height: 4.5em;   /* roughly three lines, easy to see and start typing in */
+  max-height: 12em;    /* then scrolls instead of pushing the page */
+  overflow-y: auto;
+}
+.input-area input:focus,
+.input-area textarea:focus {
   outline: none;
   box-shadow: none;
 }

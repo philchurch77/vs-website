@@ -88,7 +88,7 @@ def stream_flashcards(request):
         return StreamingHttpResponse(
             stream_agent_deltas(
                 toolkit_agent,
-                [{"role": "system", "content": toolkit_agent.instructions}, *chat_history],
+                chat_history,
                 on_complete=save_turns,
             ),
             content_type="text/plain",

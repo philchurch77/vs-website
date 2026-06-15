@@ -1,26 +1,30 @@
 """Test helpers shared across app test suites."""
-from types import SimpleNamespace
 
 
-def make_fake_runner(deltas):
-    """Build a stand-in for agents.Runner that streams the given deltas.
+def make_fake_anthropic_client(deltas):
+    """Build a stand-in for anthropic.Anthropic that streams the given deltas.
 
-    Mirrors the surface the views rely on: Runner.run_streamed(agent, input=...)
-    returns an object whose stream_events() async-generates raw_response_event
-    items carrying a .data.delta attribute. No OpenAI calls are made.
+    Mirrors the surface streaming.stream_agent_deltas relies on:
+    ``client.messages.stream(...)`` returns a context manager whose
+    ``text_stream`` iterates the deltas. No network calls are made.
     """
 
-    class _Result:
-        async def stream_events(self):
-            for delta in deltas:
-                yield SimpleNamespace(
-                    type="raw_response_event",
-                    data=SimpleNamespace(delta=delta),
-                )
+    class _Stream:
+        def __enter__(self):
+            return self
 
-    class _Runner:
-        @staticmethod
-        def run_streamed(agent, input):
-            return _Result()
+        def __exit__(self, *exc):
+            return False
 
-    return _Runner
+        @property
+        def text_stream(self):
+            return iter(deltas)
+
+    class _Messages:
+        def stream(self, **kwargs):
+            return _Stream()
+
+    class _Client:
+        messages = _Messages()
+
+    return _Client()
