@@ -30,10 +30,11 @@ TIME_SLOTS = [
 ]
 
 BEHAVIOURS = {
-    "GREEN": ["Calm", "Engaged", "Playing", "Expressing", "Smiling", "Learning",
-              "Connecting", "Participating", "Curious"],
+    "GREEN": ["Calm", "Engaged", "Playing", "Communicative", "Smiling", "Learning",
+              "Connecting", "Participating", "Curious", "Working independently"],
     "RED":   ["Worried", "Hypervigilant", "Shouting", "Throwing", "Running",
-              "Fighting", "High energy", "Screeching", "Looking alarmed"],
+              "Fighting", "High energy", "Screeching", "Looking alarmed",
+              "Arguing", "Pushing", "Not-sharing", "Controlling"],
     "BLUE":  ["Disengaged", "Quiet", "Distant", "Flat", "Withdrawn", "Sad",
               "Tired", "Frozen", "Zoning out", "Glazed", "Collapse", "Curling up"],
 }
@@ -48,14 +49,16 @@ TRIGGERS = [
 
 RESPONSES = {
     "GREEN": ["Maintain routine", "Praise effort quietly", "Offer choice",
-              "Support independence", "Use connection / check-in", "Continue learning task"],
+              "Support independence", "Use connection / check-in", "Continue learning task",
+              "TA Support", "No adult available"],
     "RED":   ["Keep everyone safe", "Reduce language", "Use calm tone", "Create space",
               "Remove audience", "Offer trusted adult", "Reduce demand",
               "Offer movement break", "Offer quiet space", "Support breathing / grounding",
-              "Follow safety plan"],
+              "Follow safety plan", "TA Support", "No adult available"],
     "BLUE":  ["Quiet presence", "Gentle check-in", "Trusted adult nearby", "Offer water",
               "Offer tactile object", "Offer comfort item", "Reduce demand",
-              "Use simple choices", "Sensory grounding", "Allow time"],
+              "Use simple choices", "Sensory grounding", "Allow time", "TA Support",
+              "No adult available"],
 }
 
 SUPPORT_PLAN_PROMPTS = [
