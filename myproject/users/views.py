@@ -10,7 +10,7 @@ def register_view(request):
             # With multiple auth backends configured (model + allauth), login()
             # must be told which backend authenticated the new user.
             login(request, form.save(), backend="django.contrib.auth.backends.ModelBackend")
-            return redirect("posts:list")
+            return redirect("/")
     else:
         form = UserCreationForm()
     return render(request, "users/register.html", { "form": form })
@@ -23,12 +23,12 @@ def login_view(request):
             if 'next' in request.POST:
                 return redirect(request.POST.get('next'))
             else:
-                return redirect("posts:list")
+                return redirect("/")
     else: 
         form = AuthenticationForm()
     return render(request, "users/login.html", { "form": form })
 
 def logout_view(request):
     if request.method == "POST": 
-        logout(request) 
-        return redirect("posts:list")
+        logout(request)
+        return redirect("/")

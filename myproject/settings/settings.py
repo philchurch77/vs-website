@@ -51,10 +51,7 @@ INSTALLED_APPS = [
     "taggit",
     "myproject.core",
     "myproject.users",
-    "myproject.posts",
-    "myproject.evaluation.apps.EvaluationConfig",
     "myproject.flashcards",
-    "myproject.training",
     "myproject.sdq",
     "myproject.resources",
     "myproject.tolerance",
@@ -133,7 +130,7 @@ CSRF_COOKIE_SECURE = not DEBUG     # allow http locally
 
 # --- Auth ---
 LOGIN_URL = "/users/login/"
-LOGIN_REDIRECT_URL = "/posts/"
+LOGIN_REDIRECT_URL = "/"
 
 SITE_ID = 1
 

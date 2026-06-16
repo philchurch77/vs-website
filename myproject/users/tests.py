@@ -20,7 +20,7 @@ class RegistrationTests(TestCase):
             "password1": "complex-pass-123",
             "password2": "complex-pass-123",
         })
-        self.assertRedirects(response, reverse("posts:list"))
+        self.assertRedirects(response, "/")
         self.assertTrue(User.objects.filter(username="newteacher").exists())
         self.assertTrue(response.wsgi_request.user.is_authenticated)
 
@@ -33,14 +33,14 @@ class LoginLogoutTests(TestCase):
         response = self.client.get(reverse("users:login"))
         self.assertEqual(response.status_code, 200)
 
-    def test_login_redirects_to_posts(self):
+    def test_login_redirects_to_home(self):
         response = self.client.post(reverse("users:login"), {
             "username": "teacher",
             "password": "pass-12345",
         })
-        self.assertRedirects(response, reverse("posts:list"))
+        self.assertRedirects(response, "/")
 
-    def test_logout_redirects_to_posts(self):
+    def test_logout_redirects_to_home(self):
         self.client.force_login(self.user)
         response = self.client.post(reverse("users:logout"))
-        self.assertRedirects(response, reverse("posts:list"))
+        self.assertRedirects(response, "/")
