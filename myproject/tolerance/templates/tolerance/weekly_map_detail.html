@@ -290,7 +290,7 @@ const OBS_DATA            = JSON.parse(document.getElementById('wot-obs-data').t
 const DAYS_LIST           = JSON.parse(document.getElementById('wot-days').textContent);
 const ALL_SLOT_NAMES      = JSON.parse(document.getElementById('wot-time-slots').textContent);
 const WEEKLY_SUMMARY_SLOT = JSON.parse(document.getElementById('wot-weekly-slot').textContent);
-const TREND_DATA          = JSON.parse(document.getElementById('wot-trend-data').textContent);
+let   TREND_DATA          = JSON.parse(document.getElementById('wot-trend-data').textContent);
 const TREND_URL_BASE      = "{% url 'tolerance:weekly_map_detail' pk=0 %}".replace('/0/', '/');
 
 // Active slots: the ones currently shown (initially from server)
@@ -340,6 +340,15 @@ document.getElementById('sessionsTrigger').addEventListener('click', () => {
   const open = dropdown.hidden;
   dropdown.hidden = !open;
   document.getElementById('sessionsTrigger').setAttribute('aria-expanded', String(open));
+});
+
+// Close the sessions dropdown when clicking anywhere outside it
+document.addEventListener('click', (e) => {
+  const dropdown = document.getElementById('sessionsDropdown');
+  if (dropdown.hidden) return;
+  if (document.getElementById('sessionsCtrl').contains(e.target)) return;
+  dropdown.hidden = true;
+  document.getElementById('sessionsTrigger').setAttribute('aria-expanded', 'false');
 });
 
 document.getElementById('selectAllSlots').addEventListener('change', (e) => {
@@ -499,6 +508,11 @@ async function saveObservation() {
   if (activeCellEl) updateCell(activeCellEl, currentObs);
   renderBandChart();
   renderSummary(data.summary);
+  if (data.trend) {
+    TREND_DATA = data.trend;
+    // Refresh the scatter immediately if it's the view currently on screen
+    if (!document.getElementById('trendChartWrap').hidden) renderTrendChart();
+  }
   activeCellEl = null; activeBandKey = null;
   return true;
 }
@@ -729,200 +743,191 @@ function renderTrendChart() {
 
   if (TREND_DATA.length === 0) {
     container.innerHTML = '<p class="wot-trend-empty">No observation data yet.</p>';
+    caption.textContent = '';
     return;
   }
 
-  const NS  = 'http://www.w3.org/2000/svg';
-  const PAD = { top: 16, right: 24, bottom: 50, left: 16 };
-  const H   = 210;
-  const W   = container.clientWidth || 560;
-  const cW  = W - PAD.left - PAD.right;
-  const cH  = H - PAD.top  - PAD.bottom;
+  const NS   = 'http://www.w3.org/2000/svg';
+  const PAD  = { top: 22, right: 16, bottom: 64, left: 34 };
+  const days = TREND_DATA;               // X axis: each recorded day, oldest → newest
+  const n    = days.length;
 
-  // Zone layout (fractions of cH, top to bottom = RED → GREEN → BLUE)
-  const BAND = { RED: [0, 0.33], GREEN: [0.33, 0.66], BLUE: [0.66, 1.0] };
-  const ZONE_MID = {
-    RED:   (BAND.RED[0]   + BAND.RED[1])   / 2,
-    GREEN: (BAND.GREEN[0] + BAND.GREEN[1]) / 2,
-    BLUE:  (BAND.BLUE[0]  + BAND.BLUE[1])  / 2,
-  };
-  const ZONE_FILL   = { RED: '#fee2e2', GREEN: '#d1fae5', BLUE: '#dbeafe' };
-  const ZONE_STROKE = { RED: '#ef4444', GREEN: '#10b981', BLUE: '#3b82f6' };
-  const ZONE_LABEL  = { RED: 'Hyper-arousal', GREEN: 'In window', BLUE: 'Hypo-arousal' };
-  const ZONE_TEXT   = { RED: '#b91c1c', GREEN: '#065f46', BLUE: '#1d4ed8' };
+  const W    = container.clientWidth || 560;
+  const cH   = 188;
+  const cW   = W - PAD.left - PAD.right;
+  const colW = cW / n;
+  const barW = Math.min(48, colW * 0.62);
+  const H    = cH + PAD.top + PAD.bottom;
+
+  // WoT order, top → bottom: hyper (red) · in-window (green) · hypo (blue)
+  const ZONE_FILL  = { RED: '#ef4444', GREEN: '#10b981', BLUE: '#3b82f6' };
+  const ZONE_LABEL = { RED: 'Hyper-arousal', GREEN: 'In window', BLUE: 'Hypo-arousal' };
+  const TREND_COL  = '#4f46e5';          // indigo: the "% in window" regulation trend
+
+  function zoneCounts(day) {
+    const c = { RED: 0, GREEN: 0, BLUE: 0 };
+    day.entries.forEach(e => { if (c[e.state] !== undefined) c[e.state]++; });
+    c.total = c.RED + c.GREEN + c.BLUE;
+    return c;
+  }
 
   const svg = document.createElementNS(NS, 'svg');
   svg.setAttribute('width',   W);
   svg.setAttribute('height',  H);
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
   svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label', 'Trend over time chart');
+  svg.setAttribute('aria-label', 'Each day’s share of sessions by regulation zone, with the in-window trend over time');
 
   const g = document.createElementNS(NS, 'g');
   g.setAttribute('transform', `translate(${PAD.left},${PAD.top})`);
   svg.appendChild(g);
 
-  // Background bands
-  Object.entries(BAND).forEach(([zone, [t, b]]) => {
-    const rect = document.createElementNS(NS, 'rect');
-    rect.setAttribute('x', 0);
-    rect.setAttribute('y', t * cH);
-    rect.setAttribute('width', cW);
-    rect.setAttribute('height', (b - t) * cH);
-    rect.setAttribute('fill', ZONE_FILL[zone]);
-    g.appendChild(rect);
+  // Y-axis percentage guides (0 / 50 / 100)
+  [0, 0.5, 1].forEach(frac => {
+    const y = frac * cH;
+    const ln = document.createElementNS(NS, 'line');
+    ln.setAttribute('x1', 0); ln.setAttribute('x2', cW);
+    ln.setAttribute('y1', y); ln.setAttribute('y2', y);
+    ln.setAttribute('stroke', '#e2e8f0');
+    ln.setAttribute('stroke-width', '1');
+    if (frac === 0.5) ln.setAttribute('stroke-dasharray', '4 3');
+    g.appendChild(ln);
+    const lbl = document.createElementNS(NS, 'text');
+    lbl.setAttribute('x', -6); lbl.setAttribute('y', y + 3);
+    lbl.setAttribute('text-anchor', 'end');
+    lbl.setAttribute('font-size', '8.5'); lbl.setAttribute('fill', '#9ca3af');
+    lbl.textContent = `${Math.round((1 - frac) * 100)}%`;
+    g.appendChild(lbl);
   });
 
-  // Band divider lines
-  [BAND.GREEN[0], BAND.BLUE[0]].forEach(frac => {
-    const line = document.createElementNS(NS, 'line');
-    line.setAttribute('x1', 0); line.setAttribute('x2', cW);
-    line.setAttribute('y1', frac * cH); line.setAttribute('y2', frac * cH);
-    line.setAttribute('stroke', '#cbd5e1');
-    line.setAttribute('stroke-width', '1');
-    line.setAttribute('stroke-dasharray', '4 3');
-    g.appendChild(line);
-  });
-
-  // Zone labels
-  Object.entries(ZONE_MID).forEach(([zone, mid]) => {
-    const text = document.createElementNS(NS, 'text');
-    text.setAttribute('x', cW - 6);
-    text.setAttribute('y', mid * cH + 4);
-    text.setAttribute('text-anchor', 'end');
-    text.setAttribute('font-size', '10.5');
-    text.setAttribute('font-weight', '700');
-    text.setAttribute('fill', ZONE_TEXT[zone]);
-    text.setAttribute('opacity', '0.7');
-    text.textContent = ZONE_LABEL[zone];
-    g.appendChild(text);
-  });
-
-  // Compute x/y for each data point
-  const n = TREND_DATA.length;
-  const points = TREND_DATA.map((week, i) => {
-    const xFrac = n === 1 ? 0.5 : i / (n - 1);
-    const x = xFrac * cW;
-    const total = week.total || 0;
-    const yFrac = total === 0
-      ? ZONE_MID.GREEN
-      : (week.red * ZONE_MID.RED + week.green * ZONE_MID.GREEN + week.blue * ZONE_MID.BLUE) / total;
-    const y = yFrac * cH;
-    const dominant = total === 0 ? 'GREEN'
-      : (week.red >= week.green && week.red >= week.blue) ? 'RED'
-      : (week.blue > week.red   && week.blue > week.green) ? 'BLUE'
-      : 'GREEN';
-    return { x, y, week, dominant };
-  });
-
-  // Week separator lines (drawn before lines/dots so they sit behind)
-  let prevWeekKey = null;
-  points.forEach((p, i) => {
-    if (prevWeekKey !== null && p.week.week !== prevWeekKey) {
-      const xSep = (points[i - 1].x + p.x) / 2;
+  // This-week column highlight + week separators (behind the bars)
+  let prevWeek = null;
+  days.forEach((day, di) => {
+    if (day.is_current) {
+      const hl = document.createElementNS(NS, 'rect');
+      hl.setAttribute('x', colW * di); hl.setAttribute('y', 0);
+      hl.setAttribute('width', colW);  hl.setAttribute('height', cH);
+      hl.setAttribute('fill', '#eef2ff'); hl.setAttribute('opacity', '0.7');
+      g.appendChild(hl);
+    }
+    if (prevWeek !== null && day.week !== prevWeek) {
       const sep = document.createElementNS(NS, 'line');
-      sep.setAttribute('x1', xSep); sep.setAttribute('x2', xSep);
-      sep.setAttribute('y1', 0);    sep.setAttribute('y2', cH);
-      sep.setAttribute('stroke', '#94a3b8');
-      sep.setAttribute('stroke-width', '1');
-      sep.setAttribute('stroke-dasharray', '3 3');
-      sep.setAttribute('opacity', '0.35');
+      const x = colW * di;
+      sep.setAttribute('x1', x); sep.setAttribute('x2', x);
+      sep.setAttribute('y1', -4); sep.setAttribute('y2', cH);
+      sep.setAttribute('stroke', '#94a3b8'); sep.setAttribute('stroke-width', '1');
+      sep.setAttribute('stroke-dasharray', '3 3'); sep.setAttribute('opacity', '0.45');
       g.appendChild(sep);
     }
-    prevWeekKey = p.week.week;
+    prevWeek = day.week;
   });
 
-  // Connecting lines
-  for (let i = 1; i < points.length; i++) {
-    const p1 = points[i - 1], p2 = points[i];
+  // Proportional stacked bar per day (red top · green middle · blue bottom)
+  const trendPts = [];
+  days.forEach((day, di) => {
+    const c    = zoneCounts(day);
+    const xC   = colW * (di + 0.5);
+    const barX = xC - barW / 2;
+    const bar  = document.createElementNS(NS, 'g');
+    if (!day.is_current) {
+      bar.style.cursor = 'pointer';
+      bar.addEventListener('click', () => {
+        window.location.href = TREND_URL_BASE + day.pk + '/';
+      });
+    }
+    const d = new Date(day.date + 'T00:00:00');
+    const dateStr = `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+
+    let yTop = 0;
+    ['RED', 'GREEN', 'BLUE'].forEach(zone => {
+      const cnt = c[zone];
+      if (cnt === 0) return;
+      const h = (cnt / c.total) * cH;
+      const seg = document.createElementNS(NS, 'rect');
+      seg.setAttribute('x', barX); seg.setAttribute('y', yTop);
+      seg.setAttribute('width', barW); seg.setAttribute('height', h);
+      seg.setAttribute('fill', ZONE_FILL[zone]);
+      seg.setAttribute('opacity', day.is_current ? '1' : '0.88');
+      const title = document.createElementNS(NS, 'title');
+      title.textContent = `${day.day} ${dateStr}\n${ZONE_LABEL[zone]}: ${cnt} of ${c.total} session${c.total !== 1 ? 's' : ''}`;
+      seg.appendChild(title);
+      bar.appendChild(seg);
+      yTop += h;
+    });
+
+    // Session-count label above the bar
+    const cnt = document.createElementNS(NS, 'text');
+    cnt.setAttribute('x', xC); cnt.setAttribute('y', -7);
+    cnt.setAttribute('text-anchor', 'middle');
+    cnt.setAttribute('font-size', '8.5');
+    cnt.setAttribute('fill', day.is_current ? TREND_COL : '#9ca3af');
+    cnt.setAttribute('font-weight', day.is_current ? '700' : '400');
+    cnt.textContent = c.total;
+    bar.appendChild(cnt);
+    g.appendChild(bar);
+
+    trendPts.push({ x: xC, y: (1 - c.GREEN / c.total) * cH, day, c });
+  });
+
+  // Trend line: % of sessions in-window over time (higher = more regulated)
+  for (let i = 1; i < trendPts.length; i++) {
+    const p1 = trendPts[i - 1], p2 = trendPts[i];
     const line = document.createElementNS(NS, 'line');
     line.setAttribute('x1', p1.x); line.setAttribute('y1', p1.y);
     line.setAttribute('x2', p2.x); line.setAttribute('y2', p2.y);
-    line.setAttribute('stroke', ZONE_STROKE[p2.dominant]);
-    line.setAttribute('stroke-width', '2.5');
-    line.setAttribute('stroke-linecap', 'round');
-    line.setAttribute('opacity', '0.7');
+    line.setAttribute('stroke', TREND_COL); line.setAttribute('stroke-width', '1.6');
+    line.setAttribute('stroke-linecap', 'round'); line.setAttribute('opacity', '0.65');
+    line.setAttribute('stroke-dasharray', '5 4');
     g.appendChild(line);
   }
-
-  // Dots
-  points.forEach(p => {
-    const isCurrent = p.week.is_current;
-    const circle = document.createElementNS(NS, 'circle');
-    circle.setAttribute('cx', p.x);
-    circle.setAttribute('cy', p.y);
-    circle.setAttribute('r',  isCurrent ? 7 : 5);
-    circle.setAttribute('fill',         isCurrent ? '#fff' : ZONE_STROKE[p.dominant]);
-    circle.setAttribute('stroke',       ZONE_STROKE[p.dominant]);
-    circle.setAttribute('stroke-width', isCurrent ? '3' : '1.5');
-    if (!isCurrent) {
-      circle.style.cursor = 'pointer';
-      circle.addEventListener('click', () => {
-        window.location.href = TREND_URL_BASE + p.week.pk + '/';
-      });
-    }
-    const titleEl = document.createElementNS(NS, 'title');
-    const d = new Date(p.week.date + 'T00:00:00');
-    const dateStr = `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
-    titleEl.textContent = [
-      `${p.week.day} ${dateStr}`,
-      `Green: ${p.week.green}  Red: ${p.week.red}  Blue: ${p.week.blue}`,
-    ].join('\n');
-    circle.appendChild(titleEl);
-    g.appendChild(circle);
+  trendPts.forEach(p => {
+    const dot = document.createElementNS(NS, 'circle');
+    dot.setAttribute('cx', p.x); dot.setAttribute('cy', p.y);
+    dot.setAttribute('r', p.day.is_current ? 3.4 : 2.6);
+    dot.setAttribute('fill', '#fff');
+    dot.setAttribute('stroke', TREND_COL);
+    dot.setAttribute('stroke-width', p.day.is_current ? '2.4' : '1.6');
+    const title = document.createElementNS(NS, 'title');
+    title.textContent = `${Math.round((p.c.GREEN / p.c.total) * 100)}% in window`;
+    dot.appendChild(title);
+    g.appendChild(dot);
   });
 
-  // "This week" label above the last current-week dot
-  const currentPts = points.filter(p => p.week.is_current);
-  if (currentPts.length > 0) {
-    const last = currentPts[currentPts.length - 1];
+  // X-axis: one dated label per recorded day
+  days.forEach((day, di) => {
+    const xMid = colW * (di + 0.5);
+    const d = new Date(day.date + 'T00:00:00');
     const lbl = document.createElementNS(NS, 'text');
-    const lblX = Math.max(Math.min(last.x, cW - 30), 30);
-    lbl.setAttribute('x', lblX);
-    lbl.setAttribute('y', last.y - 14);
-    lbl.setAttribute('text-anchor', 'middle');
-    lbl.setAttribute('font-size', '10');
-    lbl.setAttribute('font-weight', '600');
-    lbl.setAttribute('fill', '#4f46e5');
-    lbl.textContent = 'This week';
+    lbl.setAttribute('x', xMid); lbl.setAttribute('y', cH + 13);
+    lbl.setAttribute('text-anchor', 'end');
+    lbl.setAttribute('font-size', '8.5');
+    lbl.setAttribute('fill', day.is_current ? TREND_COL : '#6b7280');
+    lbl.setAttribute('font-weight', day.is_current ? '700' : '400');
+    lbl.setAttribute('transform', `rotate(-40 ${xMid} ${cH + 13})`);
+    lbl.textContent = `${day.day} ${d.getDate()}/${d.getMonth() + 1}`;
     g.appendChild(lbl);
-  }
-
-  // X-axis: show week-commencing date at the first point of each week
-  let lastWeekLabel = null;
-  points.forEach(p => {
-    if (p.week.week !== lastWeekLabel) {
-      lastWeekLabel = p.week.week;
-      const d = new Date(p.week.week + 'T00:00:00');
-      const wkLabel = document.createElementNS(NS, 'text');
-      wkLabel.setAttribute('x', p.x);
-      wkLabel.setAttribute('y', cH + 22);
-      wkLabel.setAttribute('text-anchor', 'middle');
-      wkLabel.setAttribute('font-size', '9.5');
-      wkLabel.setAttribute('fill', p.week.is_current ? '#0a7fa0' : '#6b7280');
-      wkLabel.setAttribute('font-weight', p.week.is_current ? '700' : '400');
-      wkLabel.textContent = `w/c ${d.getDate()}/${d.getMonth() + 1}`;
-      g.appendChild(wkLabel);
-    }
   });
 
-  // Axis footnote
-  const axisTitle = document.createElementNS(NS, 'text');
-  axisTitle.setAttribute('x', cW / 2);
-  axisTitle.setAttribute('y', cH + 44);
-  axisTitle.setAttribute('text-anchor', 'middle');
-  axisTitle.setAttribute('font-size', '9.5');
-  axisTitle.setAttribute('fill', '#9ca3af');
-  axisTitle.textContent = 'Each dot = one school day · dot height = average regulation position · hover for detail';
-  g.appendChild(axisTitle);
+  // Two-line legend / footnote
+  [
+    'Each bar = one day’s sessions · red hyper · green in-window · blue hypo',
+    'Indigo line = % of sessions in window — the regulation trend over time',
+  ].forEach((txt, i) => {
+    const t = document.createElementNS(NS, 'text');
+    t.setAttribute('x', cW / 2); t.setAttribute('y', cH + 44 + i * 12);
+    t.setAttribute('text-anchor', 'middle');
+    t.setAttribute('font-size', '9'); t.setAttribute('fill', '#9ca3af');
+    t.textContent = txt;
+    g.appendChild(t);
+  });
 
   container.appendChild(svg);
 
-  const totalDays  = TREND_DATA.length;
-  const totalWeeks = new Set(TREND_DATA.map(d => d.week)).size;
-  caption.textContent = totalWeeks === 1
-    ? `${totalDays} day${totalDays !== 1 ? 's' : ''} recorded this week. Open circles = this week. Select a previous week's dot to view it.`
-    : `${totalDays} days across ${totalWeeks} weeks. Open circles = this week. Dashed lines separate weeks.`;
+  const totalWeeks   = new Set(days.map(d => d.week)).size;
+  const totalEntries = days.reduce((sum, d) => sum + d.entries.length, 0);
+  caption.textContent =
+    `${totalEntries} session${totalEntries !== 1 ? 's' : ''} across ${n} recorded day${n !== 1 ? 's' : ''} ` +
+    `and ${totalWeeks} week${totalWeeks !== 1 ? 's' : ''}. Watch the green band and the indigo line grow as more time is spent in window.`;
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────

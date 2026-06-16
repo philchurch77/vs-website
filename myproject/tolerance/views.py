@@ -32,17 +32,19 @@ TIME_SLOTS = [
 BEHAVIOURS = {
     "GREEN": ["Calm", "Communicative", "Connecting", "Curious", "Engaged", "Learning",
               "Participating", "Playing", "Smiling", "Working independently"],
-    "RED":   ["Arguing", "Fighting", "High energy", "Hypervigilant", "Looking alarmed",
-              "Not following directions", "Not-sharing", "Offensive gestures","Pushing", "Running", "Screeching",
-              "Shouting", "Spitting", "Swearing", "Throwing", "Worried"],
-    "BLUE":  ["Collapse", "Curling up", "Disengaged", "Distant", "Flat", "Frozen",
-              "Glazed", "Quiet", "Sad", "Tired", "Withdrawn", "Zoning out"],
+    "RED":   ["Apologetic", "Arguing", "Barging", "Biting", "Exiting classroom", "Fighting", "Grabbing", "High energy", "Hitting","Hypervigilant", "Kicking", "Looking alarmed",
+              "Not following directions", "Not-sharing", "Offensive gestures", "Pinching", "Punching", "Pushing",
+              "Ruining displays", "Running", "Screeching", "Shouting", "Slapping", "Smashing", "Snatching/grabbing",
+              "Spitting", "Spoiling work", "Swearing", "Throwing", "Tipping/disrupting environment",
+              "Worried"],
+    "BLUE":  ["Apologetic", "Collapse", "Curling up", "Disengaged", "Distant", "Exiting classroom", "Flat", "Frozen",
+              "Glazed", "Quiet", "Sad", "Spoiling work", "Subdued", "Tired", "Withdrawn", "Zoning out"],
 }
 
 TRIGGERS = [
     "Being asked to explain what happened", "Bullying / social difficulty",
-    "Change in routine", "Demand too high", "Feeling unsafe", "Hunger", "Learning issues",
-    "Noise", "Other", "Peer conflict", "Sensory overload", "Separation from trusted adult",
+    "Change in routine", "Demand too high", "Feeling unsafe", "Hunger", "Learning issues", "Limit setting",
+    "Noise", "Other", "Peer conflict", "Refusing to work with another","Sensory overload", "Separation from trusted adult", "Social interaction",
     "Testing / assessment", "Tiredness", "Transition", "Unfamiliar adult", "Unknown",
     "Unstructured time", "Written task",
 ]
@@ -52,14 +54,14 @@ RESPONSES = {
               "Known adult intervened", "Maintain routine", "No adult available",
               "Offer choice", "Praise effort quietly", "Support independence", "TA Support",
               "Use connection / check-in"],
-    "RED":   ["Create space", "Follow safety plan", "Ignore low-level behaviours",
+    "RED":   ["Complete Break it Down Board", "Create space", "Evacuate classroom", "Follow safety plan", "Guide to safe space", "Ignore low-level behaviours",
               "Keep everyone safe", "Known adult intervened", "No adult available",
-              "Offer movement break", "Offer quiet space", "Offer trusted adult",
-              "Reduce demand", "Reduce language", "Remove audience",
-              "Support breathing / grounding", "TA Support", "Use calm tone"],
-    "BLUE":  ["Allow time", "Gentle check-in", "Known adult intervened", "No adult available",
-              "Offer comfort item", "Offer tactile object", "Offer water", "Quiet presence",
-              "Reduce demand", "Sensory grounding", "TA Support", "Trusted adult nearby",
+              "Offer movement break", "Offer sensory regulation", "Offer nurture to other child", "Trusted adult Presence", "Other", "Parent/carer contacted", "Quiet presence",
+              "Reduce demand", "Reduce language", "On-call requested", "Remove audience",
+              "Support breathing / grounding", "TA Support", "Teaching pro-social skills", "Use calm tone", "Use simple choices"],
+    "BLUE":  ["Allow time", "Complete Break it Down Board", "Gentle check-in", "Guide to safe space", "Known adult intervened", "No adult available",
+              "Offer comfort item", "Offer sensory regulation", "Offer tactile object", "Offer water", "On-call requested", "Other", "Parent/carer contacted", "People-pleasing", "Quiet presence",
+              "Reduce demand", "Sensory grounding", "TA Support", "Teaching pro-social skills", "Trusted adult Presence",
               "Use simple choices"],
 }
 
@@ -171,35 +173,7 @@ def weekly_map_detail(request, pk):
 
     active_slots = wmap.visible_slots if wmap.visible_slots else TIME_SLOTS
 
-    # Trend data — all weeks for this pupil (same user, same name), oldest first
-    peer_weeks = (
-        WeeklyMap.objects
-        .filter(pupil_name=wmap.pupil_name, recorded_by=wmap.recorded_by)
-        .order_by("week_commencing")
-        .prefetch_related("observations")
-    )
-    trend_data = []
-    for w in peer_weeks:
-        obs_all = list(w.observations.all())
-        for i, day in enumerate(DAYS):
-            day_date = w.week_commencing + timedelta(days=i)
-            obs = [o for o in obs_all if o.day_name == day and o.time_slot in TIME_SLOTS]
-            green = sum(1 for o in obs if o.state == "GREEN")
-            red   = sum(1 for o in obs if o.state == "RED")
-            blue  = sum(1 for o in obs if o.state == "BLUE")
-            total = green + red + blue
-            if total > 0:
-                trend_data.append({
-                    "date": str(day_date),
-                    "day": day[:3],
-                    "week": str(w.week_commencing),
-                    "pk": w.pk,
-                    "is_current": w.pk == wmap.pk,
-                    "green": green,
-                    "red": red,
-                    "blue": blue,
-                    "total": total,
-                })
+    trend_data = _build_trend_data(wmap)
 
     return render(request, "tolerance/weekly_map_detail.html", {
         "wmap": wmap,
@@ -258,11 +232,12 @@ def api_save_observation(request, pk):
     obs.abc_after      = payload.get("abc_after", "")
     obs.save()
 
-    # Return updated summary
+    # Return updated summary + trend so both can refresh without a page reload
     all_obs = list(wmap.observations.all())
     summary = _build_summary(all_obs)
+    trend = _build_trend_data(wmap)
 
-    return JsonResponse({"ok": True, "summary": summary})
+    return JsonResponse({"ok": True, "summary": summary, "trend": trend})
 
 
 # ── API: save support plan ────────────────────────────────────────────────────
@@ -302,6 +277,53 @@ def api_save_visible_slots(request, pk):
     wmap.visible_slots = [s for s in slots if s in TIME_SLOTS]
     wmap.save(update_fields=["visible_slots", "updated_at"])
     return JsonResponse({"ok": True})
+
+
+# ── Helper: build trend scatter data ──────────────────────────────────────────
+
+def _build_trend_data(wmap):
+    """All recorded days for this pupil (same user + name), oldest first.
+
+    One record per day, each carrying an `entries` list of {slot, state} —
+    the Trend chart draws a proportional stacked bar per day from these.
+
+    The caller MUST pass an ownership-checked `wmap` (e.g. via
+    get_object_or_404(WeeklyMap, pk=pk, recorded_by=request.user)); this
+    helper scopes by `wmap.recorded_by` and adds no further auth of its own.
+    """
+    peer_weeks = (
+        WeeklyMap.objects
+        .filter(pupil_name=wmap.pupil_name, recorded_by=wmap.recorded_by)
+        .order_by("week_commencing")
+        .prefetch_related("observations")
+    )
+    slot_order = {slot: idx for idx, slot in enumerate(TIME_SLOTS)}
+    trend_data = []
+    for w in peer_weeks:
+        obs_all = list(w.observations.all())
+        for i, day in enumerate(DAYS):
+            day_date = w.week_commencing + timedelta(days=i)
+            day_obs = [
+                o for o in obs_all
+                if o.day_name == day
+                and o.time_slot in TIME_SLOTS
+                and o.state in ("GREEN", "RED", "BLUE")
+            ]
+            if not day_obs:
+                continue
+            day_obs.sort(key=lambda o: slot_order.get(o.time_slot, 99))
+            trend_data.append({
+                "date": str(day_date),
+                "day": day[:3],
+                "week": str(w.week_commencing),
+                "pk": w.pk,
+                "is_current": w.pk == wmap.pk,
+                "entries": [
+                    {"slot": o.time_slot, "state": o.state}
+                    for o in day_obs
+                ],
+            })
+    return trend_data
 
 
 # ── Helper: build summary from observations ───────────────────────────────────
