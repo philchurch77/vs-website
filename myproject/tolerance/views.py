@@ -30,35 +30,37 @@ TIME_SLOTS = [
 ]
 
 BEHAVIOURS = {
-    "GREEN": ["Calm", "Engaged", "Playing", "Communicative", "Smiling", "Learning",
-              "Connecting", "Participating", "Curious", "Working independently"],
-    "RED":   ["Worried", "Hypervigilant", "Shouting", "Throwing", "Running",
-              "Fighting", "High energy", "Screeching", "Looking alarmed",
-              "Arguing", "Pushing", "Not-sharing", "Controlling"],
-    "BLUE":  ["Disengaged", "Quiet", "Distant", "Flat", "Withdrawn", "Sad",
-              "Tired", "Frozen", "Zoning out", "Glazed", "Collapse", "Curling up"],
+    "GREEN": ["Calm", "Communicative", "Connecting", "Curious", "Engaged", "Learning",
+              "Participating", "Playing", "Smiling", "Working independently"],
+    "RED":   ["Arguing", "Fighting", "High energy", "Hypervigilant", "Looking alarmed",
+              "Not following directions", "Not-sharing", "Offensive gestures","Pushing", "Running", "Screeching",
+              "Shouting", "Spitting", "Swearing", "Throwing", "Worried"],
+    "BLUE":  ["Collapse", "Curling up", "Disengaged", "Distant", "Flat", "Frozen",
+              "Glazed", "Quiet", "Sad", "Tired", "Withdrawn", "Zoning out"],
 }
 
 TRIGGERS = [
-    "Change in routine", "Transition", "Peer conflict", "Bullying / social difficulty",
-    "Demand too high", "Written task", "Testing / assessment", "Sensory overload",
-    "Noise", "Hunger", "Tiredness", "Unfamiliar adult", "Feeling unsafe",
-    "Being asked to explain what happened", "Unstructured time",
-    "Separation from trusted adult", "Learning issues", "Unknown", "Other",
+    "Being asked to explain what happened", "Bullying / social difficulty",
+    "Change in routine", "Demand too high", "Feeling unsafe", "Hunger", "Learning issues",
+    "Noise", "Other", "Peer conflict", "Sensory overload", "Separation from trusted adult",
+    "Testing / assessment", "Tiredness", "Transition", "Unfamiliar adult", "Unknown",
+    "Unstructured time", "Written task",
 ]
 
 RESPONSES = {
-    "GREEN": ["Maintain routine", "Praise effort quietly", "Offer choice",
-              "Support independence", "Use connection / check-in", "Continue learning task",
-              "TA Support", "No adult available"],
-    "RED":   ["Keep everyone safe", "Reduce language", "Use calm tone", "Create space",
-              "Remove audience", "Offer trusted adult", "Reduce demand",
-              "Offer movement break", "Offer quiet space", "Support breathing / grounding",
-              "Follow safety plan", "TA Support", "No adult available"],
-    "BLUE":  ["Quiet presence", "Gentle check-in", "Trusted adult nearby", "Offer water",
-              "Offer tactile object", "Offer comfort item", "Reduce demand",
-              "Use simple choices", "Sensory grounding", "Allow time", "TA Support",
-              "No adult available"],
+    "GREEN": ["Continue learning task", "Ignore low-level behaviours",
+              "Known adult intervened", "Maintain routine", "No adult available",
+              "Offer choice", "Praise effort quietly", "Support independence", "TA Support",
+              "Use connection / check-in"],
+    "RED":   ["Create space", "Follow safety plan", "Ignore low-level behaviours",
+              "Keep everyone safe", "Known adult intervened", "No adult available",
+              "Offer movement break", "Offer quiet space", "Offer trusted adult",
+              "Reduce demand", "Reduce language", "Remove audience",
+              "Support breathing / grounding", "TA Support", "Use calm tone"],
+    "BLUE":  ["Allow time", "Gentle check-in", "Known adult intervened", "No adult available",
+              "Offer comfort item", "Offer tactile object", "Offer water", "Quiet presence",
+              "Reduce demand", "Sensory grounding", "TA Support", "Trusted adult nearby",
+              "Use simple choices"],
 }
 
 SUPPORT_PLAN_PROMPTS = [
