@@ -1,18 +1,31 @@
 document.addEventListener("DOMContentLoaded", () => {
-	initRevealOnLoad();
+	initScrollReveal();
 	initChatHistoryDrawers();
 });
 
-function initRevealOnLoad() {
+function initScrollReveal() {
 	const revealEls = document.querySelectorAll(".reveal-on-load");
 	if (!revealEls.length) return;
 
-	revealEls.forEach((el, index) => {
-		const delay = 120 * index; // stagger for a nice cascade
-		setTimeout(() => {
-			el.classList.add("is-visible");
-		}, delay);
-	});
+	if (!("IntersectionObserver" in window)) {
+		revealEls.forEach((el) => el.classList.add("is-visible"));
+		return;
+	}
+
+	const observer = new IntersectionObserver(
+		(entries) => {
+			entries
+				.filter((entry) => entry.isIntersecting)
+				.forEach((entry, index) => {
+					// stagger elements that enter the viewport together
+					setTimeout(() => entry.target.classList.add("is-visible"), 90 * index);
+					observer.unobserve(entry.target);
+				});
+		},
+		{ threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
+	);
+
+	revealEls.forEach((el) => observer.observe(el));
 }
 
 function initChatHistoryDrawers() {
