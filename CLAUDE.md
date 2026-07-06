@@ -12,15 +12,15 @@ The intended users are **teachers and school staff** — not children directly.
 
 | App | Purpose |
 |---|---|
-| `posts` | Blog and news articles from the Virtual School |
-| `resources` | Library of documents, links, and materials shared after training |
+| `resources` | Library of documents, links, and materials shared after training (login required) |
 | `flashcards` | AI-powered toolkit to help teachers respond to trauma-affected pupils in the moment |
-| `evaluation` | AI chatbot that guides staff through reflecting on their training |
 | `tolerance` | Window of Tolerance mapping tool — weekly pupil behaviour observation grid |
-| `sdq` | Strengths & Difficulties Questionnaire — a scored assessment tool |
-| `training` | Training request submission form |
-| `users` | User registration, login, logout |
-| `core` | Shared infrastructure: the `ChatTurn` model (used by both AI chat tools, discriminated by a `tool` field), the agent streaming helper, session-id helper, and slug utility |
+| `sdq` | Strengths & Difficulties Questionnaire — a scored assessment tool (login required; results are never persisted) |
+| `users` | Login and logout. Self-registration is deliberately disabled — accounts are created by an admin in the Django admin |
+| `core` | Shared infrastructure: the `ChatTurn` model (discriminated by a `tool` field), the Anthropic streaming helper, session-id helper, slug utility, and upload validators |
+
+The former `posts`, `training`, and `evaluation` apps have been removed. `ChatTurn`
+keeps an `evaluation` tool choice only so historic rows stay valid.
 
 ### Planned future apps
 
@@ -32,9 +32,9 @@ The intended users are **teachers and school staff** — not children directly.
 
 - **Python 3.13.3** / **Django 5.2** — language and web framework
 - **SQLite** — database (local dev and Azure production)
-- **OpenAI GPT-4.1** — LLM for the flashcards and evaluation agents, via `openai-agents` framework
-- **django-allauth** — authentication including Microsoft OAuth (for staff SSO)
-- **django-taggit** — tagging on posts and resources
+- **Anthropic Claude** (`claude-opus-4-8`) — LLM for the flashcards agent, via the `anthropic` SDK wrapped in `core/streaming.py`
+- **django-allauth** — installed for Microsoft OAuth staff SSO, currently **disabled**; re-enable only with a tenant restriction and an email-domain allowlist adapter
+- **django-taggit** — tagging on resources
 - **WhiteNoise** — static file serving
 - **Gunicorn** — WSGI server in production
 - **Azure App Service** — hosting platform
@@ -51,8 +51,8 @@ python manage.py runserver
 Required environment variables (in `.env`):
 
 ```
-OPENAI_API_KEY=...
-SECRET_KEY=...             # required in production; auto-generated in dev
+ANTHROPIC_API_KEY=...      # read from the environment by the anthropic SDK
+SECRET_KEY=...             # required in production; a dev fallback is used when DEBUG
 DEBUG=True                 # dev only
 ```
 
@@ -60,8 +60,6 @@ Optional:
 
 ```
 ALLOWED_HOSTS_EXTRA=...
-MICROSOFT_CLIENT_ID=...
-MICROSOFT_CLIENT_SECRET=...
 ```
 
 ---
@@ -70,7 +68,7 @@ MICROSOFT_CLIENT_SECRET=...
 
 ### Tests
 
-Each app has a `tests.py` file. They are currently empty stubs. Before adding new behaviour, write a test for it; before handing work back, confirm existing tests still pass:
+Every live app has a real test suite in its `tests.py`, focused on permissions, ownership, and cross-user isolation. Before adding new behaviour, write a test for it; before handing work back, confirm the suite still passes:
 
 ```bash
 python manage.py test
@@ -78,7 +76,7 @@ python manage.py test
 
 There is no linting or formatting tool configured yet. If one is added (e.g. `ruff`), document the command here and run it before finishing any task.
 
-Until tests exist, the minimum bar for handing back a change is: the dev server starts, the affected page loads, and the core workflow completes without an error.
+The minimum bar for handing back a change is: tests pass, the dev server starts, the affected page loads, and the core workflow completes without an error.
 
 ---
 
@@ -91,7 +89,7 @@ Until tests exist, the minimum bar for handing back a change is: the dev server 
 - `Observation` (tolerance app) — pupil name, emotional/arousal state, observed behaviours, adult responses. This is **special category data** under UK GDPR Article 9 (data concerning health and wellbeing).
 - `WeeklyMap` — pupil name, class/year group, key adults, support plan.
 - `SDQResponse` — scored assessment data linked to a session (currently not persisted to DB, but treat any change to that carefully).
-- `ChatTurn` (`core` app, shared by evaluation/flashcards via a `tool` field) — staff reflection and training notes; may contain indirect references to named pupils.
+- `ChatTurn` (`core` app, discriminated by a `tool` field) — staff chat with the flashcards agent (plus historic evaluation rows); may contain indirect references to named pupils.
 
 ### Rules
 
@@ -99,7 +97,7 @@ Until tests exist, the minimum bar for handing back a change is: the dev server 
 - **Never expose pupil data in URLs** (e.g. no `?pupil_name=` query strings). Use PKs and enforce ownership checks in views.
 - **Filter by user/school at the queryset level**, not in templates. A user must never be able to retrieve another school's pupil data by guessing a URL or PK.
 - **Data minimisation** — only collect what is needed for the specific tool. Don't add new pupil-identifying fields without a clear purpose.
-- **AI tools** — do not send pupil names or identifying details to the OpenAI API. The flashcards and evaluation agents receive scenario descriptions and staff reflections only. Keep it that way.
+- **AI tools** — do not send pupil names or identifying details to the Anthropic API (the platform's AI sub-processor — keep the DPIA record in step with this). The flashcards agent receives scenario descriptions and staff messages only. Keep it that way.
 - **Any new feature that records, infers, or displays information about a child's health, behaviour, or wellbeing** is likely to involve Article 9 special category data. **Flag this to the developer for a human DPIA check before it ships** — do not implement it speculatively.
 
 ### When to slow down
@@ -119,17 +117,15 @@ If a task involves any of the following, pause and flag it rather than proceedin
 ```
 myproject/
   settings/         # Django settings (settings.py, wsgi.py, asgi.py, urls.py)
-  users/            # Auth: register, login, logout
-  posts/            # Blog posts with tags
-  evaluation/       # AI chat — training reflection agent
+  core/             # Shared: ChatTurn, streaming, sessions, slugs, validators
+  users/            # Auth: login, logout (no self-registration)
   flashcards/       # AI chat — trauma-responsive toolkit agent
-  training/         # Training request form
   sdq/              # SDQ assessment tool
   resources/        # Resource library
   tolerance/        # Window of Tolerance weekly observation grid
   templates/        # Base layout and shared partials
   static/           # CSS, JS, images
-  media/            # User-uploaded files
+  media/            # User-uploaded files (dev; prod uses /home/site/data/media)
 ```
 
 ---
@@ -149,7 +145,7 @@ Keep each app focused on one domain. If an app's `views.py` or `models.py` start
 
 ## Key patterns
 
-**Streaming AI responses** — both `evaluation` and `flashcards` stream via the shared `core/streaming.py` helper (`stream_agent_deltas`), which wraps `Runner.run_streamed()` for `StreamingHttpResponse`. Do not change these to synchronous responses.
+**Streaming AI responses** — `flashcards` streams via the shared `core/streaming.py` helper (`stream_agent_deltas`), which wraps the Anthropic `client.messages.stream()` API for `StreamingHttpResponse`. Errors inside the generator are caught there (the view has already returned by then) and surfaced as a friendly message. Do not change this to a synchronous response. The endpoint is rate-limited per user.
 
 **Dynamic agent instructions** — the flashcards agent builds its system prompt at runtime by injecting all `Flashcard` and `Scenario` content from the database. This is intentional.
 
@@ -157,9 +153,9 @@ Keep each app focused on one domain. If an app's `views.py` or `models.py` start
 
 **AJAX observation grid** — the tolerance app uses POST endpoints at `/api/observation/` and `/api/support-plan/` for interactive cell saving. No full page reloads.
 
-**Slug auto-generation** — `Post`, `Topic` (resources), and `TrainingRequest` generate slugs via the shared `core/slugs.py` utility, which handles duplicates with a counter suffix.
+**Slug auto-generation** — `Topic` (resources) generates slugs via the shared `core/slugs.py` utility, which handles duplicates with a counter suffix.
 
-**Azure detection** — `settings.py` checks for `WEBSITE_HOSTNAME` to switch to production paths (media at `/home/site/wwwroot/media`, SQLite at `/home/site/data/db.sqlite3`).
+**Azure paths** — in production (non-DEBUG) both persistent stores live under `/home/site/data`: SQLite at `/home/site/data/db.sqlite3`, media at `/home/site/data/media`. Never put writable data under `wwwroot` — it is wiped on every deploy.
 
 ---
 
@@ -209,5 +205,5 @@ Three slash commands chain agents together for common end-to-end workflows:
 | Command | When to use |
 |---|---|
 | `/build` | New feature from scratch — runs Theo (plan) → Ada if needed → implement → Les (tidy) → Vera (QA) |
-| `/gauntlet` | **Mandatory** before shipping any change to `tolerance`, `sdq`, `flashcards`, or `evaluation` — runs Victor (GDPR audit) → Vera (QA) |
+| `/gauntlet` | **Mandatory** before shipping any change to `tolerance`, `sdq`, or `flashcards` — runs Victor (GDPR audit) → Vera (QA) |
 | `/wheels-up` | Pre-deploy check — runs Les (final tidy) → deployment checklist → commit message draft |

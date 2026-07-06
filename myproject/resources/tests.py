@@ -15,7 +15,21 @@ class ResourceViewTests(TestCase):
         ]
         cls.topics[0].tags.add("attachment")
 
-    def test_list_is_public(self):
+    def setUp(self):
+        self.client.force_login(self.author)
+
+    def test_anonymous_is_redirected_to_login(self):
+        self.client.logout()
+        for url in (
+            reverse("resources:resource_list"),
+            reverse("resources:resource_list_by_tag", args=["attachment"]),
+            reverse("resources:page", args=[self.topics[0].slug]),
+        ):
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 302, url)
+            self.assertIn("/users/login/", response.url)
+
+    def test_list_renders_for_logged_in_user(self):
         response = self.client.get(reverse("resources:resource_list"))
         self.assertEqual(response.status_code, 200)
 

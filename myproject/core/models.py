@@ -5,10 +5,10 @@ from django.db import models
 class ChatTurn(models.Model):
     """A single message in an AI chat session.
 
-    Shared by the flashcards and evaluation tools; ``tool`` keeps each
-    tool's sessions separate even though they share users. ``role`` is
-    usually "user" or "assistant"; the flashcards tool also stores one
-    "title" row per renamed session.
+    ``tool`` keeps each tool's sessions separate even though they share
+    users. ``role`` is usually "user" or "assistant"; the flashcards tool
+    also stores one "title" row per renamed session. The evaluation app
+    was removed, but its choice stays so historic rows remain valid.
     """
 
     TOOL_FLASHCARDS = "flashcards"

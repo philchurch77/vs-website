@@ -2,7 +2,8 @@ import json
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.core.cache import cache
+from django.test import Client, TestCase
 from django.urls import reverse
 
 from myproject.core.models import ChatTurn
@@ -40,7 +41,6 @@ class FlashcardsAuthTests(TestCase):
         self.assertEqual(response.status_code, 302)
 
     def test_stream_requires_login(self):
-        # stream_flashcards is @csrf_exempt but still @login_required
         response = self.client.post(
             reverse("flashcards:stream_flashcards"),
             data=json.dumps({"message": "hello"}),
@@ -124,6 +124,7 @@ class FlashcardsStreamTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="alice", password="pass")
         self.client.login(username="alice", password="pass")
+        cache.clear()  # rate-limit counters must not leak between tests
 
     def _post_message(self, message):
         return self.client.post(
@@ -159,6 +160,50 @@ class FlashcardsStreamTests(TestCase):
     def test_get_is_rejected(self):
         response = self.client.get(reverse("flashcards:stream_flashcards"))
         self.assertEqual(response.status_code, 405)
+
+    def test_empty_message_rejected(self):
+        response = self._post_message("   ")
+        self.assertEqual(response.status_code, 400)
+
+    def test_csrf_is_enforced(self):
+        # The endpoint is no longer @csrf_exempt: a POST without the token must 403
+        csrf_client = Client(enforce_csrf_checks=True)
+        csrf_client.login(username="alice", password="pass")
+        response = csrf_client.post(
+            reverse("flashcards:stream_flashcards"),
+            data=json.dumps({"message": "hello"}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_rate_limit_returns_429(self):
+        with patch("myproject.flashcards.views.RATE_LIMIT_REQUESTS", 2), patch(
+            "myproject.core.streaming._get_client",
+            return_value=make_fake_anthropic_client(["ok"]),
+        ):
+            for _ in range(2):
+                response = self._post_message("hello")
+                b"".join(response.streaming_content)
+                self.assertEqual(response.status_code, 200)
+            response = self._post_message("one too many")
+        self.assertEqual(response.status_code, 429)
+        self.assertIn("error", response.json())
+
+    def test_stream_error_keeps_user_turn_and_tells_the_user(self):
+        # API failures happen after the view returns; the generator must
+        # surface a friendly message and still have the user turn saved.
+        with patch(
+            "myproject.core.streaming._get_client",
+            side_effect=RuntimeError("api down"),
+        ):
+            response = self._post_message("Help please")
+            body = b"".join(response.streaming_content).decode()
+
+        self.assertIn("something went wrong", body)
+        turns = ChatTurn.objects.filter(user=self.user)
+        self.assertEqual(turns.count(), 1)
+        self.assertEqual(turns.first().role, "user")
+        self.assertEqual(turns.first().content, "Help please")
 
 
 class FlashcardsTitleRowTests(TestCase):

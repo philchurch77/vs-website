@@ -1,7 +1,9 @@
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from .forms import SDQForm
 from .models import SDQResponse
 
+@login_required
 def sdq_view(request):
     form = SDQForm(request.POST or None)
     response = None

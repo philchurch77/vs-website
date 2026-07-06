@@ -1,5 +1,7 @@
 from django.db import models
 
+from myproject.core.validators import validate_upload_size
+
 
 class Flashcard(models.Model):
     flashcard_id = models.IntegerField(unique=True)
@@ -8,7 +10,10 @@ class Flashcard(models.Model):
     what_you_need = models.TextField()
     who_where_when_why = models.TextField()
     sort_order = models.IntegerField()
-    image = models.ImageField(upload_to='flashcard_images/', blank=True, null=True)
+    image = models.ImageField(
+        upload_to='flashcard_images/', blank=True, null=True,
+        validators=[validate_upload_size],
+    )
 
 
     class Meta:

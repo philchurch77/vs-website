@@ -6,9 +6,18 @@ Messages API streaming helper so it can be consumed from a synchronous
 response generator. Do not convert the views to synchronous responses —
 streaming is a project requirement (CLAUDE.md).
 """
+import logging
 from dataclasses import dataclass
 
 import anthropic
+
+logger = logging.getLogger(__name__)
+
+# Shown to the user if the stream dies mid-reply. Kept generic on purpose.
+STREAM_ERROR_MESSAGE = (
+    "\n\n⚠️ Sorry — something went wrong while generating this reply. "
+    "Please try sending your message again."
+)
 
 # Generous headroom for a chat reply without risking truncation mid-answer.
 # We always stream, so the SDK's non-streaming timeout guard does not apply.
@@ -56,17 +65,27 @@ def stream_agent_deltas(agent, messages, on_complete=None):
     use it to persist chat turns. If it returns an iterable of strings,
     those are streamed to the client after the agent output (e.g. a
     "[SUMMARY_SAVED]" marker).
+
+    This generator is consumed after the view has already returned, so
+    exceptions here never reach the view's error handling: catch them,
+    tell the user, and skip ``on_complete`` (the reply is incomplete).
+    Log only the exception — never the message content (CLAUDE.md).
     """
     full_response = ""
-    with _get_client().messages.stream(
-        model=agent.model,
-        max_tokens=agent.max_tokens,
-        system=agent.system,
-        messages=messages,
-    ) as stream:
-        for text in stream.text_stream:
-            full_response += text
-            yield text
+    try:
+        with _get_client().messages.stream(
+            model=agent.model,
+            max_tokens=agent.max_tokens,
+            system=agent.system,
+            messages=messages,
+        ) as stream:
+            for text in stream.text_stream:
+                full_response += text
+                yield text
+    except Exception:
+        logger.exception("AI stream failed")
+        yield STREAM_ERROR_MESSAGE
+        return
 
     if on_complete is not None:
         extra_chunks = on_complete(full_response)

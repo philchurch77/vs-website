@@ -2,12 +2,12 @@ import json
 import re
 
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from django.db.models import Max
 from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.utils.crypto import get_random_string
-from django.views.decorators.csrf import csrf_exempt
 
 from myproject.core.models import ChatTurn
 from myproject.core.sessions import get_or_create_session_id
@@ -17,6 +17,21 @@ from .models import Flashcard
 
 TOOL = ChatTurn.TOOL_FLASHCARDS
 SESSION_KEY = "flashcards_chat_session_id"
+
+# Each request is a paid claude call, so cap how fast one account can fire them.
+RATE_LIMIT_REQUESTS = 10
+RATE_LIMIT_WINDOW_SECONDS = 60
+
+
+def _rate_limited(user):
+    key = f"flashcards-stream-rate:{user.pk}"
+    if cache.add(key, 1, RATE_LIMIT_WINDOW_SECONDS):
+        return False
+    try:
+        return cache.incr(key) > RATE_LIMIT_REQUESTS
+    except ValueError:  # key expired between add() and incr()
+        cache.add(key, 1, RATE_LIMIT_WINDOW_SECONDS)
+        return False
 
 
 def _user_chat_sessions(user, limit=None):
@@ -53,15 +68,22 @@ def _user_chat_sessions(user, limit=None):
     return sessions
 
 
-@csrf_exempt
 @login_required
 def stream_flashcards(request):
     if request.method != "POST":
         return StreamingHttpResponse("Method Not Allowed", status=405)
 
+    if _rate_limited(request.user):
+        return JsonResponse(
+            {"error": "You're sending messages a little too quickly — please wait a minute and try again."},
+            status=429,
+        )
+
     try:
         data = json.loads(request.body)
         message = data.get("message", "").strip()
+        if not message:
+            return JsonResponse({"error": "Message is empty."}, status=400)
         session_id = get_or_create_session_id(request, SESSION_KEY)
 
         chat_history = list(
@@ -75,11 +97,14 @@ def stream_flashcards(request):
 
         toolkit_agent = build_toolkit_agent()
 
-        def save_turns(full_response):
-            ChatTurn.objects.create(
-                tool=TOOL, user=request.user, session_id=session_id,
-                role="user", content=message,
-            )
+        # Save the user's turn up front so it survives a failed stream;
+        # the assistant turn is only saved when the stream completes.
+        ChatTurn.objects.create(
+            tool=TOOL, user=request.user, session_id=session_id,
+            role="user", content=message,
+        )
+
+        def save_assistant_turn(full_response):
             ChatTurn.objects.create(
                 tool=TOOL, user=request.user, session_id=session_id,
                 role="assistant", content=full_response,
@@ -89,7 +114,7 @@ def stream_flashcards(request):
             stream_agent_deltas(
                 toolkit_agent,
                 chat_history,
-                on_complete=save_turns,
+                on_complete=save_assistant_turn,
             ),
             content_type="text/plain",
         )
@@ -159,14 +184,14 @@ def filtered_flashcards(request):
 def save_flashcard_ids(request):
     try:
         data = json.loads(request.body)
-        flashcard_ids = data.get("flashcard_ids", [])
-        if isinstance(flashcard_ids, list):
-            request.session["selected_flashcard_ids"] = flashcard_ids
-            request.session.modified = True
-            return JsonResponse({"status": "success"})
-        return JsonResponse({"error": "Invalid data"}, status=400)
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    flashcard_ids = data.get("flashcard_ids", [])
+    if isinstance(flashcard_ids, list):
+        request.session["selected_flashcard_ids"] = flashcard_ids
+        request.session.modified = True
+        return JsonResponse({"status": "success"})
+    return JsonResponse({"error": "Invalid data"}, status=400)
 
 
 @login_required
@@ -183,7 +208,10 @@ def delete_chat_session(request, session_id):
 def rename_chat_session(request, session_id):
     if not ChatTurn.objects.filter(tool=TOOL, user=request.user, session_id=session_id).exists():
         return JsonResponse({"error": "Session not found"}, status=404)
-    data = json.loads(request.body)
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
     new_title = data.get("title", "").strip()
     if new_title:
         ChatTurn.objects.filter(tool=TOOL, user=request.user, session_id=session_id, role="title").delete()

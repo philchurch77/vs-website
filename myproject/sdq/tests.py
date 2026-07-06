@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
@@ -5,9 +6,19 @@ from .models import SDQResponse
 
 
 class SDQTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user("staff", password="a-long-test-password")
+        self.client.force_login(self.user)
+
     def _valid_data(self):
         # 1 ("Somewhat True") is a valid value for every question
         return {f"q{i}": 1 for i in range(1, 26)}
+
+    def test_anonymous_is_redirected_to_login(self):
+        self.client.logout()
+        response = self.client.get(reverse("sdq:sdq_form_view"))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/users/login/", response.url)
 
     def test_form_renders(self):
         response = self.client.get(reverse("sdq:sdq_form_view"))

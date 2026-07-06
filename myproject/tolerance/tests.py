@@ -190,6 +190,29 @@ class ToleranceOwnerCanAccessOwnData(TestCase):
         )
         self.assertEqual(response.status_code, 400)
 
+    def test_invalid_state_rejected(self):
+        payload = {"day_name": "Tuesday", "time_slot": "Lesson 1", "state": "PURPLE"}
+        response = self.client.post(
+            reverse("tolerance:api_save_observation", args=[self.wmap.pk]),
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_out_of_vocab_values_rejected(self):
+        for field in ("observed_behaviours", "possible_triggers", "adult_responses"):
+            payload = {
+                "day_name": "Tuesday", "time_slot": "Lesson 1", "state": "RED",
+                field: ["Not a real option"],
+            }
+            response = self.client.post(
+                reverse("tolerance:api_save_observation", args=[self.wmap.pk]),
+                data=json.dumps(payload),
+                content_type="application/json",
+            )
+            self.assertEqual(response.status_code, 400, field)
+        self.assertFalse(Observation.objects.filter(weekly_map=self.wmap).exists())
+
     def test_create_map_redirects_to_detail(self):
         response = self.client.post(reverse("tolerance:dashboard"), {
             "pupil_name": "New Pupil",
@@ -197,6 +220,15 @@ class ToleranceOwnerCanAccessOwnData(TestCase):
         })
         wmap = WeeklyMap.objects.get(pupil_name="New Pupil")
         self.assertRedirects(response, reverse("tolerance:weekly_map_detail", args=[wmap.pk]))
+
+    def test_create_map_with_bad_date_shows_error(self):
+        response = self.client.post(reverse("tolerance:dashboard"), {
+            "pupil_name": "New Pupil",
+            "week_commencing": "not-a-date",
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(response.context["create_error"])
+        self.assertFalse(WeeklyMap.objects.filter(pupil_name="New Pupil").exists())
 
     def test_owner_can_delete_own_map(self):
         response = self.client.post(reverse("tolerance:delete_weekly_map", args=[self.wmap.pk]))

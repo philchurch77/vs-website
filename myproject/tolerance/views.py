@@ -54,16 +54,22 @@ RESPONSES = {
               "Known adult intervened", "Maintain routine", "No adult available",
               "Offer choice", "Praise effort quietly", "Support independence", "TA Support",
               "Use connection / check-in"],
-    "RED":   ["Complete Break it Down Board", "Create space", "Evacuate classroom", "Follow safety plan", "Guide to safe space", "Ignore low-level behaviours",
+    "RED":   ["Complete Break it Down Board", "Create space", "Evacuate classroom", "Follow safety plan", "Gave Behavioural Consequence", "Gave Logical Consequence", "Guide to safe space", "Ignore low-level behaviours",
               "Keep everyone safe", "Known adult intervened", "No adult available",
               "Offer movement break", "Offer sensory regulation", "Offer nurture to other child", "Trusted adult Presence", "Other", "Parent/carer contacted", "Quiet presence",
-              "Reduce demand", "Reduce language", "On-call requested", "Remove audience",
+              "Reduce demand", "Reduce language", "On-call requested", "Remove audience", "Restorative Approach",
               "Support breathing / grounding", "TA Support", "Teaching pro-social skills", "Use calm tone", "Use simple choices"],
-    "BLUE":  ["Allow time", "Complete Break it Down Board", "Gentle check-in", "Guide to safe space", "Known adult intervened", "No adult available",
+    "BLUE":  ["Allow time", "Complete Break it Down Board", "Gave Behavioural Consequence", "Gave Logical Consequence", "Gentle check-in", "Guide to safe space", "Known adult intervened", "No adult available",
               "Offer comfort item", "Offer sensory regulation", "Offer tactile object", "Offer water", "On-call requested", "Other", "Parent/carer contacted", "People-pleasing", "Quiet presence",
-              "Reduce demand", "Sensory grounding", "TA Support", "Teaching pro-social skills", "Trusted adult Presence",
+              "Reduce demand", "Restorative Approach", "Sensory grounding", "TA Support", "Teaching pro-social skills", "Trusted adult Presence",
               "Use simple choices"],
 }
+
+# Flat sets for validating what the observation API may store. Behaviours and
+# responses are accepted across states: the UI keeps per-state lists, but a
+# saved cell may retain selections made before the state was switched.
+VALID_BEHAVIOURS = {b for options in BEHAVIOURS.values() for b in options}
+VALID_RESPONSES = {r for options in RESPONSES.values() for r in options}
 
 SUPPORT_PLAN_PROMPTS = [
     ("hardest_times",      "What times of day are hardest for the pupil?"),
@@ -86,6 +92,7 @@ SUPPORT_PLAN_PROMPTS = [
 @login_required
 def dashboard(request):
     """Landing page: list all weekly maps; also handles create-new form."""
+    create_error = None
     if request.method == "POST":
         pupil_name = request.POST.get("pupil_name", "").strip()
         week_commencing_raw = request.POST.get("week_commencing", "")
@@ -94,15 +101,23 @@ def dashboard(request):
         review_date_raw = request.POST.get("review_date", "") or None
 
         if pupil_name and week_commencing_raw:
-            wmap = WeeklyMap.objects.create(
-                pupil_name=pupil_name,
-                week_commencing=week_commencing_raw,
-                recorded_by=request.user,
-                class_or_year_group=class_year,
-                key_adults=key_adults,
-                review_date=review_date_raw,
-            )
-            return redirect("tolerance:weekly_map_detail", pk=wmap.pk)
+            try:
+                week_commencing = date.fromisoformat(week_commencing_raw)
+                review_date = date.fromisoformat(review_date_raw) if review_date_raw else None
+            except ValueError:
+                create_error = "Please enter valid dates."
+            else:
+                wmap = WeeklyMap.objects.create(
+                    pupil_name=pupil_name,
+                    week_commencing=week_commencing,
+                    recorded_by=request.user,
+                    class_or_year_group=class_year,
+                    key_adults=key_adults,
+                    review_date=review_date,
+                )
+                return redirect("tolerance:weekly_map_detail", pk=wmap.pk)
+        else:
+            create_error = "Pupil name and week commencing are both required."
 
     maps = WeeklyMap.objects.filter(recorded_by=request.user).select_related("recorded_by")
     today = date.today()
@@ -113,6 +128,7 @@ def dashboard(request):
     return render(request, "tolerance/weekly_map_list.html", {
         "maps": maps,
         "default_wc": default_wc.isoformat(),
+        "create_error": create_error,
     })
 
 
@@ -211,6 +227,28 @@ def api_save_observation(request, pk):
     if day_name not in DAYS or (time_slot not in TIME_SLOTS and time_slot != WEEKLY_SUMMARY_SLOT):
         return JsonResponse({"ok": False, "error": "invalid day or time_slot"}, status=400)
 
+    state = payload.get("state", "GREY")
+    if state not in Observation.State.values:
+        return JsonResponse({"ok": False, "error": "invalid state"}, status=400)
+
+    helpfulness = payload.get("response_helpfulness", "")
+    if helpfulness and helpfulness not in Observation.Helpfulness.values:
+        return JsonResponse({"ok": False, "error": "invalid response_helpfulness"}, status=400)
+
+    vocab_fields = [
+        ("observed_behaviours", VALID_BEHAVIOURS),
+        ("possible_triggers", set(TRIGGERS)),
+        ("adult_responses", VALID_RESPONSES),
+    ]
+    for field, allowed in vocab_fields:
+        values = payload.get(field, [])
+        if (
+            not isinstance(values, list)
+            or not all(isinstance(v, str) for v in values)
+            or not set(values) <= allowed
+        ):
+            return JsonResponse({"ok": False, "error": f"unrecognised {field}"}, status=400)
+
     obs, _ = Observation.objects.get_or_create(
         weekly_map=wmap,
         day_name=day_name,
@@ -218,11 +256,11 @@ def api_save_observation(request, pk):
         defaults={"created_by": request.user},
     )
 
-    obs.state = payload.get("state", "GREY")
+    obs.state = state
     obs.observed_behaviours = payload.get("observed_behaviours", [])
     obs.possible_triggers = payload.get("possible_triggers", [])
     obs.adult_responses = payload.get("adult_responses", [])
-    obs.response_helpfulness = payload.get("response_helpfulness", "")
+    obs.response_helpfulness = helpfulness
     obs.notes = payload.get("notes", "")
     obs.place          = payload.get("place", "")
     obs.people_present = payload.get("people_present", "")

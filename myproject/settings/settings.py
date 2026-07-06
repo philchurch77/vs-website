@@ -6,22 +6,24 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
 # --- Core ---
-SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key")  # safe default for local
+SECRET_KEY = os.getenv("SECRET_KEY", "")
 DEBUG = os.getenv("DEBUG", "0") in ("1", "true", "True")
+
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = "dev-secret-key"  # local development only
+    else:
+        raise RuntimeError("SECRET_KEY must be set in production")
 
 # --- Hosts / CSRF ---
 runtime_host = os.environ.get("WEBSITE_HOSTNAME")  # set by Azure
 extra_hosts = [x.strip() for x in os.getenv("ALLOWED_HOSTS_EXTRA", "").split(",") if x.strip()]
-allow_all = os.getenv("ALLOW_ALL_HOSTS", "0") in ("1", "true", "True")
 
-if allow_all:
-    ALLOWED_HOSTS = ["*"]
-else:
-    ALLOWED_HOSTS = [h for h in [
-        runtime_host, *extra_hosts,
-        "localhost", "127.0.0.1",
-        ".azurewebsites.net", ".scm.azurewebsites.net",
-    ] if h]
+ALLOWED_HOSTS = [h for h in [
+    runtime_host, *extra_hosts,
+    "localhost", "127.0.0.1",
+    ".azurewebsites.net", ".scm.azurewebsites.net",
+] if h]
 
 CSRF_TRUSTED_ORIGINS = []
 for h in ALLOWED_HOSTS:
@@ -47,7 +49,6 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
-    "allauth.socialaccount.providers.microsoft",
     "taggit",
     "myproject.core",
     "myproject.users",
@@ -116,17 +117,36 @@ else:
     STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 MEDIA_URL = "/media/"
-MEDIA_ROOT = os.path.join("/home/site/wwwroot", "media")
+# /home/site/data is Azure's persistent volume; wwwroot is wiped on each deploy
+MEDIA_ROOT = "/home/site/data/media" if not DEBUG else os.path.join(BASE_DIR, "media")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# --- Passwords ---
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 12},
+    },
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
 
-# --- Proxy & cookie security ---
+# --- Proxy & transport security ---
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
 SESSION_COOKIE_SECURE = not DEBUG  # allow http locally
 CSRF_COOKIE_SECURE = not DEBUG     # allow http locally
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "same-origin"
+X_FRAME_OPTIONS = "DENY"
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    # Start with 1 hour; raise to 31536000 + INCLUDE_SUBDOMAINS once confirmed stable
+    SECURE_HSTS_SECONDS = 3600
 
 # --- Auth ---
 LOGIN_URL = "/users/login/"
@@ -139,20 +159,9 @@ AUTHENTICATION_BACKENDS = [
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
-SOCIALACCOUNT_PROVIDERS = {
-    "microsoft": {
-        "TENANT": "organizations",
-        "APP": {
-            "client_id": os.getenv("MICROSOFT_CLIENT_ID", ""),
-            "secret": os.getenv("MICROSOFT_CLIENT_SECRET", ""),
-        },
-        "SCOPE": ["User.Read"],
-    }
-}
-
-SOCIALACCOUNT_AUTO_SIGNUP = True
-SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
-ACCOUNT_EMAIL_VERIFICATION = "none"
+# Microsoft SSO is disabled for the user-testing phase. When re-enabling:
+# restrict TENANT to the Cambridgeshire tenant ID (not "organizations"), and add a
+# SOCIALACCOUNT_ADAPTER with an email-domain allowlist before turning auto-signup on.
 
 # --- Logging ---
 LOGGING = {
@@ -165,9 +174,6 @@ LOGGING = {
         "django.security.csrf": {"handlers": ["console"], "level": "INFO", "propagate": False},
     },
 }
-
-if not SECRET_KEY and not DEBUG:
-    raise RuntimeError("SECRET_KEY must be set in production")
 
 
 

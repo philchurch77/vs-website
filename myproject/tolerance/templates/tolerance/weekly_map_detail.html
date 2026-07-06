@@ -362,14 +362,20 @@ document.getElementById('selectAllSlots').addEventListener('change', (e) => {
 
 document.getElementById('saveSlots').addEventListener('click', async () => {
   const payload = { visible_slots: activeSlots };
-  const data = await (await fetch(SAVE_SLOTS_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
-    body: JSON.stringify(payload),
-  })).json();
-  if (data.ok) {
+  let data = null;
+  try {
+    const resp = await fetch(SAVE_SLOTS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+      body: JSON.stringify(payload),
+    });
+    data = await resp.json();
+  } catch (e) { /* non-JSON response, e.g. redirect to login after session expiry */ }
+  if (data && data.ok) {
     const m = document.getElementById('slotSavedMsg');
     m.hidden = false; setTimeout(() => { m.hidden = true; }, 2500);
+  } else {
+    showToast('Could not save — please refresh and try again.');
   }
 });
 
@@ -496,13 +502,16 @@ document.getElementById("abcToggle").addEventListener("click", () => {
 });
 
 async function saveObservation() {
-  const resp = await fetch(SAVE_OBS_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-CSRFToken": getCsrf() },
-    body: JSON.stringify(currentObs),
-  });
-  const data = await resp.json();
-  if (!data.ok) { showToast('Could not save — please try again.'); return false; }
+  let data = null;
+  try {
+    const resp = await fetch(SAVE_OBS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRFToken": getCsrf() },
+      body: JSON.stringify(currentObs),
+    });
+    data = await resp.json();
+  } catch (e) { /* non-JSON response, e.g. redirect to login after session expiry */ }
+  if (!data || !data.ok) { showToast('Could not save — please try again.'); return false; }
   const key = `${currentObs.day_name}:${currentObs.time_slot}`;
   OBS_DATA[key] = { ...currentObs };
   if (activeCellEl) updateCell(activeCellEl, currentObs);
@@ -564,14 +573,20 @@ document.getElementById('supportToggle').addEventListener('click', () => {
 async function savePlan() {
   const payload = {};
   document.querySelectorAll(".wot-support-textarea").forEach(ta => { payload[ta.dataset.planKey] = ta.value; });
-  const data = await (await fetch(SAVE_PLAN_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-CSRFToken": getCsrf() },
-    body: JSON.stringify(payload),
-  })).json();
-  if (data.ok) {
+  let data = null;
+  try {
+    const resp = await fetch(SAVE_PLAN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRFToken": getCsrf() },
+      body: JSON.stringify(payload),
+    });
+    data = await resp.json();
+  } catch (e) { /* non-JSON response, e.g. redirect to login after session expiry */ }
+  if (data && data.ok) {
     const m = document.getElementById("planSaveMsg");
     m.hidden = false; setTimeout(() => { m.hidden = true; }, 3000);
+  } else {
+    showToast('Could not save — please refresh and try again.');
   }
 }
 

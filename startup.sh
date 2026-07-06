@@ -19,12 +19,13 @@ export PYTHONPATH="$APP_ROOT:${PYTHONPATH:-}"
 : "${DJANGO_SETTINGS_MODULE:=myproject.settings.settings}"   # <-- change if needed
 WSGI_PATH="${WSGI_PATH:-myproject.settings.wsgi:application}"  # <-- change if needed
 
-# 3) Optional: run migrations & collectstatic (skip failing these in case DB not reachable)
+# 3) Run migrations & collectstatic. These must succeed: booting on a
+# mismatched schema or a stale static manifest breaks the app at runtime.
 if [ -f "$APP_ROOT/manage.py" ]; then
   echo "Running migrations..."
-  python manage.py migrate --noinput || echo "Migrations failed (continuing)."
+  python manage.py migrate --noinput
   echo "Collecting static..."
-  python manage.py collectstatic --noinput || echo "Collectstatic failed (continuing)."
+  python manage.py collectstatic --noinput
 fi
 
 # 4) Start gunicorn from the current app path

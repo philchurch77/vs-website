@@ -1,7 +1,7 @@
 /*
- * Shared chat UI for the AI tools (flashcards "Echo" and the evaluation
- * assistant). Each page calls initChat(config) on DOMContentLoaded; the
- * config supplies everything page-specific:
+ * Shared chat UI for the flashcards "Echo" assistant. Each page calls
+ * initChat(config) on DOMContentLoaded; the config supplies everything
+ * page-specific:
  *
  *   streamUrl   POST endpoint that streams the assistant reply
  *   markdown    render assistant messages as markdown (needs marked.js)
@@ -112,7 +112,15 @@ function initChat(config) {
 
             if (!response.ok || !response.body) {
                 removeThinkingBubble();
-                appendMessage("assistant", "⚠️ Error: Failed to stream response.");
+                let message = "⚠️ Error: Failed to stream response.";
+                try {
+                    const data = await response.json();
+                    if (data && data.error) message = "⚠️ " + data.error;
+                } catch (e) { /* body was not JSON; keep the generic message */ }
+                appendMessage("assistant", message);
+                if (response.status === 429 && !input.value) {
+                    input.value = text;  // rate-limited: let them resend without retyping
+                }
                 return;
             }
 

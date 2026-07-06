@@ -21,6 +21,9 @@
         <h2>New weekly map</h2>
         <p>Start tracking a pupil for the week.</p>
       </div>
+      {% if create_error %}
+        <p class="form-errors" role="alert">{{ create_error }}</p>
+      {% endif %}
       <form method="post" class="wot-create-form">
         {% csrf_token %}
         <div class="wot-form-group wot-form-group--pupil">
