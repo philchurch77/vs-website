@@ -5,6 +5,8 @@
 {% block content %}
 <section>
 
+  {% include "partials/page_header.html" with eyebrow="Assessment tool" title="Strengths and Difficulties Questionnaire" subtitle="Complete the questionnaire and submit to find the total score. Results are shown on screen only and are never stored." only %}
+
   {% if response %}
   <div class="score-grid" role="region" aria-label="SDQ scores">
     <div class="score-card" style="--hue:220">
@@ -51,15 +53,12 @@
   </div>
   {% endif %}
 
-  <h1>Strengths and Difficulties Questionnaire</h1>
-  <p>Complete the questionnaire and submit to find the total score.</p>
   <div class="narrow-text">
     <p>
       For each item, please mark the box for Not True, Somewhat True or Certainly True.
       Please answer based on the child's behaviour over the last six months or this school year.
     </p>
   </div>
-
 
   <form class="form-with-validation sdq-form-cards" method="post">
     {% csrf_token %}

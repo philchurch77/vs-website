@@ -4,28 +4,14 @@
 
 {% block content %}
 <section class="resources-page">
-  <div class="resources-hero">
-    <div class="resources-hero-copy">
-      <p class="resources-eyebrow">Cambridgeshire Virtual School</p>
-      <h1 class="resources-hero-title">Training resources</h1>
-      <p class="resources-hero-text">Guidance, reference materials, and follow-up resources from training sessions, gathered in one place and easier to scan.</p>
-    </div>
-    <div class="resources-hero-summary" aria-label="Resources summary">
-      <div class="resources-summary-value">{{ resources.paginator.count }}</div>
-      <div class="resources-summary-label">resources available</div>
-      {% if tag %}
-        <a class="resources-active-filter" href="{% url 'resources:resource_list' %}">Filtered by {{ tag.name }}. Clear filter</a>
-      {% else %}
-        <div class="resources-summary-note">Newest resources appear first.</div>
-      {% endif %}
-    </div>
-  </div>
+  {% include "partials/page_header.html" with eyebrow="Cambridgeshire Virtual School" title="Training resources" subtitle="Guidance, reference materials, and follow-up resources from training sessions, gathered in one place and easier to scan." stat_value=resources.paginator.count stat_label="resources available" stat_note="Newest resources appear first." only %}
 
   {% if resources %}
     <div class="resources-toolbar">
       <p class="resources-toolbar-text">
         {% if tag %}
           Showing resources tagged with <strong>{{ tag.name }}</strong>
+          <a class="resources-active-filter" href="{% url 'resources:resource_list' %}">Clear filter</a>
         {% else %}
           Browse practical resources, downloadable materials, and related links.
         {% endif %}
@@ -75,8 +61,16 @@
     </div>
   {% else %}
     <div class="resources-empty-state">
-      <h2 class="resources-empty-title">No resources yet</h2>
-      <p class="resources-empty-text">New training materials and follow-up links will appear here once they have been added.</p>
+      {% if tag %}
+        <h2 class="resources-empty-title">No resources tagged with {{ tag.name }}</h2>
+        <p class="resources-empty-text">
+          There are currently no resources with this tag.
+          <a class="resources-active-filter" href="{% url 'resources:resource_list' %}">Clear filter</a>
+        </p>
+      {% else %}
+        <h2 class="resources-empty-title">No resources yet</h2>
+        <p class="resources-empty-text">New training materials and follow-up links will appear here once they have been added.</p>
+      {% endif %}
     </div>
   {% endif %}
 

@@ -1,0 +1,20 @@
+{% comment %}
+Shared page header. Usage:
+  {% include "partials/page_header.html" with title="..." %}
+Optional context: eyebrow, subtitle, stat_value, stat_label, stat_note.
+The stat block renders only when stat_value is provided.
+{% endcomment %}
+<header class="page-header{% if not stat_value %} page-header--no-stat{% endif %}">
+  <div class="page-header-copy">
+    {% if eyebrow %}<p class="page-header-eyebrow">{{ eyebrow }}</p>{% endif %}
+    <h1 class="page-header-title">{{ title }}</h1>
+    {% if subtitle %}<p class="page-header-subtitle">{{ subtitle }}</p>{% endif %}
+  </div>
+  {% if stat_value %}
+    <div class="page-header-summary" aria-label="Summary">
+      <div class="page-header-stat-value">{{ stat_value }}</div>
+      <div class="page-header-stat-label">{{ stat_label }}</div>
+      {% if stat_note %}<div class="page-header-stat-note">{{ stat_note }}</div>{% endif %}
+    </div>
+  {% endif %}
+</header>
